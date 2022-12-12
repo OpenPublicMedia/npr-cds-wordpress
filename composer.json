@@ -1,0 +1,26 @@
+{
+	"name"       : "openpublicmedia/npr-story-api",
+	"description": "Access the NPR CDS from within Wordpress",
+	"homepage"   : "https://github.com/OpenPublicMedia/nprapi-wordpress/",
+	"type"       : "wordpress-plugin",
+	"license"    : "GPL-2.0+",
+	"require": {},
+	"dist": {
+		"url": "https://github.com/OpenPublicMedia/nprapi-wordpress/archive/refs/tags/v2.0.zip",
+		"type": "zip"
+	},
+	"authors": [
+		{
+			"name": "Jared Counts",
+			"email": "jcounts@houstonpublicmedia.org"
+		},
+		{
+			"name": "William Tam",
+			"email": "tamw@thirteen.org"
+		},
+		{
+			"name": "Brian Divver",
+			"email": "bdivver@xpn.org"
+		}
+	]
+}
