@@ -2,42 +2,55 @@
 
 /**
  * @file
- *
- * Defines a class for NPRML creation/transmission and retrieval/parsing
- * Unlike NPRAPI class, NPRAPIDrupal is drupal-specific
+ * Defines basic OOP containers for NPRML.
  */
-require_once( dirname( __FILE__ ) . '/NPRAPI.php' );
 require_once( dirname( __FILE__ ) . '/nprml.php' );
 
 /**
- * Class NPRAPIWordpress
+ * Defines a class for NPRML creation/transmission and retrieval/parsing, for any PHP-based system.
  */
-class NPRAPIWordpress extends NPRAPI {
+class NPR_CDS_WP {
+
+	// HTTP status code = OK
+	const NPR_CDS_STATUS_OK = 200;
+
+	// Default URL for pulling stories
+	const NPR_CDS_VERSION = 'v1';
 
 	/**
-	 * Makes HTTP request to NPR API.
-	 *
-	 * @param array $params
-	 *   Key/value pairs to be sent (within the request's query string).
-	 *
-	 *
-	 * @param string $path
-	 *   The path part of the request URL (i.e., https://example.com/PATH).
-	 *
-	 * @param string $base
-	 *   The base URL of the request (i.e., HTTP://EXAMPLE.COM/path) with no trailing slash.
+	 * Initializes an NPRML object.
 	 */
-	function request( $params = [], $path = 'documents', $base = self::NPRAPI_PULL_URL ) {
+	function __construct() {
+		$this->request = new stdClass;
+		$this->request->method = NULL;
+		$this->request->params = NULL;
+		$this->request->data = NULL;
+		$this->request->path = NULL;
+		$this->request->base = NULL;
+		$this->request->request_url = NULL;
+
+
+		$this->response = new stdClass;
+		$this->response->id = NULL;
+		$this->response->code = NULL;
+	}
+
+	function request( $params = [], $path = 'documents' ) {
 
 		$this->request->params = $params;
 		$this->request->path = $path;
-		$this->request->base = $base;
+		$this->request->base = NPR_CDS_PULL_URL;
 
 		$queries = [];
 		foreach ( $this->request->params as $k => $v ) {
-			$queries[] = "$k=$v";
+			if ( $k !== 'id' ) {
+				$queries[] = "$k=$v";
+			}
 		}
 		$request_url = $this->request->base . '/' . self::NPR_CDS_VERSION . '/' . $this->request->path;
+		if ( !empty( $params['id'] ) ) {
+			$request_url .= '/' . $params['id'];
+		}
 		if ( !empty( $queries ) ) {
 			$request_url .= '?' . implode( '&', $queries );
 		}
@@ -46,9 +59,9 @@ class NPRAPIWordpress extends NPRAPI {
 	}
 
 	function get_token_options() {
-		$token = get_option( 'ds_npr_cds_token' );
-		if ( !empty( $token ) ) {
-			nprstory_show_message( 'No CDS bearer token present. Please enter one on the main settings page.', TRUE );
+		$token = get_option( 'npr_cds_token' );
+		if ( empty( $token ) ) {
+			npr_cds_show_message( 'No CDS bearer token present. Please enter one on the main settings page.', TRUE );
 		}
 		return [
 			'headers' => [
@@ -57,12 +70,6 @@ class NPRAPIWordpress extends NPRAPI {
 		];
 	}
 
-	/**
-	 *
-	 * Query a single url.  If there is not an API Key in the query string, append one, but otherwise just do a straight query
-	 *
-	 * @param string $url -- the full url to query.
-	 */
 	function query_by_url( $url ) {
 		//fill out the $this->request->param array so we can know what params were sent
 		$parsed_url = parse_url( $url );
@@ -79,22 +86,22 @@ class NPRAPIWordpress extends NPRAPI {
 		$response = wp_remote_get( $url, $options );
 		if ( !is_wp_error( $response ) ) {
 			$this->response = $response;
-			if ( $response['response']['code'] == self::NPRAPI_STATUS_OK ) {
+			if ( $response['response']['code'] == self::NPR_CDS_STATUS_OK ) {
 				if ( $response['body'] ) {
 					$this->json = $response['body'];
 				} else {
 					$this->notice[] = __( 'No data available.' );
 				}
 			} else {
-				nprstory_show_message( 'An error occurred pulling your story from the NPR API.  The API responded with message =' . $response['response']['message'], TRUE );
+				npr_cds_show_message( 'An error occurred pulling your story from the NPR API.  The API responded with message =' . $response['response']['message'], TRUE );
 			}
 		} else {
 			$error_text = '';
 			if ( !empty( $response->errors['http_request_failed'][0] ) ) {
 				$error_text = '<br> HTTP Error response =  ' . $response->errors['http_request_failed'][0];
 			}
-			nprstory_show_message( 'Error pulling story for url=' . $url . $error_text, TRUE );
-			nprstory_error_log( 'Error retrieving story for url=' . $url );
+			npr_cds_show_message( 'Error pulling story for url=' . $url . $error_text, TRUE );
+			npr_cds_error_log( 'Error retrieving story for url=' . $url );
 		}
 	}
 
@@ -102,9 +109,10 @@ class NPRAPIWordpress extends NPRAPI {
 		$href_xp = explode( '/', $href );
 		return end( $href_xp );
 	}
-	function extract_profiles ( $profiles ) {
+
+	function extract_profiles ( $story ) {
 		$output = [];
-		foreach ( $profiles as $p ) {
+		foreach ( $story->profiles as $p ) {
 			$p_xp = explode( '/', $p->href );
 			$output[] = end( $p_xp );
 		}
@@ -112,7 +120,7 @@ class NPRAPIWordpress extends NPRAPI {
 	}
 
 	function get_document ( $href ) {
-		$url = self::NPRAPI_PULL_URL . $href;
+		$url = NPR_CDS_PULL_URL . $href;
 		$options = $this->get_token_options();
 		$response = wp_remote_get( $url, $options );
 		if ( is_wp_error( $response ) ) {
@@ -125,20 +133,9 @@ class NPRAPIWordpress extends NPRAPI {
 			error_log( $message );
 			return $response;
 		}
-		return json_decode( $response['body'], false );
+		$json = json_decode( $response['body'], false );
+		return $json->resources[0];
 	}
-	// function extract_url ( $href ) {
-	// 	$id = $this->extract_asset_id( $href );
-	// 	$json = npr_remote_get( $id );
-	// 	$output = '';
-	// 	$j = $json->resources[0];
-	// 	foreach ( $j->webPages as $web ) {
-	// 		if ( in_array( 'canonical', $web->rels ) ) {
-	// 			$output = $web->href;
-	// 		}
-	// 	}
-	// 	return $output;
-	// }
 
 	/**
 	 *
@@ -149,10 +146,7 @@ class NPRAPIWordpress extends NPRAPI {
 	 * @return int|null $post_id or null
 	 */
 	function update_posts_from_stories( $publish = TRUE, $qnum = false ) {
-		$pull_post_type = get_option( 'ds_npr_pull_post_type' );
-		if ( empty( $pull_post_type ) ) {
-			$pull_post_type = 'post';
-		}
+		$pull_post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 
 		$post_id = null;
 
@@ -192,14 +186,10 @@ class NPRAPIWordpress extends NPRAPI {
 					$existing = $existing_status = null;
 				}
 
-				$npr_has_layout = FALSE;
 				$npr_has_video = FALSE;
-				// get the "NPR layout" version if available and the "use rich layout" option checked in settings
-				// if option is not checked, return the text with HTML
 				$npr_layout = $this->get_body_with_layout( $story );
 				if ( !empty( $npr_layout['body'] ) ) {
 					$story->body = $npr_layout['body'];
-					$npr_has_layout = $npr_layout['has_layout'];
 					$npr_has_video = $npr_layout['has_video'];
 				}
 
@@ -221,10 +211,10 @@ class NPRAPIWordpress extends NPRAPI {
 				$wp_category_ids = [];
 				$wp_category_id = "";
 				if ( false !== $qnum ) {
-					$args['tags_input'] = get_option( 'ds_npr_query_tags_' . $qnum );
+					$args['tags_input'] = get_option( 'npr_cds_query_tags_' . $qnum );
 					if ( $pull_post_type == 'post' ) {
 						// Get Default category from options table and store in array for post_array
-						$wp_category_id = intval( get_option( 'ds_npr_query_category_' . $qnum ) );
+						$wp_category_id = intval( get_option( 'npr_cds_query_category_' . $qnum ) );
 						$wp_category_ids[] = $wp_category_id;
 					}
 				} else {
@@ -281,7 +271,6 @@ class NPRAPIWordpress extends NPRAPI {
 						NPR_PUB_DATE_META_KEY		  => $story->publishDateTime,
 						NPR_STORY_DATE_MEATA_KEY	  => $story->publishDateTime,
 						NPR_LAST_MODIFIED_DATE_KEY	  => $story->editorialLastModifiedDateTime,
-						NPR_STORY_HAS_LAYOUT_META_KEY => $npr_has_layout,
 						NPR_STORY_HAS_VIDEO_META_KEY  => $npr_has_video
 					];
 					// get audio
@@ -322,19 +311,15 @@ class NPRAPIWordpress extends NPRAPI {
 					 * @param bool $created true if not pre-existing, false otherwise
 					 */
 
-					if ( $npr_has_layout ) {
-						// keep WP from stripping content from NPR posts
-						kses_remove_filters();
-					}
+					// keep WP from stripping content from NPR posts
+					kses_remove_filters();
 
 					$args = apply_filters( 'npr_pre_insert_post', $args, $post_id, $story, $created );
 					$post_id = wp_insert_post( $args );
 					wp_set_post_terms( $post_id, $wp_category_ids, 'category', true );
 
-					if ( $npr_has_layout ) {
-						// re-enable the built-in content stripping
-						kses_init_filters();
-					}
+					// re-enable the built-in content stripping
+					kses_init_filters();
 
 					// now that we have an id, we can add images
 					// this is the way WP seems to do it, but we couldn't call media_sideload_image or media_ because that returned only the URL
@@ -354,9 +339,7 @@ class NPRAPIWordpress extends NPRAPI {
 							$attached_images = get_children( $image_args );
 						}
 						foreach ( $story->images as $image ) {
-
-							// only sideload the primary image if using the npr layout
-							if ( !in_array( 'primary', $image->rels ) && $npr_has_layout ) {
+							if ( !in_array( 'primary', $image->rels ) ) {
 								continue;
 							}
 							$image_url = '';
@@ -377,7 +360,7 @@ class NPRAPIWordpress extends NPRAPI {
 								}
 							}
 
-							nprstory_error_log( 'Got image from: ' . $image_url );
+							npr_cds_error_log( 'Got image from: ' . $image_url );
 
 							$imagep_url_parse = parse_url( $image_url );
 							$imagep_url_parts = pathinfo( $imagep_url_parse['path'] );
@@ -513,18 +496,14 @@ class NPRAPIWordpress extends NPRAPI {
 					 * @param NPRMLEntity $story Story object created during import
 					 */
 
-					if ( $npr_has_layout ) {
-						// keep WP from stripping content from NPR posts
-						kses_remove_filters();
-					}
+					// keep WP from stripping content from NPR posts
+					kses_remove_filters();
 
 					$args = apply_filters( 'npr_pre_update_post', $args, $post_id, $story );
 					$post_id = wp_insert_post( $args );
 
-					if ( $npr_has_layout ) {
-						// re-enable content stripping
-						kses_init_filters();
-					}
+					// re-enable content stripping
+					kses_init_filters();
 				}
 
 				// set categories for story
@@ -605,40 +584,25 @@ class NPRAPIWordpress extends NPRAPI {
 
 	/**
 	 * TODO: Update for CDS
-	 * Create NPRML from wordpress post.
-	 *
-	 * @param object $post
-	 *   A wordpress post.
-	 *
-	 * @return string
-	 *   An NPRML string.
-	 */
-	function create_NPRML( $post ) {
-		// using some old helper code
-		return nprstory_to_nprml( $post );
-	}
-
-	/**
-	 * TODO: Update for CDS
 	 * This function will send the push request to the NPR API to add/update a story.
 	 *
-	 * @see NPRAPI::send_request()
+	 * @see NPRCDS::send_request()
 	 *
 	 * @param string $nprml
 	 * @param int $post_ID
 	 */
 	function send_request ( $nprml, $post_ID ) {
 		$error_text = '';
-		$org_id = get_option( 'ds_npr_api_org_id' );
+		$org_id = get_option( 'npr_cds_org_id' );
 		if ( !empty( $org_id ) ) {
 			$args = [
 				'orgId'  => $org_id,
-				'apiKey' => get_option( 'ds_npr_api_key' )
+				'apiKey' => get_option( 'npr_cds_token' )
 			];
 			$args = apply_filters( 'npr_pre_article_push', $args, $post_ID );
-			$url = add_query_arg( $args, get_option( 'ds_npr_api_push_url' ) . '/story' );
+			$url = add_query_arg( $args, get_option( 'npr_cds_push_url' ) . '/story' );
 
-			nprstory_error_log( 'Sending nprml = ' . $nprml );
+			npr_cds_error_log( 'Sending nprml = ' . $nprml );
 
 			$result = wp_remote_post( $url, ['body' => $nprml ] );
 			if ( !is_wp_error( $result ) ) {
@@ -649,7 +613,7 @@ class NPRAPIWordpress extends NPRAPI {
 						$npr_story_id = (string)$response_xml->list->story['id'];
 						update_post_meta( $post_ID, NPR_STORY_ID_META_KEY, $npr_story_id );
 					} else {
-						error_log( 'Error returned from NPR Story API with status code 200 OK but failed wp_remote_retrieve_body: ' . print_r( $result, true ) ); // debug use
+						error_log( 'Error returned from NPR CDS with status code 200 OK but failed wp_remote_retrieve_body: ' . print_r( $result, true ) ); // debug use
 					}
 				} else {
 					$error_text = '';
@@ -689,15 +653,58 @@ class NPRAPIWordpress extends NPRAPI {
 	 */
 	function send_delete( $api_id ) {
 		$args = [
-			'orgId'  => get_option( 'ds_npr_api_org_id' ),
-			'apiKey' => get_option( 'ds_npr_api_key' ),
+			'orgId'  => get_option( 'npr_cds_org_id' ),
+			'apiKey' => get_option( 'npr_cds_token' ),
 			'id' => $api_id
 		];
 		$args = apply_filters( 'npr_pre_article_delete', $args );
-		$url = add_query_arg( $args, get_option( 'ds_npr_api_push_url' ) . '/story' );
+		$url = add_query_arg( $args, get_option( 'npr_cds_push_url' ) . '/story' );
 
 		$result = wp_remote_request( $url, [ 'method' => 'DELETE' ] );
 		$body = wp_remote_retrieve_body( $result );
+	}
+
+	function parse_response() {
+		$json = json_decode( $this->response->data, TRUE );
+		if ( !empty( $json->resources[0] ) ) {
+			$id = $json['resources'][0]['id'];
+		}
+		$this->response->id = $id ? $id : NULL;
+	}
+
+	/**
+	 * TODO: Update for CDS
+	 * Create NPRML from wordpress post.
+	 *
+	 * @param object $post
+	 *   A wordpress post.
+	 *
+	 * @return string
+	 *   An NPRML string.
+	 */
+	function create_NPRML( $post ) {
+		// using some old helper code
+		return npr_cds_to_nprml( $post );
+	}
+
+	/**
+	 * Parses object. Turns raw XML(NPRML) into various object properties.
+	 */
+	function parse() {
+		if ( !empty( $this->json ) ) {
+			$json = $this->json;
+		} else {
+			$this->notices[] = 'No JSON to parse.';
+			return;
+		}
+
+		$object = json_decode( $json, false );
+
+		if ( !empty( $object->resources ) ) {
+			foreach ( $object->resources as $story ) {
+				$this->stories[] = $story;
+			}
+		}
 	}
 
 	/**
@@ -757,84 +764,22 @@ class NPRAPIWordpress extends NPRAPI {
 		return $output;
 	}
 
-	/**
-	 * TODO: Still needed??
-	 * Convert an NPRElement object into an array
-	 *
-	 * @param object $story
-	 *   An NPR Element object
-	 *
-	 * @param string $element
-	 *   The story elements to parse
-	 *
-	 * @return array
-	 *   An ID-based array of elements
-	 */
-	function parse_story_elements( $story, $element ) {
-		$output = [];
-		if ( isset( $story->{$element} ) ) {
-			$element_array = [];
-			if ( isset( $story->{$element}->id ) ) {
-				$element_array[] = $story->{$element};
-			} else {
-				// sometimes there are multiple objects
-				foreach ( (array)$story->{$element} as $elem ) {
-					if ( isset( $elem->id ) ) {
-						$element_array[] = $elem;
-					}
-				}
-			}
-			foreach ( $element_array as $elem ) {
-				$output[ $elem->id ] = (array)$elem;
-			}
-		}
-		return $output;
-	}
-
-	/**
-	 * TODO: Still needed??
-	 * Extract HTML links from NPRML output
-	 *
-	 * @param object $link
-	 *   An NPR Element object
-	 *
-	 * @return string
-	 *   The HTML link
-	 */
-	function link_extract( $links ) {
-		$output = '';
-		if ( !empty( $links ) ) :
-			if ( is_string( $links ) ) :
-				$output = $links;
-			elseif ( is_array( $links ) ) :
-				foreach ( $links as $link ) :
-					if ( empty( $link->type ) ) {
-						continue;
-					}
-					if ( 'html' === $link->type ) :
-						$output = $link->value;
-					endif;
-				endforeach;
-			elseif ( $links instanceof NPRMLElement && !empty( $links->value ) ) :
-				$output = $links->value;
-			endif;
-		endif;
-		return $output;
-	}
-
 	function get_image_url ( $image ) {
 		if ( empty( $image->hrefTemplate ) ) {
 			return $image->href;
 		}
+		$format = get_option( 'npr_cds_image_format', 'webp' );
+		$quality = get_option( 'npr_cds_image_quality', 75 );
+		$width = get_option( 'npr_cds_image_width', 1200 );
 		$parse = parse_url( $image->hrefTemplate );
 		parse_str( $parse['query'], $output );
 		foreach ( $output as $k => $v ) {
 			if ( $v == '{width}' ) {
-				$output[ $k ] = '1000';
+				$output[ $k ] = $width;
 			} elseif ( $v == '{format}' ) {
-				$output[ $k ] = 'webp';
+				$output[ $k ] = $format;
 			} elseif ( $v == '{quality}' ) {
-				$output[ $k ] = '75';
+				$output[ $k ] = $quality;
 			}
 		}
 		return $parse['scheme'] . '://' . $parse['host'] . $parse['path'] . '?' . http_build_query( $output );
@@ -843,7 +788,7 @@ class NPRAPIWordpress extends NPRAPI {
 	function extract_asset_profile ( $asset ) {
 		$output = '';
 		foreach ( $asset->profiles as $profile ) {
-			if ( in_array( 'type', $profile->rels ) ) {
+			if ( !empty( $profile->rels ) && in_array( 'type', $profile->rels ) ) {
 				$output = $this->extract_asset_id( $profile->href );
 			}
 		}
@@ -851,20 +796,19 @@ class NPRAPIWordpress extends NPRAPI {
 	}
 
 	/**
-	 * This function will check a story to see if it has a layout object, if there is
-	 * we'll format the body with any images, externalAssets, or htmlAssets inserted in the order they are in the layout
+	 * This function will format the body of the story with any provided assets inserted in the order they are in the layout
 	 * and return an array of the transformed body and flags for what sort of elements are returned
 	 *
-	 * @param NPRMLEntity $story Story object created during import
+	 * @param $story Story object created during import
 	 * @return array with reconstructed body and flags describing returned elements
 	 */
 	function get_body_with_layout( $story ) {
-		$returnary = [ 'body' => FALSE, 'has_layout' => FALSE, 'has_image' => FALSE, 'has_video' => FALSE, 'has_external' => FALSE, 'has_slideshow' => FALSE ];
+		$returnary = [ 'body' => FALSE, 'has_image' => FALSE, 'has_video' => FALSE, 'has_external' => FALSE, 'has_slideshow' => FALSE ];
 		$body_with_layout = "";
-		$use_npr_featured = ( !empty( get_option( 'dp_npr_query_use_featured' ) ) ? TRUE : FALSE );
+		$use_npr_featured = ( !empty( get_option( 'npr_cds_query_use_featured' ) ) ? TRUE : FALSE );
 		$profiles = $this->extract_profiles( $story );
+
 		if ( in_array( 'buildout', $profiles ) && !empty( $story->layout ) ) {
-			$returnary['has_layout'] = TRUE;
 			foreach ( $story->layout as $layout ) {
 				$asset_id = $this->extract_asset_id( $layout->href );
 				$asset_current = $story->assets->{ $asset_id };
@@ -878,7 +822,7 @@ class NPRAPIWordpress extends NPRAPI {
 					case 'promo-card' :
 						$promo_card = $this->get_document( $asset_current->documentLink->href );
 						$promo_card_url = '';
-						if ( !empty( $promo_card->webPages ) ) {
+						if ( !is_wp_error( $promo_card ) && !empty( $promo_card ) ) {
 							foreach ( $promo_card->webPages as $web ) {
 								if ( in_array( 'canonical', $web->rels ) ) {
 									$promo_card_url = $web->href;
@@ -949,8 +893,9 @@ class NPRAPIWordpress extends NPRAPI {
 						break;
 					case 'image' :
 						if ( $asset_profile == 'image' ) {
+							$thisimg_rels = [];
 							foreach ( $story->images as $images ) {
-								if ( $images->href = '#/assets/' . $asset_id ) {
+								if ( $images->href == '#/assets/' . $asset_id && !empty( $images->rels ) ) {
 									$thisimg_rels = $images->rels;
 								}
 							}
@@ -958,7 +903,7 @@ class NPRAPIWordpress extends NPRAPI {
 								break;
 							}
 							foreach ( $asset_current->enclosures as $img_enclose ) {
-								if ( in_array( 'primary', $img_enclose->rels ) ) {
+								if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
 									$thisimg = $img_enclose;
 								}
 							}
@@ -986,160 +931,6 @@ class NPRAPIWordpress extends NPRAPI {
 							$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
 						}
 						break;
-
-
-					/*
-					TODO: Figure out how slideshows are delivered in CDS
-
-					case 'externalAsset' :
-						if ( !empty( $externalAssets[ $reference ] ) ) {
-							$figclass = "wp-block-embed";
-							if ( !empty( (string)$externalAssets[ $reference ]['type'] ) && strtolower( (string)$externalAssets[ $reference ]['type'] ) == 'youtube') {
-								$returnary['has_video'] = TRUE;
-								$figclass .= " is-type-video";
-							}
-							$fightml = "<figure class=\"$figclass\"><div class=\"wp-block-embed__wrapper\">";
-							$fightml .=  "\n" . $externalAssets[$reference]['url'] . "\n";
-							$figcaption = '';
-							if ( !empty( (string)$externalAssets[ $reference ]['credit'] ) || !empty( (string)$externalAssets[ $reference ]['caption'] ) ) {
-								if ( !empty( trim( (string)$externalAssets[ $reference ]['credit'] ) ) ) {
-									$figcaption .= " <cite>" . trim( (string)$externalAssets[ $reference ]['credit'] ) . "</cite>";
-								}
-								if ( !empty( (string)$externalAssets[ $reference ]['caption'] ) ) {
-									$figcaption .= trim( (string)$externalAssets[ $reference ]['caption'] );
-								}
-								$figcaption = !empty( $figcaption ) ? "<figcaption>$figcaption</figcaption>" : "";
-							}
-							$fightml .= "</div>$figcaption</figure>\n";
-							$body_with_layout .= $fightml;
-						}
-						break;
-					case 'multimedia' :
-						if ( !empty( $multimedia[ $reference ] ) ) {
-							// check permissions
-							$perms = $multimedia[ $reference ]['permissions'];
-							if ( $perms->embed->allow != false ) {
-								$fightml = "<figure class=\"wp-block-embed is-type-video\"><div class=\"wp-block-embed__wrapper\">";
-								$returnary['has_video'] = TRUE;
-								$fightml .= "<div style=\"padding-bottom: 56.25%; position:relative; height:0;\"><iframe src=\"https://www.npr.org/embedded-video?storyId=" . (int)$story->id . "&mediaId=$reference&jwMediaType=music\" frameborder=\"0\" scrolling=\"no\" style=\"position:absolute; top:0; left:0; width:100%; height:100%;\" marginwidth=\"0\" marginheight=\"0\"></iframe></div>";
-								$figcaption = '';
-								if ( !empty( (string)$multimedia[ $reference ]['credit'] ) || !empty( (string)$multimedia[ $reference ]['caption'] ) ) {
-									if (!empty( trim( (string)$multimedia[ $reference ]['credit'] ) ) ) {
-										$figcaption .= " <cite>" . trim( (string)$multimedia[ $reference ]['credit'] ) . "</cite>";
-									}
-									if ( !empty( (string)$multimedia[ $reference ]['caption'] ) ) {
-										$figcaption .= trim( (string)$multimedia[ $reference ]['caption'] );
-									}
-									$figcaption = ( !empty( $figcaption ) ? "<figcaption>$figcaption</figcaption>" : "" );
-								}
-								$fightml .= "</div>$figcaption</figure>\n";
-								$body_with_layout .= $fightml;
-							}
-						}
-						break;
-					case 'container' :
-						if ( !empty( $container[ $reference ] ) ) {
-							$thiscon = $container[ $reference ];
-							$figclass = 'npr-container';
-							if ( !empty( $thiscon['colSpan']->value ) && $thiscon['colSpan']->value < 4 ) {
-								$figclass .= ' npr-container-col-1';
-							}
-							$fightml = "<figure class=\"wp-block-embed $figclass\"><div class=\"wp-block-embed__wrapper\">";
-							if ( !empty( $thiscon['title']->value ) ) {
-								$fightml .= "<h2>" . $thiscon['title']->value . "</h2>";
-							}
-							if ( !empty( $thiscon['introText']->value ) ) {
-								$fightml .= "<p>" . $thiscon['introText']->value . "</p>";
-							}
-							if ( !empty( $thiscon['link']->refId ) ) {
-								if ( !empty( $related[ $thiscon['link']->refId ] ) ) {
-									$fightml .= '<p><a href="' . $this->link_extract( $related[ $thiscon['link']->refId ]['link'] ) . '">' . $related[ $thiscon['link']->refId ]['caption']->value . '</a></p>';
-								}
-							}
-							if ( !empty( $thiscon['listText']->refId ) ) {
-								if ( !empty( $listText[ $thiscon['listText']->refId ] ) ) {
-									foreach ( $listText[ $thiscon['listText']->refId ]['paragraphs'] as $lparagraph ) {
-										$fightml .= $lparagraph->value;
-									}
-								}
-							}
-							$fightml .= "</div></figure>\n";
-							$body_with_layout .= $fightml;
-						}
-						break;
-					case 'list' :
-						if ( !empty( $collection[ $reference ] ) ) {
-							$thiscol = $collection[ $reference ];
-							$fightml = '';
-							if ( strtolower( $thiscol['displayType'] ) == "slideshow" ) {
-								$returnary['has_slideshow'] = TRUE;
-								$caption = '';
-								if ( !empty( $json['title'] ) ) {
-									$caption .= '<h3>' . $json['title'] . '</h3>';
-								}
-								if ( !empty( $json['intro'] ) ) {
-									$caption .= '<p>' . $json['intro'] . '</p>';
-								}
-								$fightml .= '<figure class="wp-block-image"><div class="splide"><div class="splide__track"><ul class="splide__list">';
-								foreach ( $thiscol['member'] as $cmem ) {
-									if ( !empty( $members[ $cmem->refId ] ) ) {
-										$thismem = $members[ $cmem->refId ];
-										if ( !empty( $thismem['image'] ) ) {
-											$thisimg = $storyimages[ $thismem['image']->refId ];
-											$image_url = $thisimg['image_url'];
-											$credits = [];
-											$full_credits = '';
-											if ( !empty( $thisimg['producer']->value ) ) {
-												$credits[] = $thisimg['producer']->value;
-											}
-											if ( !empty( $thisimg['provider']->value ) ) {
-												$credits[] = $thisimg['provider']->value;
-											}
-											if ( !empty( $thisimg['copyright']->value ) ) {
-												$credits[] = $thisimg['copyright']->value;
-											}
-											if ( !empty( $credits ) ) {
-												$full_credits = ' (' . implode( ' | ', $credits ) . ')';
-											}
-											$link_text = str_replace( '"', "'", $thisimg['title']->value . $full_credits );
-											foreach ( $thisimg['crop'] as $crop ) {
-												if ( $crop->type == $thismem['image']->crop ) {
-													$image_url = $crop->src;
-												}
-											}
-											$fightml .= '<li class="splide__slide"><a href="' . esc_url( $image_url ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_url ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . nprstory_esc_html( $link_text ) . '</div></li>';
-										}
-									}
-								}
-								$fightml .= '</div></div></ul>';
-								if ( !empty( $caption ) ) {
-									$fightml .= '<figcaption>' . $caption . '</figcaption>';
-								}
-								$fightml .= '</figure>';
-							} elseif ( strtolower( $thiscol['displayType'] ) == "simple story" ) {
-								$fightml .= '<figure class="wp-block-embed"><div class="wp-block-embed__wrapper"><h2>' . $thiscol['title']->value . '</h2><ul>';
-								foreach ( $thiscol['member'] as $cmem ) {
-									$c_member = $members[ $cmem->refId ];
-									$fightml .= '<li><h3>';
-									if ( !empty( $c_member['link'] ) ) {
-										$fightml .= '<a href="' . $c_member['link']->value . '" target="_blank">';
-									}
-									$fightml .= $c_member['title']->value;
-									if ( !empty( $c_member['link'] ) ) {
-										$fightml .= '</a>';
-									}
-									$fightml .= '</h3>';
-									if ( !empty( $c_member['image'] ) ) {
-										$c_member_image = $storyimages[ $c_member['image']->refId ];
-										$fightml .= '<img src="' . $c_member_image['image_url'] . '" alt="' . $c_member_image['title']->value . '" loading="lazy" />';
-									}
-									$fightml .= $c_member['introText']->value . '</li>';
-								}
-								$fightml .= '</ul></div></figure>';
-							}
-							$body_with_layout .= $fightml;
-						}
-						break; */
 					default :
 						// Do nothing???
 						break;
@@ -1183,12 +974,12 @@ class NPRAPIWordpress extends NPRAPI {
 			}
 		}
 		if ( $returnary['has_slideshow'] ) {
-			$body_with_layout = '<link rel="stylesheet" href="' . NPRSTORY_PLUGIN_URL . 'assets/css/splide.min.css" />' .
+			$body_with_layout = '<link rel="stylesheet" href="' . NPR_CDS_PLUGIN_URL . 'assets/css/splide.min.css" />' .
 				$body_with_layout .
-				'<script src="' . NPRSTORY_PLUGIN_URL . 'assets/js/splide.min.js"></script>' .
-				'<script src="' . NPRSTORY_PLUGIN_URL . 'assets/js/splide-settings.js"></script>';
+				'<script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/splide.min.js"></script>' .
+				'<script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/splide-settings.js"></script>';
 		}
-		$returnary['body'] = nprstory_esc_html( $body_with_layout );
+		$returnary['body'] = npr_cds_esc_html( $body_with_layout );
 		return $returnary;
 	}
 }

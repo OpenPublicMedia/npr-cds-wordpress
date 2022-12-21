@@ -3,10 +3,10 @@
  * The class DS_NPR_API and related functions for getting stories from the API
  */
 
-require_once( NPRSTORY_PLUGIN_DIR . 'get_stories_ui.php' );
-require_once( NPRSTORY_PLUGIN_DIR . 'classes/NPRAPIWordpress.php' );
+require_once( NPR_CDS_PLUGIN_DIR . 'get_stories_ui.php' );
+require_once( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
 
-class DS_NPR_API {
+class NPR_CDS {
 	var $created_message = '';
 
 	/**
@@ -14,23 +14,20 @@ class DS_NPR_API {
 	 *
 	 * @return string The post type
 	 */
-	public static function nprstory_get_pull_post_type() {
-		$pull_post_type = get_option( 'ds_npr_pull_post_type' );
-		if ( empty( $pull_post_type ) ) {
-			$pull_post_type = 'post';
-		}
-		return $pull_post_type;
+	public static function get_pull_post_type() {
+		return get_option( 'npr_cds_pull_post_type', 'post' );
 	}
 
 	/**
 	 * The cron job to pull stories from the API
 	 */
-	public static function nprstory_cron_pull() {
+	public static function cron_pull() {
 		// here we should get the list of IDs/full urls that need to be checked hourly
 		//because this is run on cron, and may be fired off by an non-admin, we need to load a bunch of stuff
 		require_once( ABSPATH . 'wp-admin/includes/file.php' );
 		require_once( ABSPATH . 'wp-admin/includes/media.php' );
 
+		$pull_url = NPR_CDS_PULL_URL;
 		// This is debug code. It may be save future devs some time; please keep it around.
 		/*
 			$now = gmDate("D, d M Y G:i:s O ");
@@ -38,49 +35,55 @@ class DS_NPR_API {
 		*/
 
 		// here we go.
-		$num = get_option( 'ds_npr_num' );
-		for ( $i=0; $i < $num; $i++ ) {
-			$api = new NPRAPIWordpress();
-			$profileTypeID = get_option( 'ds_npr_query_profileTypeId_' . $i );
-			$query_string = get_option( 'ds_npr_query_' . $i );
-			if ( !empty( $query_string ) ) {
-				nprstory_error_log( 'Cron '. $i . ' querying NPR API for ' . $query_string );
+		$num = get_option( 'npr_cds_num' );
+		for ( $i = 0; $i < $num; $i++ ) {
+			$api = new NPR_CDS_WP();
+			$query = get_option( 'npr_cds_query_' . $i );
+			if ( !empty( $query ) ) {
+				npr_cds_error_log( 'Cron '. $i . ' querying NPR CDS for ' . $query['filters'] );
 				//if the query string contains the pull url and 'query', just make request from the API
-				if ( stristr( $query_string, get_option( 'ds_npr_api_pull_url' ) ) && stristr( $query_string, 'query' ) ) {
-					$api->query_by_url( $query_string );
-				} else {
-					/*
-					 * If the string doesn't contain the base URL, try to query using an ID
-					 * but only if the query string is not a URL in its own right.
-					 */
-					if ( stristr( $query_string, 'http:' ) || stristr( $query_string, 'https:' ) ) {
-						error_log( sprintf(
-							'Not going to run query because the query string %1$s contains http: or https: and is not pointing to the pullURL %2$s',
-							var_export( $query_string, true ),
-							var_export( get_option( 'ds_npr_api_pull_url' ), true )
-						) ); // debug use
-					} else {
-						$params = [ 'id' => $query_string, 'profileTypeId' => $profileTypeID, 'apiKey' => get_option( 'ds_npr_api_key' )];
-						$api->request( $params, 'query', get_option( 'ds_npr_api_pull_url' ) );
+				$url = $pull_url . '/' . NPR_CDS_WP::NPR_CDS_VERSION . '/documents?';
+				$query_array = [];
+				if ( !empty( $query['filters'] ) ) {
+					$filters = explode( '&', $query['filters'] );
+					if ( !empty( $filters ) ) {
+						foreach ( $filters as $filter ) {
+							$filt = explode( '=', $filter );
+							if ( !empty( $filt[1] ) ) {
+								$query_array[] = $filter;
+							}
+						}
 					}
 				}
+				if ( !empty( $query['sorting'] ) ) {
+					$sorting = explode( '&', $query['sorting'] );
+					if ( !empty( $sorting ) ) {
+						foreach ( $sorting as $sort ) {
+							$sort_x = explode( '=', $sort );
+							if ( !empty( $sort_x[1] ) ) {
+								$query_array[] = $sort;
+							}
+						}
+					}
+				}
+				$url .= implode( '&', $query_array );
+				$api->query_by_url( $url );
 				$api->parse();
 				try {
-					if ( empty( $api->message ) || $api->message->level != 'warning' ) {
+					if ( empty( $api->message ) || $api->message->level !== 'warning' ) {
 						//check the publish flag and send that along.
 						$pub_flag = FALSE;
-						$pub_option = get_option( 'ds_npr_query_publish_' . $i );
-						if ( $pub_option == 'Publish' ) {
+						if ( $query['publish'] == 'Publish' ) {
 							$pub_flag = TRUE;
 						}
 						$story = $api->update_posts_from_stories( $pub_flag, $i );
 					} else {
 						if ( empty( $story ) ) {
-							error_log( 'NPR Story API: not going to save story. Query ' . $query_string . ' returned an error ' . $api->message->id . ' error' ); // debug use
+							error_log( 'NPR CDS: not going to save story. Query ' . $query_string . ' returned an error ' . $api->message->id . ' error' ); // debug use
 						}
 					}
 				} catch( Exception $e ) {
-					error_log( 'NPR Story API: error in ' .  __FUNCTION__ . ' like this :'. $e ); // debug use
+					error_log( 'NPR CDS: error in ' .  __FUNCTION__ . ' like this :'. $e ); // debug use
 				}
 			}
 		}
@@ -93,8 +96,8 @@ class DS_NPR_API {
 		// if the current user shouldn't be doing this, fail
 		if ( !current_user_can( 'edit_posts' ) ) {
 			wp_die(
-				__( 'You do not have permission to edit posts, and therefore you do not have permission to pull posts from the NPR API' ),
-				__( 'NPR Story API Error' ),
+				__( 'You do not have permission to edit posts, and therefore you do not have permission to pull posts from the NPR CDS' ),
+				__( 'NPR CDS Error' ),
 				403
 			);
 		}
@@ -102,10 +105,10 @@ class DS_NPR_API {
 		// find the input that is allegedly a story id
 		// We validate these later
 		if ( isset( $_POST ) && isset( $_POST[ 'story_id' ] ) ) {
-			if ( !check_admin_referer( 'nprstory_nonce_story_id', 'nprstory_nonce_story_id_field' ) ) {
+			if ( !check_admin_referer( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ) ) {
 				wp_die(
-					__( 'Nonce did not verify in DS_NPR_API::load_page_hook. Are you sure you should be doing this?' ),
-					__( 'NPR Story API Error' ),
+					__( 'Nonce did not verify in NPR_CDS::load_page_hook. Are you sure you should be doing this?' ),
+					__( 'NPR CDS Error' ),
 					403
 				);
 			}
@@ -113,7 +116,7 @@ class DS_NPR_API {
 			if ( isset( $_POST['publishNow'] ) ) {
 				$publish = true;
 			}
-			if ( isset( $_POST['createDaft'] ) ) {
+			if ( isset( $_POST['createDraft'] ) ) {
 				$publish = false;
 			}
 		} elseif ( isset( $_GET['story_id'] ) && isset( $_GET['create_draft'] ) ) {
@@ -147,8 +150,8 @@ class DS_NPR_API {
 				} elseif ( !empty( $meta['story_id'] ) ) {
 					$story_id = $meta['story_id'];
 				} else {
-					nprstory_show_message( "The referenced URL (" . $story_id . ") does not contain a valid NPR Story API ID. Please try again.", TRUE );
-					error_log( "The referenced URL (" . $story_id . ") does not contain a valid NPR Story API ID. Please try again." ); // debug use
+					npr_cds_show_message( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID. Please try again.", TRUE );
+					error_log( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID. Please try again." ); // debug use
 				}
 			}
 		}
@@ -156,11 +159,11 @@ class DS_NPR_API {
 		// Don't do anything if $story_id isn't an ID
 		if ( isset( $story_id ) && is_numeric( $story_id ) ) {
 			// start the API class
-			// todo: check that the API key is actually set
-			$api = new NPRAPIWordpress();
+			// todo: check that the CDS token is actually set
+			$api = new NPR_CDS_WP();
 
-			$params = [ 'id' => $story_id, 'apiKey' => get_option( 'ds_npr_api_key' ), 'profileTypeId' => '1,15' ];
-			$api->request( $params, 'query', get_option( 'ds_npr_api_pull_url' ) );
+			$params = [ 'id' => $story_id ];
+			$api->request( $params );
 			$api->parse();
 
 			if ( empty( $api->message ) || $api->message->level != 'warning' ) {
@@ -172,9 +175,8 @@ class DS_NPR_API {
 				}
 			} else {
 				if ( empty( $story ) ) {
-					$xml = simplexml_load_string( $api->xml );
-					nprstory_show_message( 'Error retrieving story for id = ' . $story_id . '<br> API error =' . $api->message->id . '<br> API Message =' . $xml->message->text, TRUE );
-					error_log( 'Not going to save the return from query for story_id=' . $story_id .', we got an error=' . $api->message->id . ' from the NPR Story API' ); // debug use
+					npr_cds_show_message( 'Error retrieving story for id = ' . $story_id . '<br> CDS error =' . $api->message->id . '<br> CDS Message =' . $api->message->text, TRUE );
+					error_log( 'Not going to save the return from query for story_id=' . $story_id .', we got an error=' . $api->message->id . ' from the NPR CDS' ); // debug use
 					return;
 				}
 			}
@@ -196,8 +198,8 @@ class DS_NPR_API {
 	 * Register the admin menu for "Get NPR Stories"
 	 */
 	public function admin_menu() {
-		add_posts_page( 'Get NPR Stories', 'Get NPR Stories', 'edit_posts', 'get-npr-stories',   'nprstory_get_stories' );
+		add_posts_page( 'Get NPR Stories', 'Get NPR Stories', 'edit_posts', 'get-npr-stories',   'npr_cds_get_stories' );
 	}
 }
 
-new DS_NPR_API;
+new NPR_CDS;

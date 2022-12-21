@@ -1,16 +1,16 @@
 <?php
 
 /**
- * nprstory_to_nprml(): Translates a post to NPRML.  Returns an XML string.
+ * npr_cds_to_nprml(): Translates a post to NPRML.  Returns an XML string.
  */
-function nprstory_to_nprml( $post ) {
-	$story = nprstory_post_to_nprml_story( $post );
+function npr_cds_to_nprml( $post ) {
+	$story = npr_cds_post_to_nprml_story( $post );
 	$doc = [];
 	$doc[] = [
 		'tag' => 'list',
 		'children' => [ [ 'tag' => 'story', 'children' => $story ] ]
 	];
-	$ret_xml = nprstory_nprml_array_to_xml( 'nprml', [ 'version' => '0.93' ], $doc );
+	$ret_xml = npr_cds_nprml_array_to_xml( 'nprml', [ 'version' => '0.93' ], $doc );
 	return $ret_xml;
 }
 
@@ -21,14 +21,14 @@ function nprstory_to_nprml( $post ) {
  * If a mapped custom field does not exist in a certain post, just send the default field.
  * @param  $post
  */
-function nprstory_post_to_nprml_story( $post ) {
+function npr_cds_post_to_nprml_story( $post ) {
 	$story = [];
 	$story[] = [
 		'tag' => 'link',
 		'attr' => [ 'type' => 'html' ],
 		'text' => get_permalink( $post )
 	];
-	$use_custom = get_option( 'dp_npr_push_use_custom_map' );
+	$use_custom = get_option( 'npr_cds_push_use_custom_map' );
 
 	//get the list of metas available for this post
 	$post_metas = get_post_custom_keys( $post->ID );
@@ -41,7 +41,7 @@ function nprstory_post_to_nprml_story( $post ) {
 	/*
 	 * Custom content
 	 */
-	$custom_content_meta = get_option( 'ds_npr_api_mapping_body' );
+	$custom_content_meta = get_option( 'npr_cds_mapping_body' );
 	if (
 		$use_custom
 		&& !empty( $custom_content_meta )
@@ -52,12 +52,12 @@ function nprstory_post_to_nprml_story( $post ) {
 		$post_for_teaser = $post;
 		$post_for_teaser->post_content = $content;
 		if ( empty( $teaser_text ) ) {
-			$teaser_text = nprstory_nai_get_excerpt( $post_for_teaser );
+			$teaser_text = npr_cds_nai_get_excerpt( $post_for_teaser );
 		}
 	} else {
 		$content = $post->post_content;
 		if ( empty( $teaser_text ) ) {
-			$teaser_text = nprstory_nai_get_excerpt( $post );
+			$teaser_text = npr_cds_nai_get_excerpt( $post );
 		}
 	}
 
@@ -65,8 +65,8 @@ function nprstory_post_to_nprml_story( $post ) {
 	 * Clean up the content by applying shortcodes and then stripping any remaining shortcodes.
 	 */
 	// Let's see if there are any plugins that need to fix their shortcodes before we run do_shortcode
-	if ( has_filter( 'npr_ds_shortcode_filter' ) ) {
-		$content = apply_filters( 'npr_ds_shortcode_filter', $content );
+	if ( has_filter( 'npr_cds_shortcode_filter' ) ) {
+		$content = apply_filters( 'npr_cds_shortcode_filter', $content );
 	}
 
 	// Let any plugin that has short codes try and replace those with HTML
@@ -84,7 +84,7 @@ function nprstory_post_to_nprml_story( $post ) {
 	/*
 	 * Custom title
 	 */
-	$custom_title_meta = get_option( 'ds_npr_api_mapping_title' );
+	$custom_title_meta = get_option( 'npr_cds_mapping_title' );
 	if (
 		$use_custom
 		&& !empty( $custom_title_meta )
@@ -110,7 +110,7 @@ function nprstory_post_to_nprml_story( $post ) {
 	 * If no cool things are going on, just send the display name for the post_author field.
 	 */
 	$byline = FALSE;
-	$custom_byline_meta = get_option( 'ds_npr_api_mapping_byline' );
+	$custom_byline_meta = get_option( 'npr_cds_mapping_byline' );
 	// Custom field mapping byline
 	if (
 		$use_custom
@@ -146,10 +146,10 @@ function nprstory_post_to_nprml_story( $post ) {
 				];
 			}
 		} else {
-			nprstory_error_log( 'we do not have co authors' );
+			npr_cds_error_log( 'we do not have co authors' );
 		}
 	} else {
-		nprstory_error_log( 'can not find get_coauthors' );
+		npr_cds_error_log( 'can not find get_coauthors' );
 	}
 	if ( !$byline ) {
 		$story[] = [
@@ -218,7 +218,7 @@ function nprstory_post_to_nprml_story( $post ) {
 	];
 
 	// NPR One audio run-by date
-	$datetime = nprstory_get_post_expiry_datetime( $post ); // if expiry date is not set, returns publication date plus 7 days
+	$datetime = npr_cds_get_post_expiry_datetime( $post ); // if expiry date is not set, returns publication date plus 7 days
 	if ( $datetime instanceof DateTime ) {
 		$story[] = [
 			'tag' => 'audioRunByDate',
@@ -237,10 +237,10 @@ function nprstory_post_to_nprml_story( $post ) {
 	 */
 	$story[] = [
 		'tag' => 'textWithHtml',
-		'children' => nprstory_nprml_split_paragraphs( $content )
+		'children' => npr_cds_nprml_split_paragraphs( $content )
 	];
 
-	$perms_group = get_option( 'ds_npr_story_default_permission' );
+	$perms_group = get_option( 'npr_cds_story_default_permission' );
 	if ( !empty( $perms_group ) ) {
 		$story[] = [
 			'tag' => 'permissions',
@@ -253,8 +253,8 @@ function nprstory_post_to_nprml_story( $post ) {
 		];
 	}
 
-	$custom_media_credit = get_option( 'ds_npr_api_mapping_media_credit' );
-	$custom_media_agency = get_option( 'ds_npr_api_mapping_media_agency' );
+	$custom_media_credit = get_option( 'npr_cds_mapping_media_credit' );
+	$custom_media_agency = get_option( 'npr_cds_mapping_media_agency' );
 
 	/*
 		remove this for now until we decide if we're going to actually do this...km
@@ -408,10 +408,10 @@ function nprstory_post_to_nprml_story( $post ) {
 				if ( !empty( $audio_meta['length'] ) ) {
 					$duration = $audio_meta['length'];
 				} elseif ( !empty( $audio_meta['length_formatted'] ) ) {
-					$duration = nprstory_convert_duration_to_seconds( $audio_meta['length_formatted'] );
+					$duration = npr_cds_convert_duration_to_seconds( $audio_meta['length_formatted'] );
 				} elseif ( !empty( $pieces[3] ) ) {
 					$metadata = unserialize( trim( $pieces[3] ) );
-					$duration = ( !empty($metadata['duration'] ) ) ? nprstory_convert_duration_to_seconds( $metadata['duration'] ) : 0;
+					$duration = ( !empty($metadata['duration'] ) ) ? npr_cds_convert_duration_to_seconds( $metadata['duration'] ) : 0;
 				}
 
 				$story[] = [
@@ -443,13 +443,13 @@ function nprstory_post_to_nprml_story( $post ) {
 }
 
 // Convert "HH:MM:SS" duration (not time) into seconds
-function nprstory_convert_duration_to_seconds( $duration ) {
+function npr_cds_convert_duration_to_seconds( $duration ) {
 	$pieces = explode( ':', $duration );
 	$duration_in_seconds = ( $pieces[0] * 60 * 60 + $pieces[1] * 60 + $pieces[2] );
 	return $duration_in_seconds;
 }
 
-function nprstory_nprml_split_paragraphs( $html ) {
+function npr_cds_nprml_split_paragraphs( $html ) {
 	$parts = array_filter(
 		array_map( 'trim', preg_split( "/<\/?p>/", $html ) )
 	);
@@ -470,7 +470,7 @@ function nprstory_nprml_split_paragraphs( $html ) {
 /**
  * convert a PHP array to XML
  */
-function nprstory_nprml_array_to_xml( $tag, $attrs, $data ) {
+function npr_cds_nprml_array_to_xml( $tag, $attrs, $data ) {
 	$xml = new DOMDocument();
 	$xml->formatOutput = true;
 	$root = $xml->createElement( $tag );
@@ -478,7 +478,7 @@ function nprstory_nprml_array_to_xml( $tag, $attrs, $data ) {
 		$root->setAttribute( $k, $v );
 	}
 	foreach ( $data as $item ) {
-		$elemxml = nprstory_nprml_item_to_xml( $item, $xml );
+		$elemxml = npr_cds_nprml_item_to_xml( $item, $xml );
 		$root->appendChild( $elemxml );
 	}
 	$xml->appendChild( $root );
@@ -493,7 +493,7 @@ function nprstory_nprml_array_to_xml( $tag, $attrs, $data ) {
  * @param Array $item Must have a key 'tag'
  * @param DOMDocument $xml
  */
-function nprstory_nprml_item_to_xml( $item, $xml ) {
+function npr_cds_nprml_item_to_xml( $item, $xml ) {
 	if ( !array_key_exists( 'tag', $item ) ) {
 		error_log( "Unable to convert NPRML item to XML: no tag for: " . print_r( $item, true ) ); // debug use
 		// this should actually be a serious error
@@ -501,7 +501,7 @@ function nprstory_nprml_item_to_xml( $item, $xml ) {
 	$elem = $xml->createElement( $item['tag'] );
 	if ( array_key_exists( 'children', $item ) ) {
 		foreach ( $item['children'] as $child ) {
-			$childxml = nprstory_nprml_item_to_xml( $child, $xml );
+			$childxml = npr_cds_nprml_item_to_xml( $child, $xml );
 			$elem->appendChild( $childxml );
 		}
 	}
@@ -537,7 +537,7 @@ function nprstory_nprml_item_to_xml( $item, $xml ) {
  * @param   int		$word_count	Number of words (default 30)
  * @return  String
  */
-function nprstory_nai_get_excerpt( $post, $word_count = 30 ) {
+function npr_cds_nai_get_excerpt( $post, $word_count = 30 ) {
 	$text = $post->post_content;
 
 	$text = strip_shortcodes( $text );

@@ -7,28 +7,28 @@
  * Output the NPR Story API publishing options metabox for the edit page admin interface
  *
  * @param WP_Post $post the WordPress post object.
- * @see nprstory_save_send_to_api
- * @see nprstory_save_send_to_one
- * @see nprstory_save_nprone_featured
- * @see nprstory_publish_meta_box_assets
+ * @see npr_cds_save_send_to_api
+ * @see npr_cds_save_send_to_one
+ * @see npr_cds_save_nprone_featured
+ * @see npr_cds_publish_meta_box_assets
  * @since 1.7
  *
  * @todo When there is better browser support for input type="datetime-local", replace the jQuery UI and weird forms with the html5 solution. https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local
  */
-function nprstory_publish_meta_box( $post ) {
+function npr_cds_publish_meta_box( $post ) {
 	$is_disabled = ( 'publish' !== $post->post_status );
-	$attrs = [ 'id' => 'ds-npr-update-push' ];
+	$attrs = [ 'id' => 'npr-cds-update-push' ];
 
 	if ( $is_disabled ) {
 		$attrs['disabled'] = 'disabled';
 	}
 
 	wp_enqueue_style( 'jquery-ui' );
-	wp_enqueue_style( 'nprstory_publish_meta_box_stylesheet' );
-	wp_enqueue_script( 'nprstory_publish_meta_box_script' );
+	wp_enqueue_style( 'npr_cds_publish_meta_box_stylesheet' );
+	wp_enqueue_script( 'npr_cds_publish_meta_box_script' );
 
 	?>
-	<div id="ds-npr-publish-actions">
+	<div id="npr-cds-publish-actions">
 		<ul>
 		<?php
 			// send to the npr api
@@ -40,9 +40,9 @@ function nprstory_publish_meta_box( $post ) {
 			echo '<li>';
 			printf(
 				'<label><input value="1" type="checkbox" name="send_to_api" id="send_to_api" %2$s/> %1$s</label>',
-				__( 'Send to NPR API', 'nprapi' ),
+				__( 'Send to NPR CDS', 'nprcds' ),
 				checked( $nprapi, '1', false )
-				// @see nprstory_save_send_to_api for a historical note on this metadata name
+				// @see npr_cds_save_send_to_api for a historical note on this metadata name
 			);
 
 			echo '<ul>';
@@ -50,13 +50,13 @@ function nprstory_publish_meta_box( $post ) {
 			// send to nprone
 			printf(
 				'<li><label><input value="1" type="checkbox" name="send_to_one" id="send_to_one" %2$s/> %1$s</label> %3$s </li>',
-				__( 'Include for listening in NPR One', 'nprapi' ),
+				__( 'Include for listening in NPR One', 'nprcds' ),
 				checked( get_post_meta( $post->ID, '_send_to_one', true ), '1', false ),
 				// the following is an ul li within the "Send to npr one" li
 				// set the story as featured in NPR One
 				sprintf(
 					'<ul><li><label><input value="1" type="checkbox" name="nprone_featured" id="nprone_featured" %2$s/> %1$s</label></li></ul>',
-					__( 'Set as featured story in NPR One', 'nprapi' ),
+					__( 'Set as featured story in NPR One', 'nprcds' ),
 					checked( get_post_meta( $post->ID, '_nprone_featured', true ), '1', false )
 				)
 			);
@@ -70,7 +70,7 @@ function nprstory_publish_meta_box( $post ) {
 	 * This section does not use https://developer.wordpress.org/reference/functions/touch_time/ because there does not seem to be a way to pass it a custom element
 	 */
 
-	$datetime = nprstory_get_post_expiry_datetime( $post );
+	$datetime = npr_cds_get_post_expiry_datetime( $post );
 	?>
 	<div id="nprone-expiry">
 		<div id="nprone-expiry-display">
@@ -81,7 +81,7 @@ function nprstory_publish_meta_box( $post ) {
 					date_format( $datetime, 'M j, Y @ H:i' ) // Nov 30, 2017 @ 20:45
 				);
 			?>
-			<button id="nprone-expiry-edit" class="link-effect"><?php esc_html_e( 'Edit', 'nprapi' ); ?></button>
+			<button id="nprone-expiry-edit" class="link-effect"><?php esc_html_e( 'Edit', 'nprcds' ); ?></button>
 		</div>
 		<div id="nprone-expiry-form" class="hidden">
 			<?php
@@ -96,8 +96,8 @@ function nprstory_publish_meta_box( $post ) {
 			?>
 
 			<div class="row">
-				<button id="nprone-expiry-ok" class="button"><?php esc_html_e( 'OK', 'nprapi' ); ?></button>
-				<button id="nprone-expiry-cancel" class="link-effect"><?php esc_html_e( 'Cancel', 'nprapi' ); ?></button>
+				<button id="nprone-expiry-ok" class="button"><?php esc_html_e( 'OK', 'nprcds' ); ?></button>
+				<button id="nprone-expiry-cancel" class="link-effect"><?php esc_html_e( 'Cancel', 'nprcds' ); ?></button>
 			</div>
 		</div>
 	</div>
@@ -108,20 +108,20 @@ function nprstory_publish_meta_box( $post ) {
  * Register stylesheet for the NPR Story API publishing options metabox
  *
  * @since 1.7
- * @see nprstory_publish_meta_box
+ * @see npr_cds_publish_meta_box
  */
-function nprstory_publish_meta_box_assets() {
+function npr_cds_publish_meta_box_assets() {
 	wp_register_style(
-		'nprstory_publish_meta_box_stylesheet',
-		NPRSTORY_PLUGIN_URL . 'assets/css/meta-box.css'
+		'npr_cds_publish_meta_box_stylesheet',
+		NPR_CDS_PLUGIN_URL . 'assets/css/meta-box.css'
 	);
 	wp_register_style(
 		'jquery-ui',
-		NPRSTORY_PLUGIN_URL . 'assets/css/jquery-ui.css'
+		NPR_CDS_PLUGIN_URL . 'assets/css/jquery-ui.css'
 	);
 	wp_register_script(
-		'nprstory_publish_meta_box_script',
-		NPRSTORY_PLUGIN_URL . 'assets/js/meta-box.js',
+		'npr_cds_publish_meta_box_script',
+		NPR_CDS_PLUGIN_URL . 'assets/js/meta-box.js',
 		[ 'jquery', 'jquery-ui-datepicker' ],
 		null,
 		true
@@ -129,32 +129,32 @@ function nprstory_publish_meta_box_assets() {
 }
 
 /**
- * Alternate meta box output if the API Push URL option is not set
+ * Alternate meta box output if the CDS Push URL option is not set
  *
  * Propmts the user to set that option.
  * @link https://github.com/npr/nprapi-wordpress/issues/51
  *
  * @param WP_Post $post the WordPress post object.
  * @since 1.8
- * @see nprstory_add_options_page
+ * @see npr_cds_add_options_page
  */
-function nprstory_publish_meta_box_prompt( $post ) {
-	if ( current_user_can( 'manage_options' ) ) { // this should match the value in nprstory_add_options_page
+function npr_cds_publish_meta_box_prompt( $post ) {
+	if ( current_user_can( 'manage_options' ) ) { // this should match the value in npr_cds_add_options_page
 		printf(
 			'<p>%1$s</p>',
-			wp_kses_post( __( 'The NPR API plugin\'s settings must be configured to push stories to the NPR API. Instructions are <a href="https://github.com/npr/nprapi-wordpress/blob/master/docs/settings.md">here</a>.', 'nprapi' ) )
+			wp_kses_post( __( 'The NPR CDS plugin\'s settings must be configured to push stories to the NPR CDS. Instructions are <a href="https://github.com/openpublicmedia/npr-cds-wordpress/blob/master/docs/settings.md">here</a>.', 'nprcds' ) )
 		);
 
-		$url = menu_page_url( 'ds_npr_api', false ); // this should match the value in nprstory_add_options_page
+		$url = menu_page_url( 'npr_cds', false ); // this should match the value in npr_cds_add_options_page
 		printf(
 			'<a href="%2$s" class="button button-primary button-large">%1$s</a>',
-			wp_kses_post( __( 'Configure the Plugin', 'nprapi' ) ),
+			wp_kses_post( __( 'Configure the Plugin', 'nprcds' ) ),
 			esc_attr( $url )
 		);
 	} else {
 		printf(
 			'<p>%1$s</p>',
-			wp_kses_post( __( 'Your site administrator must set the NPR Story API Push URL in the NPR Story API plugin\'s settings in order to push to the NPR API.', 'nprapi' ) )
+			wp_kses_post( __( 'Your site administrator must set the NPR CDS Push URL in the NPR CDS plugin\'s settings in order to push to the NPR CDS.', 'nprcds' ) )
 		);
 	}
 }

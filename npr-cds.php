@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NPR Content Distribution Service
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 2.0
+ * Version: 1.0
  * Author: Open Public Media
  * License: GPLv2
 */
@@ -27,8 +27,8 @@ define( 'NPR_STORY_ID_META_KEY', 'npr_story_id' );
 define( 'NPR_API_LINK_META_KEY', 'npr_api_link' );
 define( 'NPR_HTML_LINK_META_KEY', 'npr_html_link' );
 define( 'NPR_SHORT_LINK_META_KEY', 'npr_short_link' );
-define( 'NPR_STORY_CONTENT_META_KEY', get_option( 'ds_npr_api_mapping_body', 'npr_story_content' ) );
-define( 'NPR_BYLINE_META_KEY', get_option( 'ds_npr_api_mapping_media_credit', 'npr_byline' ) );
+define( 'NPR_STORY_CONTENT_META_KEY', get_option( 'npr_cds_mapping_body', 'npr_story_content' ) );
+define( 'NPR_BYLINE_META_KEY', get_option( 'npr_cds_mapping_media_credit', 'npr_byline' ) );
 define( 'NPR_BYLINE_LINK_META_KEY', 'npr_byline_link' );
 define( 'NPR_MULTI_BYLINE_META_KEY', 'npr_multi_byline' );
 define( 'NPR_IMAGE_GALLERY_META_KEY', 'npr_image_gallery' );
@@ -40,11 +40,12 @@ define( 'NPR_STORY_DATE_MEATA_KEY', 'npr_story_date' );
 define( 'NPR_LAST_MODIFIED_DATE_KEY', 'npr_last_modified_date' );
 define( 'NPR_RETRIEVED_STORY_META_KEY', 'npr_retrieved_story' );
 
-define( 'NPR_IMAGE_CREDIT_META_KEY', get_option( 'ds_npr_api_mapping_media_credit', 'npr_image_credit' ) );
-define( 'NPR_IMAGE_AGENCY_META_KEY', get_option( 'ds_npr_api_mapping_media_agency', 'npr_image_agency' ) );
+define( 'NPR_IMAGE_CREDIT_META_KEY', get_option( 'npr_cds_mapping_media_credit', 'npr_image_credit' ) );
+define( 'NPR_IMAGE_AGENCY_META_KEY', get_option( 'npr_cds_mapping_media_agency', 'npr_image_agency' ) );
 define( 'NPR_IMAGE_CAPTION_META_KEY', 'npr_image_caption' );
 
-define( 'NPR_STORY_HAS_LAYOUT_META_KEY', 'npr_has_layout' );
+define( 'NPR_CDS_PULL_URL', get_option( 'npr_cds_pull_url', 'https://content.api.npr.org' ) );
+
 define( 'NPR_STORY_HAS_VIDEO_META_KEY', 'npr_has_video' );
 
 define( 'NPR_PUSH_STORY_ERROR', 'npr_push_story_error' );
@@ -53,22 +54,22 @@ define( 'NPR_MAX_QUERIES', 10 );
 
 define( 'NPR_POST_TYPE', 'npr_story_post' );
 
-define( 'NPRSTORY_PLUGIN_URL', plugin_dir_url(__FILE__) );
+define( 'NPR_CDS_PLUGIN_URL', plugin_dir_url(__FILE__) );
 
 // Load files
-define( 'NPRSTORY_PLUGIN_DIR', plugin_dir_path(__FILE__) );
-require_once( NPRSTORY_PLUGIN_DIR . 'settings.php' );
-require_once( NPRSTORY_PLUGIN_DIR . 'classes/NPRAPIWordpress.php' );
-require_once( NPRSTORY_PLUGIN_DIR . 'get_stories.php' );
-require_once( NPRSTORY_PLUGIN_DIR . 'meta-boxes.php' );
-require_once( NPRSTORY_PLUGIN_DIR . 'push_story.php' );
+define( 'NPR_CDS_PLUGIN_DIR', plugin_dir_path(__FILE__) );
+require_once( NPR_CDS_PLUGIN_DIR . 'settings.php' );
+require_once( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
+require_once( NPR_CDS_PLUGIN_DIR . 'get_stories.php' );
+require_once( NPR_CDS_PLUGIN_DIR . 'meta-boxes.php' );
+require_once( NPR_CDS_PLUGIN_DIR . 'push_story.php' );
 
 //add the cron to get stories
-register_activation_hook( NPRSTORY_PLUGIN_DIR . 'ds-npr-api.php', 'nprstory_activation' );
-add_action( 'npr_ds_hourly_cron', [ 'DS_NPR_API', 'nprstory_cron_pull' ] );
-register_deactivation_hook( NPRSTORY_PLUGIN_DIR . 'ds-npr-api.php', 'nprstory_deactivation' );
+register_activation_hook( NPR_CDS_PLUGIN_DIR . 'npr-cds.php', 'npr_cds_activation' );
+add_action( 'npr_cds_hourly_cron', [ 'NPR_CDS', 'cron_pull' ] );
+register_deactivation_hook( NPR_CDS_PLUGIN_DIR . 'npr-cds.php', 'npr_cds_deactivation' );
 
-function nprstory_activation() {
+function npr_cds_activation() {
 	global $wpdb;
 	if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 		// check if it is a network activation - if so, run the activation function for each blog id
@@ -77,34 +78,34 @@ function nprstory_activation() {
 		$blogids = $wpdb->get_col( $wpdb->prepare( "SELECT blog_id FROM %s", $wpdb->blogs ) );
 		foreach ( $blogids as $blog_id ) {
 			switch_to_blog( $blog_id );
-			nprstory_activate();
+			npr_cds_activate();
 		}
 		switch_to_blog( $old_blog );
 	} else {
-		nprstory_activate();
+		npr_cds_activate();
 	}
 }
 
-function nprstory_activate() {
-	update_option( 'dp_npr_query_multi_cron_interval', 60 );
-	if ( !wp_next_scheduled( 'npr_ds_hourly_cron' ) ) {
-		nprstory_error_log( 'turning on cron event for NPR Story API plugin' );
-		wp_schedule_event( time(), 'hourly', 'npr_ds_hourly_cron' );
+function npr_cds_activate() {
+	update_option( 'npr_cds_query_multi_cron_interval', 60 );
+	if ( !wp_next_scheduled( 'npr_cds_hourly_cron' ) ) {
+		npr_cds_error_log( 'turning on cron event for NPR CDS plugin' );
+		wp_schedule_event( time(), 'hourly', 'npr_cds_hourly_cron' );
 	}
 
-	$num = get_option( 'ds_npr_num' );
+	$num = get_option( 'npr_cds_num' );
 	if ( empty( $num ) ) {
-		update_option( 'ds_npr_num', 5 );
+		update_option( 'npr_cds_num', 5 );
 	}
 
-	$def_url = 'https://api.npr.org';
-	$pull_url = get_option( 'ds_npr_api_pull_url' );
+	$def_url = 'https://content.api.npr.org';
+	$pull_url = get_option( 'npr_cds_pull_url' );
 	if ( empty( $pull_url ) ) {
-		update_option( 'ds_npr_api_pull_url', $def_url );
+		update_option( 'npr_cds_pull_url', $def_url );
 	}
 }
 
-function nprstory_deactivation() {
+function npr_cds_deactivation() {
 	global $wpdb;
 	if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 		// check if it is a network activation - if so, run the activation function for each blog id
@@ -113,40 +114,37 @@ function nprstory_deactivation() {
 		$blogids = $wpdb->get_col( $wpdb->prepare( "SELECT blog_id FROM %s", $wpdb->blogs ) );
 		foreach ( $blogids as $blog_id ) {
 			switch_to_blog( $blog_id );
-			nprstory_deactivate();
+			npr_cds_deactivate();
 		}
 		switch_to_blog( $old_blog );
 	} else {
-		nprstory_deactivate();
+		npr_cds_deactivate();
 	}
 }
 
-function nprstory_deactivate() {
-	wp_clear_scheduled_hook( 'npr_ds_hourly_cron' );
-	$num = get_option( 'ds_npr_num' );
-	if ( !empty( $num ) ) {
-		delete_option( 'ds_npr_num' );
+function npr_cds_deactivate() {
+	wp_clear_scheduled_hook( 'npr_cds_hourly_cron' );
+	$num = get_option( 'npr_cds_num' );
+	for ( $i = 0; $i < $num; $i++ ) {
+		delete_option( 'npr_cds_query_' . $i );
 	}
-
-	$push_url = get_option( 'ds_npr_api_push_url' );
-	if ( !empty( $push_url ) ) {
-		delete_option( 'ds_npr_api_push_url' );
-	}
+	delete_option( 'npr_cds_num' );
+	delete_option( 'npr_cds_push_url' );
 }
 
 
-function nprstory_show_message( $message, $errormsg = false ) {
+function npr_cds_show_message( $message, $errormsg = false ) {
 	if ( $errormsg ) {
 		echo '<div id="message" class="error">';
 	} else {
 		echo '<div id="message" class="updated fade">';
 	}
-	echo nprstory_esc_html( "<p><strong>$message</strong></p></div>" );
+	echo npr_cds_esc_html( "<p><strong>$message</strong></p></div>" );
 }
 
-add_action( 'init', 'nprstory_create_post_type' );
+add_action( 'init', 'npr_cds_create_post_type' );
 
-function nprstory_create_post_type() {
+function npr_cds_create_post_type() {
 	register_post_type( NPR_POST_TYPE, [
 		'labels' => [
 			'name' => __( 'NPR Stories' ),
@@ -166,32 +164,32 @@ function nprstory_create_post_type() {
  *
  * @link https://github.com/npr/nprapi-wordpress/issues/51
  */
-function nprstory_add_meta_boxes() {
+function npr_cds_add_meta_boxes() {
 	$screen = get_current_screen();
-	$push_post_type = get_option( 'ds_npr_push_post_type' ) ?: 'post';
-	$push_url = get_option( 'ds_npr_api_push_url' );
+	$push_post_type = get_option( 'npr_cds_push_post_type' ) ?: 'post';
+	$push_url = get_option( 'npr_cds_push_url' );
 	if ( $screen->id == $push_post_type ) {
 		if ( !empty( $push_url ) ) {
 			global $post;
 			add_meta_box(
-				'ds_npr_document_meta',
+				'npr_cds_document_meta',
 				'NPR Story API',
-				'nprstory_publish_meta_box',
+				'npr_cds_publish_meta_box',
 				$push_post_type, 'side'
 			);
-			add_action( 'admin_enqueue_scripts', 'nprstory_publish_meta_box_assets' );
+			add_action( 'admin_enqueue_scripts', 'npr_cds_publish_meta_box_assets' );
 		} else {
 			global $post;
 			add_meta_box(
-				'ds_npr_document_meta',
+				'npr_cds_document_meta',
 				'NPR Story API',
-				'nprstory_publish_meta_box_prompt',
+				'npr_cds_publish_meta_box_prompt',
 				$push_post_type, 'side'
 			);
 		}
 	}
 }
-add_action( 'add_meta_boxes', 'nprstory_add_meta_boxes' );
+add_action( 'add_meta_boxes', 'npr_cds_add_meta_boxes' );
 
 /**
  * Function to only enable error_logging if WP_DEBUG is true
@@ -199,7 +197,7 @@ add_action( 'add_meta_boxes', 'nprstory_add_meta_boxes' );
  * This should only be used for error_log in development environments
  * If the thing being logged is a fatal error, use error_log so it will always be logged
  */
-function nprstory_error_log( $thing ) {
+function npr_cds_error_log( $thing ) {
 	if ( WP_DEBUG ) {
 		error_log( $thing ); //debug use
 	}
@@ -208,18 +206,19 @@ function nprstory_error_log( $thing ) {
 /**
  * Function to help with escaping HTML, especially for admin screens
  */
-function nprstory_esc_html( $string ) {
+function npr_cds_esc_html( $string ) {
 	return html_entity_decode( esc_html( $string ), ENT_QUOTES );
 }
 
-function nprstory_add_header_meta() {
+function npr_cds_add_header_meta() {
 	global $wp_query;
 	if ( !is_home() && !is_404() &&
-		( get_post_type() === get_option( 'ds_npr_pull_post_type' ) || get_post_type() === get_option( 'ds_npr_push_post_type' ) )
+		( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || get_post_type() === get_option( 'npr_cds_push_post_type' ) )
 	) {
 		$id = $wp_query->queried_object_id;
 		$npr_story_id = get_post_meta( $id, 'npr_story_id', 1 );
 		if ( !empty( $npr_story_id ) ) {
+			$primary_cat = '';
 			$has_audio = ( preg_match( '/\[audio/', $wp_query->post->post_content ) ? 1 : 0 );
 			$word_count = str_word_count( strip_tags( $wp_query->post->post_content ) );
 			$byline = '';
@@ -241,7 +240,7 @@ function nprstory_add_header_meta() {
 				$keywords[] = $htag->name;
 			endforeach;
 			$primary_cat = get_post_meta( $id, 'epc_primary_category', true );
-			if ( empty( $primary_cat ) ) {
+			if ( empty( $primary_cat ) && !empty( $keywords ) ) {
 				$primary_cat = $keywords[0];
 			} ?>
 		<meta name="datePublished" content="<?php echo get_the_date( 'c', $id ); ?>" />
@@ -257,4 +256,4 @@ function nprstory_add_header_meta() {
 		}
 	}
 }
-add_action( 'wp_head', 'nprstory_add_header_meta', 100 );
+add_action( 'wp_head', 'npr_cds_add_header_meta', 100 );

@@ -1,12 +1,12 @@
 {
-	"name"       : "openpublicmedia/npr-story-api",
+	"name"       : "openpublicmedia/npr-cds-wordpress",
 	"description": "Access the NPR CDS from within Wordpress",
-	"homepage"   : "https://github.com/OpenPublicMedia/nprapi-wordpress/",
+	"homepage"   : "https://github.com/OpenPublicMedia/npr-cds-wordpress/",
 	"type"       : "wordpress-plugin",
 	"license"    : "GPL-2.0+",
 	"require": {},
 	"dist": {
-		"url": "https://github.com/OpenPublicMedia/nprapi-wordpress/archive/refs/tags/v2.0.zip",
+		"url": "https://github.com/OpenPublicMedia/npr-cds-wordpress/archive/refs/tags/v1.0.zip",
 		"type": "zip"
 	},
 	"authors": [

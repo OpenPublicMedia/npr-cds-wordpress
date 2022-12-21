@@ -3,7 +3,7 @@ services:
   web:
     image: wordpress
     volumes:
-      - .:/var/www/html/wp-content/plugins/nprapi-wordpress
+      - .:/var/www/html/wp-content/plugins/npr-cds-wordpress
     ports:
       - '8080:80'
     depends_on:

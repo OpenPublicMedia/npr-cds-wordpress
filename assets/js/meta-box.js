@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	var $ = jQuery;
 
 	// contains the inputs
-	var $container = $( '#ds-npr-publish-actions' );
+	var $container = $( '#npr-cds-publish-actions' );
 
 	// initialize the form
 	$container.find( 'input' ).on( 'change', li_checking );
