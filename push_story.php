@@ -64,7 +64,7 @@ function npr_cds_push( $post_ID, $post ) {
 		// Don't push stories to the NPR CDS if they were originally pulled from the NPR CDS
 		$retrieved = get_post_meta( $post_ID, NPR_RETRIEVED_STORY_META_KEY, true );
 		if ( empty( $retrieved ) || $retrieved == 0 ) {
-			$api->send_request( $api->create_NPRML( $post ), $post_ID );
+			$api->send_request( $api->create_json( $post ), $post_ID );
 		} else {
 			npr_cds_error_log( 'Not pushing the story with post_ID ' . $post_ID . ' to the NPR CDS because it came from the CDS' );
 		}
@@ -244,7 +244,7 @@ function npr_cds_save_send_to_cds( $post_ID ) {
 
 	global $post;
 
-	if ( get_post_type( $post ) != get_option( 'npr_cds_push_post_type' ) ) return false;
+	if ( get_post_type( $post ) !== get_option( 'npr_cds_push_post_type' ) ) return false;
 	$value = ( isset( $_POST['send_to_cds'] ) && $_POST['send_to_cds'] == 1 ) ? 1 : 0;
 
 	// see historical note
@@ -268,7 +268,7 @@ function npr_cds_save_send_to_one( $post_ID ) {
 
 	global $post;
 
-	if ( get_post_type( $post ) != get_option( 'npr_cds_push_post_type' ) ) return false;
+	if ( get_post_type( $post ) !== get_option( 'npr_cds_push_post_type' ) ) return false;
 	$value = (
 		isset( $_POST['send_to_one'] )
 		&& $_POST['send_to_one'] == 1

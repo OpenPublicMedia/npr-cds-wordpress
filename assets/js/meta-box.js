@@ -1,5 +1,5 @@
 /**
- * NPR Story API meta box functions and features
+ * NPR CDS meta box functions and features
  *
  * @since 1.7
  */

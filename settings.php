@@ -175,7 +175,7 @@ function npr_cds_settings_init() {
 	register_setting( 'npr_cds', 'npr_cds_push_url', [ 'sanitize_callback' => 'npr_cds_validation_callback_pull_url' ] );
 
 	add_settings_field( 'npr_cds_org_id', 'Org ID', 'npr_cds_org_id_callback', 'npr_cds', 'npr_cds_settings' );
-	register_setting( 'npr_cds', 'npr_cds_org_id' );
+	register_setting( 'npr_cds', 'npr_cds_org_id', [ 'sanitize_callback' => 'npr_cds_validation_callback_org_id' ] );
 
 	add_settings_field( 'npr_cds_prefix', 'Document Prefix', 'npr_cds_prefix_callback', 'npr_cds', 'npr_cds_settings' );
 	register_setting( 'npr_cds', 'npr_cds_prefix', [ 'sanitize_callback' => 'npr_cds_validation_callback_prefix' ] );
@@ -207,7 +207,7 @@ function npr_cds_settings_init() {
 	$num =  get_option( 'npr_cds_num', 5 );
 	for ( $i = 0; $i < $num; $i++ ) {
 		add_settings_field( 'npr_cds_query_' . $i, 'Query String ' . $i, 'npr_cds_query_callback', 'npr_cds_get_multi_settings', 'npr_cds_get_multi_settings', $i );
-		register_setting( 'npr_cds_get_multi_settings', 'npr_cds_query_' . $i, [ 'type' => 'array', 'default' => [ 'query' => '', 'filters' => '', 'sorting' => '', 'publish' => '', 'category' => '', 'tags' => '' ] ] );
+		register_setting( 'npr_cds_get_multi_settings', 'npr_cds_query_' . $i, [ 'type' => 'array', 'default' => [ 'filters' => '', 'sorting' => '', 'publish' => '', 'category' => '', 'tags' => '' ] ] );
 	}
 
 	add_settings_field( 'npr_cds_query_run_multi', 'Run the queries on saving changes', 'npr_cds_query_run_multi_callback', 'npr_cds_get_multi_settings', 'npr_cds_get_multi_settings' );
@@ -526,6 +526,13 @@ function npr_cds_validation_callback_push_url( $value ) {
 			);
 			$value = '';
 		}
+	}
+	return esc_attr( $value );
+}
+
+function npr_cds_validation_callback_org_id( $value ) {
+	if ( preg_match( '/^[0-9]{1,4}$/', $value ) ) {
+		$value = 's' . $value;
 	}
 	return esc_attr( $value );
 }

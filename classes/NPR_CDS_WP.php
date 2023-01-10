@@ -4,10 +4,10 @@
  * @file
  * Defines basic OOP containers for NPRML.
  */
-require_once( dirname( __FILE__ ) . '/nprml.php' );
+require_once( dirname( __FILE__ ) . '/npr_json.php' );
 
 /**
- * Defines a class for NPRML creation/transmission and retrieval/parsing, for any PHP-based system.
+ * Defines a class for NPR JSON creation/transmission and retrieval/parsing, for any PHP-based system.
  */
 class NPR_CDS_WP {
 
@@ -18,7 +18,7 @@ class NPR_CDS_WP {
 	const NPR_CDS_VERSION = 'v1';
 
 	/**
-	 * Initializes an NPRML object.
+	 * Initializes an NPR JSON object.
 	 */
 	function __construct() {
 		$this->request = new stdClass;
@@ -588,30 +588,29 @@ class NPR_CDS_WP {
 	 *
 	 * @see NPRCDS::send_request()
 	 *
-	 * @param string $nprml
+	 * @param string $json
 	 * @param int $post_ID
 	 */
-	function send_request ( $nprml, $post_ID ) {
+	function send_request ( $json, $post_ID ) {
 		$error_text = '';
 		$org_id = get_option( 'npr_cds_org_id' );
-		if ( !empty( $org_id ) ) {
-			$args = [
-				'orgId'  => $org_id,
-				'apiKey' => get_option( 'npr_cds_token' )
-			];
-			$args = apply_filters( 'npr_pre_article_push', $args, $post_ID );
-			$url = add_query_arg( $args, get_option( 'npr_cds_push_url' ) . '/story' );
+		$prefix = get_option( 'npr_cds_prefix' );
+		if ( !empty( $org_id ) && !empty( $prefix ) ) {
+			$cds_id = $prefix . '-' . $post_ID;
+			$options = $this->get_token_options();
+			$options = apply_filters( 'npr_pre_article_push', $options, $cds_id );
+			$url = get_option( 'npr_cds_push_url' ) . '/' . SELF::NPR_CDS_VERSION . '/documents/' . $cds_id;
+			npr_cds_error_log( 'Sending json = ' . $json );
 
-			npr_cds_error_log( 'Sending nprml = ' . $nprml );
-
-			$result = wp_remote_post( $url, ['body' => $nprml ] );
+			$options['body'] = $json;
+			$options['method'] = 'PUT';
+			$result = wp_remote_request( $url, $options );
 			if ( !is_wp_error( $result ) ) {
-				if ( $result['response']['code'] == 200 ) {
+				if ( $result['response']['code'] == SELF::NPR_CDS_STATUS_OK ) {
 					$body = wp_remote_retrieve_body( $result );
 					if ( $body ) {
-						$response_xml = simplexml_load_string( $body );
-						$npr_story_id = (string)$response_xml->list->story['id'];
-						update_post_meta( $post_ID, NPR_STORY_ID_META_KEY, $npr_story_id );
+						$response_json = json_decode( $body );
+						update_post_meta( $post_ID, NPR_STORY_ID_META_KEY, $cds_id );
 					} else {
 						error_log( 'Error returned from NPR CDS with status code 200 OK but failed wp_remote_retrieve_body: ' . print_r( $result, true ) ); // debug use
 					}
@@ -623,8 +622,8 @@ class NPR_CDS_WP {
 					$body = wp_remote_retrieve_body( $result );
 
 					if ( $body ) {
-						$response_xml = simplexml_load_string( $body );
-						$error_text .= '  API Error Message = ' . $response_xml->message->text;
+						$response_json = json_decode( $body );
+						$error_text .= '  API Error Message = ' . $response_json->message->text;
 					}
 					error_log( 'Error returned from NPR Story API with status code other than 200 OK: ' . $error_text ); // debug use
 				}
@@ -652,15 +651,12 @@ class NPR_CDS_WP {
 	 * @param  $api_id
 	 */
 	function send_delete( $api_id ) {
-		$args = [
-			'orgId'  => get_option( 'npr_cds_org_id' ),
-			'apiKey' => get_option( 'npr_cds_token' ),
-			'id' => $api_id
-		];
-		$args = apply_filters( 'npr_pre_article_delete', $args );
-		$url = add_query_arg( $args, get_option( 'npr_cds_push_url' ) . '/story' );
+		$options = $this->get_token_options();
+		$options = apply_filters( 'npr_pre_article_delete', $options );
+		$url = get_option( 'npr_cds_push_url' ) . '/' . SELF::NPR_CDS_VERSION . '/documents/' . $api_id;
 
-		$result = wp_remote_request( $url, [ 'method' => 'DELETE' ] );
+		$options['method'] = 'DELETE';
+		$result = wp_remote_request( $url, $options );
 		$body = wp_remote_retrieve_body( $result );
 	}
 
@@ -673,18 +669,16 @@ class NPR_CDS_WP {
 	}
 
 	/**
-	 * TODO: Update for CDS
-	 * Create NPRML from wordpress post.
+	 * Create CDS JSON from WordPress post.
 	 *
 	 * @param object $post
-	 *   A wordpress post.
+	 *   A WordPress post.
 	 *
 	 * @return string
-	 *   An NPRML string.
+	 *   A JSON string.
 	 */
-	function create_NPRML( $post ) {
-		// using some old helper code
-		return npr_cds_to_nprml( $post );
+	function create_json( $post ) {
+		return npr_cds_to_json( $post );
 	}
 
 	/**

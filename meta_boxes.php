@@ -4,7 +4,7 @@
  */
 
 /**
- * Output the NPR Story API publishing options metabox for the edit page admin interface
+ * Output the NPR CDS publishing options metabox for the edit page admin interface
  *
  * @param WP_Post $post the WordPress post object.
  * @see npr_cds_save_send_to_api
@@ -39,7 +39,7 @@ function npr_cds_publish_meta_box( $post ) {
 			// this list item contains all other list items, because their enabled/disabled depends on this checkbox
 			echo '<li>';
 			printf(
-				'<label><input value="1" type="checkbox" name="send_to_api" id="send_to_api" %2$s/> %1$s</label>',
+				'<label><input value="1" type="checkbox" name="send_to_cds" id="send_to_cds" %2$s/> %1$s</label>',
 				__( 'Send to NPR CDS', 'nprcds' ),
 				checked( $nprapi, '1', false )
 				// @see npr_cds_save_send_to_api for a historical note on this metadata name
@@ -105,7 +105,7 @@ function npr_cds_publish_meta_box( $post ) {
 }
 
 /**
- * Register stylesheet for the NPR Story API publishing options metabox
+ * Register stylesheet for the NPR CDS publishing options metabox
  *
  * @since 1.7
  * @see npr_cds_publish_meta_box
