@@ -70,7 +70,7 @@ function npr_cds_bulk_action_update_action() {
 					$params = [ 'id' => $api_id ];
 					$api->request( $params );
 					$api->parse();
-					if ( empty( $api->message ) || $api->message->level != 'warning' ) {
+					if ( empty( $api->message ) ) {
 						npr_cds_error_log( 'updating story for CDS ID = ' . $api_id );
 						$story = $api->update_posts_from_stories();
 					}

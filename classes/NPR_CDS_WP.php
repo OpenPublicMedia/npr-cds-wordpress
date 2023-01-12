@@ -14,8 +14,18 @@ class NPR_CDS_WP {
 	// HTTP status code = OK
 	const NPR_CDS_STATUS_OK = 200;
 
+	// HTTP status code for successful deletion
+	const NPR_CDS_DELETE_OK = 204;
+
 	// Default URL for pulling stories
 	const NPR_CDS_VERSION = 'v1';
+
+	public $response;
+	public $request;
+	public $message;
+	public $json;
+	public $notice;
+	public $stories;
 
 	/**
 	 * Initializes an NPR JSON object.
@@ -583,8 +593,7 @@ class NPR_CDS_WP {
 	}
 
 	/**
-	 * TODO: Update for CDS
-	 * This function will send the push request to the NPR API to add/update a story.
+	 * This function will send the push request to the NPR CDS to add/update a story.
 	 *
 	 * @see NPRCDS::send_request()
 	 *
@@ -623,7 +632,7 @@ class NPR_CDS_WP {
 
 					if ( $body ) {
 						$response_json = json_decode( $body );
-						$error_text .= '  API Error Message = ' . $response_json->message->text;
+						$error_text .= '  API Error Message = ' . $response_json->message;
 					}
 					error_log( 'Error returned from NPR Story API with status code other than 200 OK: ' . $error_text ); // debug use
 				}
@@ -645,7 +654,6 @@ class NPR_CDS_WP {
 	}
 
 	/**
-	 * TODO: Update for CDS
 	 * wp_remote_request supports sending a custom method, so the cURL code has been removed
 	 *
 	 * @param  $api_id
@@ -658,6 +666,9 @@ class NPR_CDS_WP {
 		$options['method'] = 'DELETE';
 		$result = wp_remote_request( $url, $options );
 		$body = wp_remote_retrieve_body( $result );
+		if ( $result['response']['code'] == SELF::NPR_CDS_DELETE_OK && empty( $body ) ) {
+			npr_cds_error_log( 'Uploaded article ' . $api_id . ' successfully deleted from the NPR CDS' );
+		}
 	}
 
 	function parse_response() {
@@ -688,16 +699,21 @@ class NPR_CDS_WP {
 		if ( !empty( $this->json ) ) {
 			$json = $this->json;
 		} else {
-			$this->notices[] = 'No JSON to parse.';
+			$this->notice[] = 'No JSON to parse.';
 			return;
 		}
 
 		$object = json_decode( $json, false );
-
+		if ( empty( $this->stories ) ) {
+			$this->stories = [];
+		}
 		if ( !empty( $object->resources ) ) {
 			foreach ( $object->resources as $story ) {
 				$this->stories[] = $story;
 			}
+		}
+		if ( !empty( $object->message ) ) {
+			$this->message = $object->message;
 		}
 	}
 
@@ -837,7 +853,7 @@ class NPR_CDS_WP {
 					case 'audio' :
 						if ( $asset_current->isAvailable ) {
 							if ( $asset_current->isEmbeddable ) {
-								$body_with_layout .= '<p><iframe class="npr-embed-audio" style="width: 100%; height: 235px;" src="' . $asset_current->embeddedPlayerLink->href . '"></iframe></p>';
+								$body_with_layout .= '<p><iframe class="npr-embed-audio" style="width: 100%; height: 239px;" src="' . $asset_current->embeddedPlayerLink->href . '"></iframe></p>';
 							} elseif ( $asset_current->isDownloadable ) {
 								foreach ( $asset_current->enclosures as $enclose ) {
 									if ( $enclose->type == 'audio/mpeg' ) {
