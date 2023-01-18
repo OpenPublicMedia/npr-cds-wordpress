@@ -76,12 +76,20 @@ function npr_cds_to_json( $post ) {
 		$content = apply_filters( 'npr_cds_shortcode_filter', $content );
 	}
 
-	// Let any plugin that has short codes try and replace those with HTML
-	$content = do_shortcode( $content );
+	// Since we don't have a standard way to handle galleries across installs, let's just nuke them
+	// Also, NPR is still trying to figure out how to handle galleries in CDS, so we can circle back when they do
+	$content = preg_replace( '/\[gallery(.*)\]/U', '', $content );
+
+	// The [embed] shortcode also gets kinda hinky, along with the Twitter/YouTube oEmbed stuff
+	// In lieu of removing them, let's just convert them into links
+	$content = preg_replace( '/\[embed\](.*)\[\/embed\]/', '<a href="$1">$1</a>', $content );
+	$content = preg_replace( '/<p>(https?:\/\/.+)<\/p>/U', '<p><a href="$1">$1</a></p>', $content );
+
+	// Apply the usual filters from 'the_content', which should resolve any remaining shortcodes
+	$content = apply_filters( 'the_content', $content );
 
 	// for any remaining short codes, nuke 'em
 	$content = strip_shortcodes( $content );
-	$content = apply_filters( 'the_content', $content );
 
 	$story->teaser = $teaser_text;
 
