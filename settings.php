@@ -206,7 +206,7 @@ function npr_cds_settings_init() {
 
 	$num =  get_option( 'npr_cds_num', 5 );
 	for ( $i = 0; $i < $num; $i++ ) {
-		add_settings_field( 'npr_cds_query_' . $i, 'Query String ' . $i, 'npr_cds_query_callback', 'npr_cds_get_multi_settings', 'npr_cds_get_multi_settings', $i );
+		add_settings_field( 'npr_cds_query_' . $i, 'Query ' . $i, 'npr_cds_query_callback', 'npr_cds_get_multi_settings', 'npr_cds_get_multi_settings', $i );
 		register_setting( 'npr_cds_get_multi_settings', 'npr_cds_query_' . $i, [ 'type' => 'array', 'default' => [ 'filters' => '', 'sorting' => '', 'publish' => '', 'category' => '', 'tags' => '' ] ] );
 	}
 

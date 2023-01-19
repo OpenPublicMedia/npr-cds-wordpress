@@ -265,12 +265,27 @@ function npr_cds_create_post_type() {
 	register_post_type( NPR_POST_TYPE, [
 		'labels' => [
 			'name' => __( 'NPR Stories' ),
-			'singular_name' => __( 'NPR Story' )
+			'singular_name' => __( 'NPR Story' ),
+			'menu_name' => __( 'NPR Stories' ),
+			'edit_item' => __( 'Edit NPR Story' ),
+			'view_item' => __( 'View NPR Story' ),
+			'search_items' => __( 'Search NPR Stories' ),
+			'not_found' => __( 'NPR Story Not Found' ),
+			'not_found_in_trash' => __( 'NPR Story not found in trash' )
 		],
+		'description' => 'Stories pulled from NPR or member stations via the NPR CDS',
 		'public' => true,
-		'has_archive' => true,
 		'menu_position' => 5,
-		'supports' => [ 'title', 'editor', 'thumbnail', 'custom-fields' ]
+		'menu_icon' => 'dashicons-admin-post',
+		'has_archive' => true,
+		'rewrite' => [
+			'slug' => __( 'npr-story' ),
+			'with_front' => false,
+			'feeds' => true,
+			'pages' => true
+		],
+		'supports' => [ 'title', 'editor', 'thumbnail', 'author', 'excerpt', 'custom-fields' ],
+		'taxonomies' => [ 'post_tag', 'category' ]
 	]);
 }
 

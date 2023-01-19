@@ -42,25 +42,25 @@ There is documentation in the NPR's [Github site](https://npr.github.io/content-
 
 ## Screenshots
 
-NPR Story API Plugin Settings screen
+NPR CDS Plugin General Settings screen
 
-![NPR Story API Plugin Settings screen](docs/assets/img/npr-api-wp-plugin-settings.png)
+![NPR CDS Plugin Settings screen](docs/assets/img/settings-general.png.webp)
 
-NPR Story API multiple get settings
+NPR CDS multiple get settings
 
-![NPR Story API multiple get settings](docs/assets/img/npr-api-multiple-get-settings.png)
+![NPR CDS multiple get settings](docs/assets/img/settings-multi-get.png.webp)
 
 Get NPR Stories link in the dashboard
 
-![Get NPR Stories link in the dashboard](docs/assets/img/get-npr-stories-link.png)
+![Get NPR Stories link in the dashboard](docs/assets/img/get-npr-stories-dash.png.webp)
 
 Getting an NPR Story by Story ID
 
-![Getting NPR Stories by Story ID](docs/assets/img/get-npr-stories-link.png)
+![Getting NPR Stories by Story ID](docs/assets/img/get-npr-stories-link.png.webp)
 
 NPR Stories having got gotten
 
-![NPR Stories having got gotten](docs/assets/img/npr-stories.png)
+![NPR Stories having got gotten](docs/assets/img/npr-stories.png.webp)
 
 
 ## Changelog

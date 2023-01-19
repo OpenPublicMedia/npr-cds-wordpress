@@ -13,7 +13,6 @@
  * @see npr_cds_publish_meta_box_assets
  * @since 1.7
  *
- * @todo When there is better browser support for input type="datetime-local", replace the jQuery UI and weird forms with the html5 solution. https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local
  */
 function npr_cds_publish_meta_box( $post ) {
 	$is_disabled = ( 'publish' !== $post->post_status );
@@ -23,12 +22,14 @@ function npr_cds_publish_meta_box( $post ) {
 		$attrs['disabled'] = 'disabled';
 	}
 
-	wp_enqueue_style( 'jquery-ui' );
 	wp_enqueue_style( 'npr_cds_publish_meta_box_stylesheet' );
 	wp_enqueue_script( 'npr_cds_publish_meta_box_script' );
-
-	?>
+	$npr_id = get_post_meta( $post->ID, 'npr_story_id', true ); ?>
 	<div id="npr-cds-publish-actions">
+<?PHP
+	if ( !empty( $npr_id ) ) {
+		echo "<h2>Current CDS ID: <strong>" . $npr_id . "</strong></h2>";
+	} ?>
 		<ul>
 		<?php
 			// send to the npr api
@@ -70,31 +71,20 @@ function npr_cds_publish_meta_box( $post ) {
 	 * This section does not use https://developer.wordpress.org/reference/functions/touch_time/ because there does not seem to be a way to pass it a custom element
 	 */
 
-	$datetime = npr_cds_get_post_expiry_datetime( $post );
-	?>
+	$datetime = npr_cds_get_post_expiry_datetime( $post ); ?>
 	<div id="nprone-expiry">
 		<div id="nprone-expiry-display">
 			<span>Expires on:</span>
-			<?php
+<?php
 				printf(
 					'<time style="font-weight: bold;">%1$s</time>',
 					date_format( $datetime, 'M j, Y @ H:i' ) // Nov 30, 2017 @ 20:45
-				);
-			?>
+				); ?>
 			<button id="nprone-expiry-edit" class="link-effect"><?php esc_html_e( 'Edit', 'nprcds' ); ?></button>
 		</div>
 		<div id="nprone-expiry-form" class="hidden">
-			<?php
-				printf(
-					'<input type="date" id="nprone-expiry-datepicker" size="10" placeholder="YYYY-MM-DD" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="%1$s"/>',
-					date_format( $datetime, 'Y-m-d' ) // 2017-01-01
-				);
-				printf(
-					'<input type="time" id="nprone-expiry-hour" size="5" placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" value="%1$s"/>',
-					date_format( $datetime, 'H:i' ) // 2017-01-01
-				);
-			?>
-
+<?php
+				echo '<input type="datetime-local" id="nprone-expiry-datetime" name="nprone-expiry-datetime" value="' . date_format( $datetime, 'Y-m-d\TH:i' ) . '" />'; ?>
 			<div class="row">
 				<button id="nprone-expiry-ok" class="button"><?php esc_html_e( 'OK', 'nprcds' ); ?></button>
 				<button id="nprone-expiry-cancel" class="link-effect"><?php esc_html_e( 'Cancel', 'nprcds' ); ?></button>
@@ -115,14 +105,10 @@ function npr_cds_publish_meta_box_assets() {
 		'npr_cds_publish_meta_box_stylesheet',
 		NPR_CDS_PLUGIN_URL . 'assets/css/meta-box.css'
 	);
-	wp_register_style(
-		'jquery-ui',
-		NPR_CDS_PLUGIN_URL . 'assets/css/jquery-ui.css'
-	);
 	wp_register_script(
 		'npr_cds_publish_meta_box_script',
 		NPR_CDS_PLUGIN_URL . 'assets/js/meta-box.js',
-		[ 'jquery', 'jquery-ui-datepicker' ],
+		[ 'jquery' ],
 		null,
 		true
 	);

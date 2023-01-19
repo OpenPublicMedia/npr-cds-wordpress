@@ -52,22 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		event.preventDefault();
 		$( '#nprone-expiry-form' ).toggleClass( 'hidden' );
 		$( '#nprone-expiry-edit' ).toggleClass( 'hidden' );
-
-		// but then it needs to update the displayed data in #nprone-expiry-display. How is it to do that?
-		// This needs to take:
-		// - the YYYY-MM-DD value of #nprone-expiry-datepicker
-		// - the HH:MM value of #nprone-expiry-hour
-		// and output a string in the format Apr 1, 2020 @ 09:01 / Nov 1, 2018 @ 23:59
-		var d = new Date();
-		var dateinput = $( '#nprone-expiry-datepicker' ).val().split('-');
-		var timeinput = $( '#nprone-expiry-hour' ).val().split(':');
-
-		d.setFullYear(dateinput[0]);
-		d.setMonth(dateinput[1] - 1); // because this is zero-indexed?
-		d.setDate(dateinput[2]);
-		d.setHours(timeinput[0]);
-		d.setMinutes(timeinput[1]);
-
+		var dateTimeLocal = $( '#nprone-expiry-datetime' ).val();
+		var d = new Date( dateTimeLocal );
 		var string = d.toLocaleString("en-us", { month: "short" })
 			+ " "
 			+ d.getDate()
@@ -80,15 +66,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		$( '#nprone-expiry-display time' ).text( string );
 	});
-
-
-	// Activate the date picker, if and only if the browser doesn't have a native datepicker
-	// @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#JavaScript
-	var test = document.createElement( 'input' );
-	test.type = 'date';
-	if ( test.type !== 'date' ) {
-		$( '#nprone-expiry-datepicker' ).attr('type', 'text').css('width', '8em').datepicker({
-			dateFormat: 'yy-mm-dd'
-		});
-	}
 });
