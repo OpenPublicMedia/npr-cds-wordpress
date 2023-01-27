@@ -2,3 +2,5 @@ release/
 vendor/
 .vscode/
 wp
+composer.lock
+bin/

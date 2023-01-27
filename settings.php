@@ -452,7 +452,7 @@ function npr_cds_mapping_media_agency_callback() {
 function npr_cds_show_post_types_select( $field_name, $keys ) {
 	$selected = get_option( $field_name );
 
-	echo npr_cds_esc_html( "<div><select id=" . $field_name . " name=" . $field_name . ">" );
+	echo npr_cds_esc_html( '<div><select id="' . $field_name . '" name="' . $field_name . '">' );
 
 	echo '<option value=""> &mdash; Select &mdash; </option>';
 	foreach ( $keys as $key ) {

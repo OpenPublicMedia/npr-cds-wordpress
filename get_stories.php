@@ -121,6 +121,7 @@ class NPR_CDS {
 			}
 		} elseif ( isset( $_GET['story_id'] ) && isset( $_GET['create_draft'] ) ) {
 			$story_id = sanitize_text_field( $_GET['story_id'] );
+			$publish = false;
 		}
 
 		// try to get the ID of the story from the URL

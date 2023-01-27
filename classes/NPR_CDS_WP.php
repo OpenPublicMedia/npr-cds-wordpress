@@ -49,7 +49,7 @@ class NPR_CDS_WP {
 
 		$this->request->params = $params;
 		$this->request->path = $path;
-		$this->request->base = NPR_CDS_PULL_URL;
+		$this->request->base = get_option( 'npr_cds_pull_url' );
 
 		$queries = [];
 		foreach ( $this->request->params as $k => $v ) {
@@ -103,7 +103,7 @@ class NPR_CDS_WP {
 					$this->notice[] = __( 'No data available.' );
 				}
 			} else {
-				npr_cds_show_message( 'An error occurred pulling your story from the NPR API.  The API responded with message =' . $response['response']['message'], TRUE );
+				npr_cds_show_message( 'An error occurred pulling your story from the NPR CDS.  The CDS responded with message = ' . $response['response']['message'], TRUE );
 			}
 		} else {
 			$error_text = '';
@@ -122,7 +122,7 @@ class NPR_CDS_WP {
 
 	function extract_profiles ( $story ) {
 		$output = [];
-		foreach ( $story->profiles as $p ) {
+		foreach ( $story as $p ) {
 			$p_xp = explode( '/', $p->href );
 			$output[] = end( $p_xp );
 		}
@@ -816,7 +816,7 @@ class NPR_CDS_WP {
 		$returnary = [ 'body' => FALSE, 'has_image' => FALSE, 'has_video' => FALSE, 'has_external' => FALSE, 'has_slideshow' => FALSE ];
 		$body_with_layout = "";
 		$use_npr_featured = ( !empty( get_option( 'npr_cds_query_use_featured' ) ) ? TRUE : FALSE );
-		$profiles = $this->extract_profiles( $story );
+		$profiles = $this->extract_profiles( $story->profiles );
 
 		if ( in_array( 'buildout', $profiles ) && !empty( $story->layout ) ) {
 			foreach ( $story->layout as $layout ) {

@@ -4,7 +4,6 @@
 	"homepage"   : "https://github.com/OpenPublicMedia/npr-cds-wordpress/",
 	"type"       : "wordpress-plugin",
 	"license"    : "GPL-2.0+",
-	"require": {},
 	"dist": {
 		"url": "https://github.com/OpenPublicMedia/npr-cds-wordpress/archive/refs/tags/v1.0.zip",
 		"type": "zip"
@@ -22,5 +21,9 @@
 			"name": "Brian Divver",
 			"email": "bdivver@xpn.org"
 		}
-	]
+	],
+	"require-dev": {
+		"phpunit/phpunit": "^9",
+		"yoast/phpunit-polyfills": "^1.0"
+	}
 }

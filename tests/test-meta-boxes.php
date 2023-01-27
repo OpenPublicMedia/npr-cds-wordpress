@@ -4,27 +4,17 @@ class Test_MetaBoxes extends WP_UnitTestCase {
 	/**
 	 * Test the meta box
 	 */
-	function test_nprstory_publish_meta_box() {
+	function test_npr_cds_publish_meta_box() {
 		$post_id = $this->factory->post->create();
 		global $post;
 		$tmp = $post;
 		$post = get_post( $post_id );
 		setup_postdata( $post );
-		update_option( 'ds_npr_push_post_type', 'post' );
+		update_option( 'npr_cds_push_post_type', 'post' );
 
 		# Simple test of output to verify some part of the expected markup is present
-		$this->expectOutputRegex('/<div id\="ds-npr-publish-actions"/');
-		nprstory_publish_meta_box( $post );
-
-		/*
-		 * @todo:
-		 * assert that jquery-ui is enqueued
-		 * assert that nprstory_publish_meta_box_stylesheet is enqueued
-		 * assert that nprstory_publish_meta_box_script is enqueued
-		 *
-		 * assert that the checked values of the check boxes match the post's meta values
-		 * assert that the expiry date matches the post's meta values
-		 */
+		$this->expectOutputRegex('/<div id\="npr\-cds\-publish\-actions"/');
+		npr_cds_publish_meta_box( $post );
 
 		// reset
 		$post = $tmp;
@@ -34,9 +24,18 @@ class Test_MetaBoxes extends WP_UnitTestCase {
 	/**
 	 * Test that the assets for the meta box are registered
 	 */
-	function test_nprstory_publish_meta_box_assets() {
+	function test_npr_cds_publish_meta_box_assets() {
 		// bare minimum test: the function runs
-		nprstory_publish_meta_box_assets();
+		npr_cds_publish_meta_box_assets();
+		$check = true;
+		global $wp_scripts, $wp_styles;
+		if ( empty( $wp_scripts->registered['npr_cds_publish_meta_box_script'] ) ) {
+			$check = false;
+		}
+		if ( empty( $wp_styles->registered['npr_cds_publish_meta_box_stylesheet'] ) ) {
+			$check = false;
+		}
+		$this->assertTrue( $check );
 	}
 }
 

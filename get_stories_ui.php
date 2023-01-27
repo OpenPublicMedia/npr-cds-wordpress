@@ -82,8 +82,7 @@ function npr_cds_bulk_action_update_action() {
 }
 
 function npr_cds_get_stories() {
-	global $is_IE;
-	$api_key =  get_option( 'npr_cds_token' );
+	$api_key = get_option( 'npr_cds_token' );
 	$pull_url = NPR_CDS_PULL_URL;
 ?>
 		<div class="wrap">
