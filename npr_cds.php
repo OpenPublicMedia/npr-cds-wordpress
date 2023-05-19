@@ -23,37 +23,31 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-define( 'NPR_STORY_ID_META_KEY', 'npr_story_id' );
-define( 'NPR_API_LINK_META_KEY', 'npr_api_link' );
-define( 'NPR_HTML_LINK_META_KEY', 'npr_html_link' );
-define( 'NPR_SHORT_LINK_META_KEY', 'npr_short_link' );
+const NPR_STORY_ID_META_KEY = 'npr_story_id';
+const NPR_API_LINK_META_KEY = 'npr_api_link';
+const NPR_HTML_LINK_META_KEY = 'npr_html_link';
+const NPR_SHORT_LINK_META_KEY = 'npr_short_link';
+const NPR_BYLINE_LINK_META_KEY = 'npr_byline_link';
+const NPR_MULTI_BYLINE_META_KEY = 'npr_multi_byline';
+const NPR_IMAGE_GALLERY_META_KEY = 'npr_image_gallery';
+const NPR_HTML_ASSETS_META_KEY = 'npr_html_assets';
+const NPR_AUDIO_META_KEY = 'npr_audio';
+const NPR_AUDIO_M3U_META_KEY = 'npr_audio_m3u';
+const NPR_PUB_DATE_META_KEY = 'npr_pub_date';
+const NPR_STORY_DATE_MEATA_KEY = 'npr_story_date';
+const NPR_LAST_MODIFIED_DATE_KEY = 'npr_last_modified_date';
+const NPR_RETRIEVED_STORY_META_KEY = 'npr_retrieved_story';
+const NPR_IMAGE_CAPTION_META_KEY = 'npr_image_caption';
+const NPR_STORY_HAS_VIDEO_META_KEY = 'npr_has_video';
+const NPR_PUSH_STORY_ERROR = 'npr_push_story_error';
+const NPR_MAX_QUERIES = 10;
+const NPR_POST_TYPE = 'npr_story_post';
+
 define( 'NPR_STORY_CONTENT_META_KEY', get_option( 'npr_cds_mapping_body', 'npr_story_content' ) );
 define( 'NPR_BYLINE_META_KEY', get_option( 'npr_cds_mapping_media_credit', 'npr_byline' ) );
-define( 'NPR_BYLINE_LINK_META_KEY', 'npr_byline_link' );
-define( 'NPR_MULTI_BYLINE_META_KEY', 'npr_multi_byline' );
-define( 'NPR_IMAGE_GALLERY_META_KEY', 'npr_image_gallery' );
-define( 'NPR_HTML_ASSETS_META_KEY', 'npr_html_assets' );
-define( 'NPR_AUDIO_META_KEY', 'npr_audio' );
-define( 'NPR_AUDIO_M3U_META_KEY', 'npr_audio_m3u' );
-define( 'NPR_PUB_DATE_META_KEY', 'npr_pub_date' );
-define( 'NPR_STORY_DATE_MEATA_KEY', 'npr_story_date' );
-define( 'NPR_LAST_MODIFIED_DATE_KEY', 'npr_last_modified_date' );
-define( 'NPR_RETRIEVED_STORY_META_KEY', 'npr_retrieved_story' );
-
 define( 'NPR_IMAGE_CREDIT_META_KEY', get_option( 'npr_cds_mapping_media_credit', 'npr_image_credit' ) );
 define( 'NPR_IMAGE_AGENCY_META_KEY', get_option( 'npr_cds_mapping_media_agency', 'npr_image_agency' ) );
-define( 'NPR_IMAGE_CAPTION_META_KEY', 'npr_image_caption' );
-
 define( 'NPR_CDS_PULL_URL', get_option( 'npr_cds_pull_url', 'https://content.api.npr.org' ) );
-
-define( 'NPR_STORY_HAS_VIDEO_META_KEY', 'npr_has_video' );
-
-define( 'NPR_PUSH_STORY_ERROR', 'npr_push_story_error' );
-
-define( 'NPR_MAX_QUERIES', 10 );
-
-define( 'NPR_POST_TYPE', 'npr_story_post' );
-
 define( 'NPR_CDS_PLUGIN_URL', plugin_dir_url(__FILE__) );
 
 // Load files
@@ -69,7 +63,7 @@ register_activation_hook( NPR_CDS_PLUGIN_DIR . 'npr_cds.php', 'npr_cds_activatio
 add_action( 'npr_cds_hourly_cron', [ 'NPR_CDS', 'cron_pull' ] );
 register_deactivation_hook( NPR_CDS_PLUGIN_DIR . 'npr_cds.php', 'npr_cds_deactivation' );
 
-function npr_cds_activation() {
+function npr_cds_activation(): void {
 	global $wpdb;
 	if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 		// check if it is a network activation - if so, run the activation function for each blog id
@@ -86,7 +80,7 @@ function npr_cds_activation() {
 	}
 }
 
-function npr_cds_activate() {
+function npr_cds_activate(): void {
 	$cron_interval = get_option( 'dp_npr_query_multi_cron_interval', 60 );
 	update_option( 'npr_cds_query_multi_cron_interval', $cron_interval );
 	if ( !wp_next_scheduled( 'npr_cds_hourly_cron' ) ) {
@@ -222,7 +216,7 @@ function npr_cds_activate() {
 	}
 }
 
-function npr_cds_deactivation() {
+function npr_cds_deactivation(): void {
 	global $wpdb;
 	if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 		// check if it is a network activation - if so, run the activation function for each blog id
@@ -239,7 +233,7 @@ function npr_cds_deactivation() {
 	}
 }
 
-function npr_cds_deactivate() {
+function npr_cds_deactivate(): void {
 	wp_clear_scheduled_hook( 'npr_cds_hourly_cron' );
 	$num = get_option( 'npr_cds_num' );
 	for ( $i = 0; $i < $num; $i++ ) {
@@ -250,7 +244,7 @@ function npr_cds_deactivate() {
 }
 
 
-function npr_cds_show_message( $message, $errormsg = false ) {
+function npr_cds_show_message( $message, $errormsg = false ): void {
 	if ( $errormsg ) {
 		echo '<div id="message" class="error">';
 	} else {
@@ -261,7 +255,7 @@ function npr_cds_show_message( $message, $errormsg = false ) {
 
 add_action( 'init', 'npr_cds_create_post_type' );
 
-function npr_cds_create_post_type() {
+function npr_cds_create_post_type(): void {
 	register_post_type( NPR_POST_TYPE, [
 		'labels' => [
 			'name' => __( 'NPR Stories' ),
@@ -296,7 +290,7 @@ function npr_cds_create_post_type() {
  *
  * @link https://github.com/npr/nprapi-wordpress/issues/51
  */
-function npr_cds_add_meta_boxes() {
+function npr_cds_add_meta_boxes(): void {
 	$screen = get_current_screen();
 	$push_post_type = get_option( 'npr_cds_push_post_type' ) ?: 'post';
 	$push_url = get_option( 'npr_cds_push_url' );
@@ -329,7 +323,7 @@ add_action( 'add_meta_boxes', 'npr_cds_add_meta_boxes' );
  * This should only be used for error_log in development environments
  * If the thing being logged is a fatal error, use error_log so it will always be logged
  */
-function npr_cds_error_log( $thing ) {
+function npr_cds_error_log( $thing ): void {
 	if ( WP_DEBUG ) {
 		error_log( $thing ); //debug use
 	}
@@ -338,11 +332,11 @@ function npr_cds_error_log( $thing ) {
 /**
  * Function to help with escaping HTML, especially for admin screens
  */
-function npr_cds_esc_html( $string ) {
+function npr_cds_esc_html( $string ): string {
 	return html_entity_decode( esc_html( $string ), ENT_QUOTES );
 }
 
-function npr_cds_add_header_meta() {
+function npr_cds_add_header_meta(): void {
 	global $wp_query;
 	if ( !is_home() && !is_404() &&
 		( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || get_post_type() === get_option( 'npr_cds_push_post_type' ) )

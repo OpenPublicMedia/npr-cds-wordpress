@@ -244,19 +244,43 @@ class NPR_CDS_WP {
 					$multi_by_line = '';
 					// continue to save single byline into npr_byline as is, but also set multi to false
 					if ( !empty( $story->bylines ) ) { // Always treats like an array, because it *should* always be an array
-						foreach ( $story->bylines as $bl ) {
-							$bl_id = $this->extract_asset_id( $bl->href );
-							$bl_asset = $story->assets->{ $bl_id };
-							$bl_profile = $this->extract_profiles( $bl_asset->profiles );
-							if ( in_array( 'byline', $bl_profile ) ) {
-								$by_lines[] = $bl_asset->name;
-								// TODO: Add in code for links when they become available
+						foreach ( $story->bylines as $byline ) {
+							$byl_id = $this->extract_asset_id( $byline->href );
+							$byl_current = $story->assets->{$byl_id};
+							$byl_profile = $this->extract_asset_profile( $byl_current );
+							if ( $byl_profile === 'reference-byline' ) {
+								foreach ( $byl_current->bylineDocuments as $byl_doc ) {
+									$byl_data = $this->get_document( $byl_doc->href );
+									if ( !empty( $byl_data ) ) {
+										$byl_link = '';
+										if ( !empty( $byl_data->webPages ) ) {
+											foreach ( $byl_data->webPages as $byl_web ) {
+												if ( !empty( $byl_web->rels ) && in_array( 'canonical', $byl_web->rels ) ) {
+													$byl_link = $byl_web->href;
+												}
+											}
+										}
+										$by_lines[] = [
+											'name' => $byl_data->title,
+											'link' => $byl_link
+										];
+									}
+								}
 							}
 						}
 					}
-					$by_line = $by_lines[0];
+
+					$by_line = $by_lines[0]['name'];
 					if ( count( $by_lines ) > 1 ) {
-						$multi_by_line = implode( '|', $by_lines );
+						$all_bylines = [];
+						foreach ( $by_lines as $bl ) {
+							if ( !empty( $bl['link'] ) ) {
+								$all_bylines[] = '<a href="' . $bl['link'] . '">' . $bl['name'] . '</a>';
+							} else {
+								$all_bylines[] = $bl['name'];
+							}
+						}
+						$multi_by_line = implode( '|', $all_bylines );
 					}
 					$webPage = '';
 					if ( !empty( $story->webPages ) ) {
@@ -274,8 +298,8 @@ class NPR_CDS_WP {
 						NPR_HTML_LINK_META_KEY		  => $webPage,
 						// NPR_SHORT_LINK_META_KEY	  => $story->link['short']->value,
 						NPR_STORY_CONTENT_META_KEY	  => $story->body,
-						NPR_BYLINE_META_KEY			  => $by_line,
-						// NPR_BYLINE_LINK_META_KEY	  => $byline_link,
+						NPR_BYLINE_META_KEY			  => $by_lines[0]['name'],
+						NPR_BYLINE_LINK_META_KEY	  => $by_lines[0]['link'],
 						NPR_MULTI_BYLINE_META_KEY	  => $multi_by_line,
 						NPR_RETRIEVED_STORY_META_KEY  => 1,
 						NPR_PUB_DATE_META_KEY		  => $story->publishDateTime,
@@ -288,7 +312,7 @@ class NPR_CDS_WP {
 						$mp3_array = [];
 						foreach ( $story->audio as $audio ) {
 							$audio_id = $this->extract_asset_id( $audio->href );
-							if ( in_array( 'primary', $audio->rels ) ) {
+							if ( in_array( 'primary', $audio->rels ) && !in_array( 'premium', $audio->rels ) ) {
 								$audio_current = $story->assets->{ $audio_id };
 								if ( $audio_current->isAvailable && $audio_current->isDownloadable ) {
 									foreach ( $audio_current->enclosures as $enclose ) {
@@ -349,7 +373,7 @@ class NPR_CDS_WP {
 							$attached_images = get_children( $image_args );
 						}
 						foreach ( $story->images as $image ) {
-							if ( !in_array( 'primary', $image->rels ) ) {
+							if ( empty( $image->rels ) || !in_array( 'primary', $image->rels ) ) {
 								continue;
 							}
 							$image_url = '';
@@ -575,7 +599,7 @@ class NPR_CDS_WP {
 					$coauthor_terms = [];
 					if ( !empty( $by_lines ) ) {
 						foreach ( $by_lines as $bl ) {
-							$search_author = $coauthors_plus->search_authors( $bl, [] );
+							$search_author = $coauthors_plus->search_authors( $bl['name'], [] );
 							if ( !empty( $search_author ) ) {
 								reset( $search_author );
 								$coauthor_terms[] = key( $search_author );
@@ -759,13 +783,13 @@ class NPR_CDS_WP {
 			if ( preg_match( '/^<(a href|em|strong)/', $p ) ) {
 				$output = '<p>' . $p . '</p>';
 			} else {
-				if ( strpos( $p, '<div class="storyMajorUpdateDate">' ) !== false ) {
+				if ( str_contains( $p, '<div class="storyMajorUpdateDate">' ) ) {
 					$output = $p;
 				}
 				$output = $p;
 			}
 		} else {
-			if ( strpos( $p, '<div class="fullattribution">' ) !== false ) {
+			if ( str_contains( $p, '<div class="fullattribution">' ) ) {
 				$output = '<p>' . str_replace( '<div class="fullattribution">', '</p><div class="fullattribution">', $p );
 			} else {
 				$output = '<p>' . $p . '</p>';
@@ -856,7 +880,7 @@ class NPR_CDS_WP {
 								$body_with_layout .= '<p><iframe class="npr-embed-audio" style="width: 100%; height: 239px;" src="' . $asset_current->embeddedPlayerLink->href . '"></iframe></p>';
 							} elseif ( $asset_current->isDownloadable ) {
 								foreach ( $asset_current->enclosures as $enclose ) {
-									if ( $enclose->type == 'audio/mpeg' ) {
+									if ( $enclose->type == 'audio/mpeg' && !in_array( 'premium', $enclose->rels ) ) {
 										$body_with_layout .= '[audio mp3="' . $enclose->href . '"][/audio]';
 									}
 								}
@@ -880,7 +904,7 @@ class NPR_CDS_WP {
 							$asset_title = $asset_current->headline;
 						}
 						$returnary['has_video'] = TRUE;
-						$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper"><iframe width="560" height="315" src="https://www.youtube.com/embed/' . $asset_current->videoId . '" title="' . $asset_title . '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></figure>';
+						$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper"><iframe width="560" height="315" src="https://www.youtube.com/embed/' . $asset_current->videoId . '" title="' . $asset_title . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></figure>';
 						break;
 					case 'internal-link' :
 						$link_url = '';
@@ -902,44 +926,71 @@ class NPR_CDS_WP {
 						}
 						break;
 					case 'image' :
-						if ( $asset_profile == 'image' ) {
-							$thisimg_rels = [];
-							foreach ( $story->images as $images ) {
-								if ( $images->href == '#/assets/' . $asset_id && !empty( $images->rels ) ) {
-									$thisimg_rels = $images->rels;
-								}
+						$thisimg_rels = [];
+						foreach ( $story->images as $images ) {
+							if ( $images->href == '#/assets/' . $asset_id && !empty( $images->rels ) ) {
+								$thisimg_rels = $images->rels;
 							}
-							if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
-								break;
-							}
-							foreach ( $asset_current->enclosures as $img_enclose ) {
-								if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
-									$thisimg = $img_enclose;
-								}
-							}
-							$figclass = "wp-block-image size-large";
-							$image_href = $this->get_image_url( $thisimg );
-							$fightml = '<img src="' . $image_href . '"';
-							if ( in_array( 'image-vertical', $thisimg->rels ) ) {
-								$figclass .= ' alignright';
-								$fightml .= " width=200";
-							}
-							$thiscaption = ( !empty( trim( $asset_current->caption ) ) ? trim( $asset_current->caption ) : '' );
-							$fightml .= ( !empty( $fightml ) && !empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
-							$fightml .= ( !empty( $fightml ) ? '>' : '' );
-							$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? $thiscaption  : '' );
-							$cites = '';
-							foreach ( [ 'producer', 'provider', 'copyright' ] as $item ) {
-								if ( !empty( $asset_current->{ $item } ) ) {
-									$cites .= ( !empty( $cites ) ? ' | ' . $asset_current->{ $item } : $asset_current->{ $item } );
-								}
-							}
-							$cites = ( !empty( $cites ) ? " <cite>$cites</cite>" : '' );
-							$thiscaption .= $cites;
-							$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>"  : '' );
-							$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
-							$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
 						}
+						if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
+							break;
+						}
+						foreach ( $asset_current->enclosures as $img_enclose ) {
+							if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
+								$thisimg = $img_enclose;
+							}
+						}
+						$figclass = "wp-block-image size-large";
+						$image_href = $this->get_image_url( $thisimg );
+						$fightml = '<img src="' . $image_href . '"';
+						if ( in_array( 'image-vertical', $thisimg->rels ) ) {
+							$figclass .= ' alignright';
+							$fightml .= " width=200";
+						}
+						$thiscaption = ( !empty( trim( $asset_current->caption ) ) ? trim( $asset_current->caption ) : '' );
+						$fightml .= ( !empty( $fightml ) && !empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
+						$fightml .= ( !empty( $fightml ) ? '>' : '' );
+						$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? $thiscaption  : '' );
+						$cites = '';
+						foreach ( [ 'producer', 'provider', 'copyright' ] as $item ) {
+							if ( !empty( $asset_current->{ $item } ) ) {
+								$cites .= ( !empty( $cites ) ? ' | ' . $asset_current->{ $item } : $asset_current->{ $item } );
+							}
+						}
+						$cites = ( !empty( $cites ) ? " <cite>$cites</cite>" : '' );
+						$thiscaption .= $cites;
+						$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>"  : '' );
+						$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
+						$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
+						break;
+					case 'image-gallery' :
+						$fightml = '<figure class="wp-block-image"><div class="splide"><div class="splide__track"><ul class="splide__list">';
+						$returnary['has_slideshow'] = TRUE;
+						foreach ( $asset_current->layout as $ig_layout ) {
+							$ig_asset_id = $this->extract_asset_id( $ig_layout->href );
+							$ig_asset_current = $story->assets->{ $ig_asset_id };
+							foreach ( $ig_asset_current->enclosures as $ig_img_enclose ) {
+								if ( !empty( $ig_img_enclose->rels ) && in_array( 'primary', $ig_img_enclose->rels ) ) {
+									$thisimg = $ig_img_enclose;
+								}
+							}
+							$image_href = $this->get_image_url( $thisimg );
+							$credits = [];
+							$full_credits = '';
+							foreach ( [ 'producer', 'provider', 'copyright' ] as $item ) {
+								if ( !empty( $ig_asset_current->{ $item } ) ) {
+									$credits[] = $ig_asset_current->{ $item };
+								}
+							}
+							if ( !empty( $credits ) ) {
+								$full_credits = ' (' . implode( ' | ', $credits ) . ')';
+							}
+
+							$link_text = str_replace( '"', "'", $ig_asset_current->title . $full_credits );
+							$fightml .= '<li class="splide__slide"><a href="' . esc_url( $thisimg->href ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_href ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . npr_cds_esc_html( $link_text ) . '</div></li>';
+						}
+						$fightml .= '</div></div></ul></figure>';
+						$body_with_layout .= $fightml;
 						break;
 					default :
 						// Do nothing???
@@ -963,7 +1014,7 @@ class NPR_CDS_WP {
 		if ( !empty( $story->audio ) ) {
 			$audio_file = '';
 			foreach ( $story->audio as $audio ) {
-				if ( in_array( 'primary', $audio->rels ) ) {
+				if ( in_array( 'primary', $audio->rels ) && !in_array( 'premium', $audio->rels ) ) {
 					$audio_id = $this->extract_asset_id( $audio->href );
 					$audio_current = $story->assets->{ $audio_id };
 					if ( $audio_current->isAvailable ) {
@@ -971,7 +1022,7 @@ class NPR_CDS_WP {
 							$audio_file = '<p><iframe class="npr-embed-audio" style="width: 100%; height: 235px;" src="' . $audio_current->embeddedPlayerLink->href . '"></iframe></p>';
 						} elseif ( $audio_current->isDownloadable ) {
 							foreach ( $audio_current->enclosures as $enclose ) {
-								if ( $enclose->type == 'audio/mpeg' ) {
+								if ( $enclose->type == 'audio/mpeg' && !in_array( 'premium', $enclose->rels ) ) {
 									$audio_file = '[audio mp3="' . $enclose->href . '"][/audio]';
 								}
 							}
