@@ -45,7 +45,7 @@ class NPR_CDS_WP {
 		$this->response->code = NULL;
 	}
 
-	function request( $params = [], $path = 'documents' ) {
+	function request( $params = [], $path = 'documents' ): void {
 
 		$this->request->params = $params;
 		$this->request->path = $path;
@@ -68,7 +68,7 @@ class NPR_CDS_WP {
 		$this->query_by_url( $request_url );
 	}
 
-	function get_token_options() {
+	function get_token_options(): array {
 		$token = get_option( 'npr_cds_token' );
 		if ( empty( $token ) ) {
 			npr_cds_show_message( 'No CDS bearer token present. Please enter one on the main settings page.', TRUE );
@@ -80,7 +80,7 @@ class NPR_CDS_WP {
 		];
 	}
 
-	function query_by_url( $url ) {
+	function query_by_url( $url ): void {
 		//fill out the $this->request->param array so we can know what params were sent
 		$parsed_url = parse_url( $url );
 		if ( !empty( $parsed_url['query'] ) ) {
@@ -115,12 +115,12 @@ class NPR_CDS_WP {
 		}
 	}
 
-	function extract_asset_id ( $href ) {
+	function extract_asset_id ( $href ): bool|string {
 		$href_xp = explode( '/', $href );
 		return end( $href_xp );
 	}
 
-	function extract_profiles ( $story ) {
+	function extract_profiles ( $story ): array {
 		$output = [];
 		foreach ( $story as $p ) {
 			$p_xp = explode( '/', $p->href );
@@ -153,9 +153,12 @@ class NPR_CDS_WP {
 	 * available from the NPR API if the pubDate on the API is after the pubDate originally stored locally.
 	 *
 	 * @param bool $publish
+	 * @param bool $qnum
+	 *
 	 * @return int|null $post_id or null
+	 * @throws Exception
 	 */
-	function update_posts_from_stories( $publish = TRUE, $qnum = false ) {
+	function update_posts_from_stories( bool $publish = TRUE, bool $qnum = false ): ?int {
 		$pull_post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 
 		$post_id = null;
@@ -610,7 +613,7 @@ class NPR_CDS_WP {
 				}
 			}
 			if ( $single_story ) {
-				return isset( $post_id ) ? $post_id : 0;
+				return $post_id ?? 0;
 			}
 		}
 		return null;
@@ -619,12 +622,13 @@ class NPR_CDS_WP {
 	/**
 	 * This function will send the push request to the NPR CDS to add/update a story.
 	 *
-	 * @see NPRCDS::send_request()
-	 *
 	 * @param string $json
 	 * @param int $post_ID
+	 *
+		  *@see NPRCDS::send_request()
+	 *
 	 */
-	function send_request ( $json, $post_ID ) {
+	function send_request( string $json, int $post_ID ): void {
 		$error_text = '';
 		$org_id = get_option( 'npr_cds_org_id' );
 		$prefix = get_option( 'npr_cds_prefix' );
@@ -682,7 +686,7 @@ class NPR_CDS_WP {
 	 *
 	 * @param  $api_id
 	 */
-	function send_delete( $api_id ) {
+	function send_delete( $api_id ): void {
 		$options = $this->get_token_options();
 		$options = apply_filters( 'npr_pre_article_delete', $options );
 		$url = get_option( 'npr_cds_push_url' ) . '/' . SELF::NPR_CDS_VERSION . '/documents/' . $api_id;
@@ -695,7 +699,7 @@ class NPR_CDS_WP {
 		}
 	}
 
-	function parse_response() {
+	function parse_response(): void {
 		$json = json_decode( $this->response->data, TRUE );
 		if ( !empty( $json->resources[0] ) ) {
 			$id = $json['resources'][0]['id'];
@@ -712,14 +716,14 @@ class NPR_CDS_WP {
 	 * @return string
 	 *   A JSON string.
 	 */
-	function create_json( $post ) {
+	function create_json( object $post ): string {
 		return npr_cds_to_json( $post );
 	}
 
 	/**
 	 * Parses object. Turns raw XML(NPRML) into various object properties.
 	 */
-	function parse() {
+	function parse(): void {
 		if ( !empty( $this->json ) ) {
 			$json = $this->json;
 		} else {
@@ -746,9 +750,10 @@ class NPR_CDS_WP {
 	 * we'll return the transcript as one big string with Transcript at the top and each paragraph separated by <p>
 	 *
 	 * @param object $story
+	 *
 	 * @return string
 	 */
-	function get_transcript_body( $story ) {
+	function get_transcript_body( object $story ): string {
 		$transcript_body = "";
 		if ( !empty( $story->audio ) ) {
 			foreach ( $story->audio as $audio ) {
@@ -777,7 +782,7 @@ class NPR_CDS_WP {
 	 * @return string
 	 *   A formatted string of text
 	 */
-	function add_paragraph_tag( $p ) {
+	function add_paragraph_tag( string $p ): string {
 		$output = '';
 		if ( preg_match( '/^<[a-zA-Z0-9 \="\-_\']+>.+<[a-zA-Z0-9\/]+>$/', $p ) ) {
 			if ( preg_match( '/^<(a href|em|strong)/', $p ) ) {
@@ -796,6 +801,19 @@ class NPR_CDS_WP {
 			}
 		}
 		return $output;
+	}
+
+	function parse_credits( $asset ): string {
+		$credits = [];
+		foreach ( [ 'producer', 'provider', 'copyright' ] as $item ) {
+			if ( !empty( $asset->{ $item } ) ) {
+				$credits[] = $asset->{ $item };
+			}
+		}
+		if ( !empty( $credits ) ) {
+			return ' (' . implode( ' | ', $credits ) . ')';
+		}
+		return '';
 	}
 
 	function get_image_url ( $image ) {
@@ -819,7 +837,7 @@ class NPR_CDS_WP {
 		return $parse['scheme'] . '://' . $parse['host'] . $parse['path'] . '?' . http_build_query( $output );
 	}
 
-	function extract_asset_profile ( $asset ) {
+	function extract_asset_profile ( $asset ): bool|string {
 		$output = '';
 		foreach ( $asset->profiles as $profile ) {
 			if ( !empty( $profile->rels ) && in_array( 'type', $profile->rels ) ) {
@@ -837,9 +855,9 @@ class NPR_CDS_WP {
 	 * @return array with reconstructed body and flags describing returned elements
 	 */
 	function get_body_with_layout( $story ) {
-		$returnary = [ 'body' => FALSE, 'has_image' => FALSE, 'has_video' => FALSE, 'has_external' => FALSE, 'has_slideshow' => FALSE ];
+		$returnary = [ 'body' => FALSE, 'has_image' => FALSE, 'has_video' => FALSE, 'has_external' => FALSE, 'has_slideshow' => FALSE, 'has_video_streaming' => FALSE ];
 		$body_with_layout = "";
-		$use_npr_featured = ( !empty( get_option( 'npr_cds_query_use_featured' ) ) ? TRUE : FALSE );
+		$use_npr_featured = !empty( get_option( 'npr_cds_query_use_featured' ) );
 		$profiles = $this->extract_profiles( $story->profiles );
 
 		if ( in_array( 'buildout', $profiles ) && !empty( $story->layout ) ) {
@@ -950,15 +968,7 @@ class NPR_CDS_WP {
 						$thiscaption = ( !empty( trim( $asset_current->caption ) ) ? trim( $asset_current->caption ) : '' );
 						$fightml .= ( !empty( $fightml ) && !empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
 						$fightml .= ( !empty( $fightml ) ? '>' : '' );
-						$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? $thiscaption  : '' );
-						$cites = '';
-						foreach ( [ 'producer', 'provider', 'copyright' ] as $item ) {
-							if ( !empty( $asset_current->{ $item } ) ) {
-								$cites .= ( !empty( $cites ) ? ' | ' . $asset_current->{ $item } : $asset_current->{ $item } );
-							}
-						}
-						$cites = ( !empty( $cites ) ? " <cite>$cites</cite>" : '' );
-						$thiscaption .= $cites;
+						$thiscaption .= ( !empty( $cites ) ? " <cite>" . $this->parse_credits( $asset_current ) . "</cite>" : '' );
 						$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>"  : '' );
 						$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
 						$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
@@ -975,22 +985,78 @@ class NPR_CDS_WP {
 								}
 							}
 							$image_href = $this->get_image_url( $thisimg );
-							$credits = [];
-							$full_credits = '';
-							foreach ( [ 'producer', 'provider', 'copyright' ] as $item ) {
-								if ( !empty( $ig_asset_current->{ $item } ) ) {
-									$credits[] = $ig_asset_current->{ $item };
-								}
-							}
-							if ( !empty( $credits ) ) {
-								$full_credits = ' (' . implode( ' | ', $credits ) . ')';
-							}
+							$full_credits = $this->parse_credits( $ig_asset_current );
 
 							$link_text = str_replace( '"', "'", $ig_asset_current->title . $full_credits );
 							$fightml .= '<li class="splide__slide"><a href="' . esc_url( $thisimg->href ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_href ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . npr_cds_esc_html( $link_text ) . '</div></li>';
 						}
 						$fightml .= '</div></div></ul></figure>';
 						$body_with_layout .= $fightml;
+						break;
+					case str_contains( $asset_profile, 'player-video' ) :
+						if ( $asset_current->isRestrictedToAuthorizedOrgServiceIds !== true ) {
+							$asset_caption = [];
+							$full_caption = '';
+							if ( !empty( $asset_current->title ) ) {
+								$asset_caption[] = $asset_current->title;
+							}
+							if ( !empty( $asset_current->caption ) ) {
+								$asset_caption[] = $asset_current->caption;
+							}
+							$credits = $this->parse_credits( $asset_current );
+							if ( !empty( $credits ) ) {
+								$asset_caption[] = '(' . $credits . ')';
+							}
+							if ( !empty( $asset_caption ) ) {
+								$full_caption = '<figcaption>' . implode( ' ', $asset_caption ) . '</figcaption>';
+							}
+							$returnary['has_video'] = true;
+							$video_asset = '';
+							if ( $asset_profile == 'player-video' ) {
+								$poster = '';
+								$video_url = $asset_current->enclosures[0]->href;
+								if ( !empty( $asset_current->images ) ) {
+									foreach ( $asset_current->images as $v_image ) {
+										if ( in_array( 'thumbnail', $v_image->rels ) ) {
+											$v_image_id = $this->extract_asset_id( $v_image->href );
+											$v_image_asset = $story->assets->{$v_image_id};
+											foreach ( $v_image_asset->enclosures as $vma ) {
+												$poster = ' poster="' . $this->get_image_url( $vma ) . '"';
+											}
+										}
+									}
+								}
+								foreach ( $asset_current->enclosures as $v_enclose ) {
+									if ( in_array( 'mp4-hd', $v_enclose->rels ) ) {
+										$video_url = $v_enclose->href;
+									} elseif ( in_array( 'mp4-high', $v_enclose->rels ) ) {
+										$video_url = $v_enclose->href;
+									}
+								}
+								$video_asset = '[video mp4="' . $video_url . '"' . $poster . '][/video]';
+							} elseif ( $asset_profile == 'stream-player-video' ) {
+								if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
+									$returnary['has_video_streaming'] = true;
+									$video_asset = <<<EOT
+									<video id="{$asset_current->id}" controls="true"></video>
+									<script>
+										let video = document.getElementById('{$asset_current->id}');
+										if (Hls.isSupported()) {
+											let hls = new Hls();
+											hls.attachMedia(video);
+											hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+												hls.loadSource("{$asset_current->enclosures[0]->href}");
+												hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+													console.log("manifest loaded, found " + data.levels.length + " quality level");
+												});
+											});
+										}
+									</script>
+									EOT;
+								}
+							}
+							$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
+						}
 						break;
 					default :
 						// Do nothing???
@@ -1039,6 +1105,9 @@ class NPR_CDS_WP {
 				$body_with_layout .
 				'<script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/splide.min.js"></script>' .
 				'<script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/splide-settings.js"></script>';
+		}
+		if ( $returnary['has_video_streaming'] ) {
+			$body_with_layout = '<style>.is-type-video video {max-width: 100%; width: 100%;}</style><script src="//cdn.jsdelivr.net/npm/hls.js@latest"></script>' . $body_with_layout;
 		}
 		$returnary['body'] = npr_cds_esc_html( $body_with_layout );
 		return $returnary;
