@@ -4,9 +4,12 @@
  * Do the mapping from WP post to the array that we're going to build the JSON from.
  * This is also where we will do custom mapping if need be.
  * If a mapped custom field does not exist in a certain post, just send the default field.
+ *
  * @param  $post
+ *
+ * @return bool|string
  */
-function npr_cds_to_json( $post ) {
+function npr_cds_to_json( $post ): bool|string {
 	$cds_version = NPR_CDS_WP::NPR_CDS_VERSION;
 	$story = new stdClass;
 	$prefix = get_option( 'npr_cds_prefix' );
@@ -185,9 +188,7 @@ function npr_cds_to_json( $post ) {
 
 	// NPR One audio run-by date
 	$datetime = npr_cds_get_post_expiry_datetime( $post ); // if expiry date is not set, returns publication date plus 7 days
-	if ( $datetime instanceof DateTime ) {
-		$story->recommendUntilDateTime = date_format( $datetime, 'c' );
-	}
+	$story->recommendUntilDateTime = date_format( $datetime, 'c' );
 
 
 	// Parse through the paragraphs, add references to layout array, and paragraph text to assets
@@ -280,7 +281,7 @@ function npr_cds_to_json( $post ) {
 		$image_regex = "/" . $image_name_parts['filename'] . "\-[a-zA-Z0-9]*" . $image_name_parts['extension'] . "/";
 		$in_body = "";
 		if ( preg_match( $image_regex, $content ) ) {
-			if ( strstr( $image_attach_url, '?') ) {
+			if ( str_contains( $image_attach_url, '?' ) ) {
 				$in_body = "&origin=body";
 			} else {
 				$in_body = "?origin=body";
@@ -445,13 +446,12 @@ function npr_cds_to_json( $post ) {
 }
 
 // Convert "HH:MM:SS" duration (not time) into seconds
-function npr_cds_convert_duration_to_seconds( $duration ) {
+function npr_cds_convert_duration_to_seconds( $duration ): int {
 	$pieces = explode( ':', $duration );
-	$duration_in_seconds = ( $pieces[0] * 60 * 60 + $pieces[1] * 60 + $pieces[2] );
-	return $duration_in_seconds;
+	return (int)$pieces[0] * 60 * 60 + (int)$pieces[1] * 60 + (int)$pieces[2];
 }
 
-function npr_cds_base_profiles() {
+function npr_cds_base_profiles(): array {
 	$output = [];
 	$cds_version = NPR_CDS_WP::NPR_CDS_VERSION;
 	$profiles = [ 'story', 'publishable', 'document', 'renderable', 'buildout' ];
@@ -470,7 +470,7 @@ function npr_cds_base_profiles() {
 	return $output;
 }
 
-function npr_cds_asset_profile( $type ) {
+function npr_cds_asset_profile( $type ): array {
 	$profiles = [ $type, 'document' ];
 	$cds_version = NPR_CDS_WP::NPR_CDS_VERSION;
 	$output = [];

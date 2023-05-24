@@ -13,7 +13,7 @@ function npr_cds_add_new_story_columns( $cols ) {
 
 add_action( 'manage_posts_custom_column', 'npr_cds_update_column_content', 10, 2 );
 
-function npr_cds_update_column_content( $column_name, $post_ID ) {
+function npr_cds_update_column_content( string $column_name, int $post_ID ): void {
 	if ( $column_name == 'update_story' ) {
 		$retrieved = get_post_meta( $post_ID, NPR_RETRIEVED_STORY_META_KEY, true );
 		if ( $retrieved ) {
@@ -26,7 +26,7 @@ function npr_cds_update_column_content( $column_name, $post_ID ) {
 //add the bulk action to the dropdown on the post admin page
 add_action( 'admin_footer-edit.php', 'npr_cds_bulk_action_update_dropdown' );
 
-function npr_cds_bulk_action_update_dropdown() {
+function npr_cds_bulk_action_update_dropdown(): void {
 	$pull_post_type = NPR_CDS::get_pull_post_type();
 	global $post_type;
 	if ( $post_type == $pull_post_type ) {
@@ -44,7 +44,10 @@ function npr_cds_bulk_action_update_dropdown() {
 //do the new bulk action
 add_action( 'load-edit.php', 'npr_cds_bulk_action_update_action' );
 
-function npr_cds_bulk_action_update_action() {
+/**
+ * @throws Exception
+ */
+function npr_cds_bulk_action_update_action(): void {
 	// 1. get the action
 	$wp_list_table = _get_list_table( 'WP_Posts_List_Table' );
 	$action = $wp_list_table->current_action();
@@ -52,13 +55,11 @@ function npr_cds_bulk_action_update_action() {
 	switch ( $action ) {
 		// 3. Perform the action
 		case 'updateNprStory':
-
-		// make sure ids are submitted.  depending on the resource type, this may be 'media' or 'ids'
+			$post_ids = [];
+			// make sure ids are submitted.  depending on the resource type, this may be 'media' or 'ids'
 			if ( isset( $_REQUEST['post'] ) ) {
 				$post_ids = array_map( 'intval', $_REQUEST['post'] );
 			}
-
-			$exported = 0;
 			foreach( $post_ids as $post_id ) {
 				$api_id = get_post_meta( $post_id, NPR_STORY_ID_META_KEY, TRUE );
 
@@ -72,16 +73,16 @@ function npr_cds_bulk_action_update_action() {
 					$api->parse();
 					if ( empty( $api->message ) ) {
 						npr_cds_error_log( 'updating story for CDS ID = ' . $api_id );
-						$story = $api->update_posts_from_stories();
+						$api->update_posts_from_stories();
 					}
 				}
 			}
 			break;
-		default: return;
+		default:
 	}
 }
 
-function npr_cds_get_stories() {
+function npr_cds_get_stories(): void {
 	$api_key = get_option( 'npr_cds_token' );
 	$pull_url = NPR_CDS_PULL_URL;
 ?>
@@ -97,7 +98,7 @@ function npr_cds_get_stories() {
 
 				// Get the story ID from the URL, then paste it into the input's value field with esc_attr
 				$story_id = '';
-				if ( ( isset( $_POST ) && isset( $_POST[ 'story_id' ] ) ) || ( isset( $_GET ) && isset( $_GET['story_id'] ) ) ) {
+				if ( ( isset( $_POST['story_id'] ) ) || ( isset( $_GET ) && isset( $_GET['story_id'] ) ) ) {
 					if ( !empty( $_POST['story_id'] ) ) {
 						$story_id = sanitize_text_field( $_POST['story_id'] );
 					}

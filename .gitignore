@@ -4,3 +4,5 @@ vendor/
 wp
 composer.lock
 bin/
+tests/*.json
+.idea

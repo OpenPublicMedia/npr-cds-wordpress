@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Defines basic OOP containers for NPRML.
+ * Defines basic OOP containers for NPR JSON.
  */
 require_once( dirname( __FILE__ ) . '/npr_json.php' );
 
@@ -20,12 +20,12 @@ class NPR_CDS_WP {
 	// Default URL for pulling stories
 	const NPR_CDS_VERSION = 'v1';
 
-	public $response;
-	public $request;
-	public $message;
-	public $json;
-	public $notice;
-	public $stories;
+	public array|WP_Error $response;
+	public stdClass $request;
+	public string $message;
+	public string $json;
+	public array $notice;
+	public array $stories;
 
 	/**
 	 * Initializes an NPR JSON object.
@@ -38,15 +38,9 @@ class NPR_CDS_WP {
 		$this->request->path = NULL;
 		$this->request->base = NULL;
 		$this->request->request_url = NULL;
-
-
-		$this->response = new stdClass;
-		$this->response->id = NULL;
-		$this->response->code = NULL;
 	}
 
 	function request( $params = [], $path = 'documents' ): void {
-
 		$this->request->params = $params;
 		$this->request->path = $path;
 		$this->request->base = get_option( 'npr_cds_pull_url' );
@@ -129,7 +123,7 @@ class NPR_CDS_WP {
 		return $output;
 	}
 
-	function get_document ( $href ) {
+	function get_document ( $href ): stdClass|WP_Error {
 		$url = NPR_CDS_PULL_URL . $href;
 		$options = $this->get_token_options();
 		$response = wp_remote_get( $url, $options );
@@ -155,10 +149,10 @@ class NPR_CDS_WP {
 	 * @param bool $publish
 	 * @param bool $qnum
 	 *
-	 * @return int|null $post_id or null
+	 * @return int $post_id or 0
 	 * @throws Exception
 	 */
-	function update_posts_from_stories( bool $publish = TRUE, bool $qnum = false ): ?int {
+	function update_posts_from_stories( bool $publish = TRUE, bool $qnum = false ): int {
 		$pull_post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 
 		$post_id = null;
@@ -254,20 +248,18 @@ class NPR_CDS_WP {
 							if ( $byl_profile === 'reference-byline' ) {
 								foreach ( $byl_current->bylineDocuments as $byl_doc ) {
 									$byl_data = $this->get_document( $byl_doc->href );
-									if ( !empty( $byl_data ) ) {
-										$byl_link = '';
-										if ( !empty( $byl_data->webPages ) ) {
-											foreach ( $byl_data->webPages as $byl_web ) {
-												if ( !empty( $byl_web->rels ) && in_array( 'canonical', $byl_web->rels ) ) {
-													$byl_link = $byl_web->href;
-												}
+									$byl_link = '';
+									if ( !empty( $byl_data->webPages ) ) {
+										foreach ( $byl_data->webPages as $byl_web ) {
+											if ( !empty( $byl_web->rels ) && in_array( 'canonical', $byl_web->rels ) ) {
+												$byl_link = $byl_web->href;
 											}
 										}
-										$by_lines[] = [
-											'name' => $byl_data->title,
-											'link' => $byl_link
-										];
 									}
+									$by_lines[] = [
+										'name' => $byl_data->title,
+										'link' => $byl_link
+									];
 								}
 							}
 						}
@@ -344,7 +336,7 @@ class NPR_CDS_WP {
 					 *
 					 * @param array $args Parameters passed to wp_insert_post()
 					 * @param int $post_id Post ID or NULL if no post ID.
-					 * @param NPRMLEntity $story Story object created during import
+					 * @param stdClass $story Story object created during import
 					 * @param bool $created true if not pre-existing, false otherwise
 					 */
 
@@ -478,7 +470,7 @@ class NPR_CDS_WP {
 					 *
 					 * @param array $metas Array of key/value pairs to be updated
 					 * @param int $post_id Post ID or NULL if no post ID.
-					 * @param NPRMLEntity $story Story object created during import
+					 * @param stdClass $story Story object created during import
 					 * @param bool $created true if not pre-existing, false otherwise
 					 */
 					$metas = apply_filters( 'npr_pre_update_post_metas', $metas, $post_id, $story, $created );
@@ -530,7 +522,7 @@ class NPR_CDS_WP {
 					 *
 					 * @param array $args Parameters passed to wp_insert_post()
 					 * @param int $post_id Post ID or NULL if no post ID.
-					 * @param NPRMLEntity $story Story object created during import
+					 * @param stdClass $story Story object created during import
 					 */
 
 					// keep WP from stripping content from NPR posts
@@ -559,7 +551,7 @@ class NPR_CDS_WP {
 							 *
 							 * @param string $term_name Name of term
 							 * @param int $post_id Post ID or NULL if no post ID.
-							 * @param NPRMLEntity $story Story object created during import
+							 * @param stdClass $story Story object created during import
 							 */
 							$topic = $this->get_document( $collect->href );
 							if ( !is_wp_error( $topic ) && in_array( 'topic', $collect->rels ) ) {
@@ -585,7 +577,7 @@ class NPR_CDS_WP {
 				*
 				* @param int[] $category_ids Array of Category IDs to assign to post identified by $post_id
 				* @param int $post_id Post ID or NULL if no post ID.
-				* @param NPRMLEntity $story Story object created during import
+				* @param stdClass $story Story object created during import
 				*/
 				$category_ids = apply_filters( 'npr_pre_set_post_categories', $category_ids, $post_id, $story );
 				if ( 0 < count( $category_ids ) && is_integer( $post_id ) ) {
@@ -593,7 +585,7 @@ class NPR_CDS_WP {
 				}
 
 				if ( !empty( $npr_tags ) ) {
-					wp_set_post_terms( $post_id, $npr_tags, 'post_tag', false );
+					wp_set_post_terms( $post_id, $npr_tags );
 				}
 
 				// If the Co-Authors Plus plugin is installed, use the bylines from the API output to set guest authors
@@ -609,14 +601,14 @@ class NPR_CDS_WP {
 							}
 						}
 					}
-					wp_set_post_terms( $post_id, $coauthor_terms, $coauthors_plus->coauthor_taxonomy, false );
+					wp_set_post_terms( $post_id, $coauthor_terms, $coauthors_plus->coauthor_taxonomy );
 				}
 			}
 			if ( $single_story ) {
 				return $post_id ?? 0;
 			}
 		}
-		return null;
+		return 0;
 	}
 
 	/**
@@ -636,23 +628,21 @@ class NPR_CDS_WP {
 			$cds_id = $prefix . '-' . $post_ID;
 			$options = $this->get_token_options();
 			$options = apply_filters( 'npr_pre_article_push', $options, $cds_id );
-			$url = get_option( 'npr_cds_push_url' ) . '/' . SELF::NPR_CDS_VERSION . '/documents/' . $cds_id;
+			$url = get_option( 'npr_cds_push_url' ) . '/' . self::NPR_CDS_VERSION . '/documents/' . $cds_id;
 			npr_cds_error_log( 'Sending json = ' . $json );
 
 			$options['body'] = $json;
 			$options['method'] = 'PUT';
 			$result = wp_remote_request( $url, $options );
 			if ( !is_wp_error( $result ) ) {
-				if ( $result['response']['code'] == SELF::NPR_CDS_STATUS_OK ) {
+				if ( $result['response']['code'] == self::NPR_CDS_STATUS_OK ) {
 					$body = wp_remote_retrieve_body( $result );
 					if ( $body ) {
-						$response_json = json_decode( $body );
 						update_post_meta( $post_ID, NPR_STORY_ID_META_KEY, $cds_id );
 					} else {
 						error_log( 'Error returned from NPR CDS with status code 200 OK but failed wp_remote_retrieve_body: ' . print_r( $result, true ) ); // debug use
 					}
 				} else {
-					$error_text = '';
 					if ( !empty( $result['response']['message'] ) ) {
 						$error_text = 'Error pushing story with post_id = ' . $post_ID . ' for url=' . $url . ' HTTP Error response =  ' . $result['response']['message'];
 					}
@@ -689,22 +679,14 @@ class NPR_CDS_WP {
 	function send_delete( $api_id ): void {
 		$options = $this->get_token_options();
 		$options = apply_filters( 'npr_pre_article_delete', $options );
-		$url = get_option( 'npr_cds_push_url' ) . '/' . SELF::NPR_CDS_VERSION . '/documents/' . $api_id;
+		$url = get_option( 'npr_cds_push_url' ) . '/' . self::NPR_CDS_VERSION . '/documents/' . $api_id;
 
 		$options['method'] = 'DELETE';
 		$result = wp_remote_request( $url, $options );
 		$body = wp_remote_retrieve_body( $result );
-		if ( $result['response']['code'] == SELF::NPR_CDS_DELETE_OK && empty( $body ) ) {
+		if ( $result['response']['code'] == self::NPR_CDS_DELETE_OK && empty( $body ) ) {
 			npr_cds_error_log( 'Uploaded article ' . $api_id . ' successfully deleted from the NPR CDS' );
 		}
-	}
-
-	function parse_response(): void {
-		$json = json_decode( $this->response->data, TRUE );
-		if ( !empty( $json->resources[0] ) ) {
-			$id = $json['resources'][0]['id'];
-		}
-		$this->response->id = $id ? $id : NULL;
 	}
 
 	/**
@@ -721,7 +703,7 @@ class NPR_CDS_WP {
 	}
 
 	/**
-	 * Parses object. Turns raw XML(NPRML) into various object properties.
+	 * Parses object. Turns raw JSON into various object properties.
 	 */
 	function parse(): void {
 		if ( !empty( $this->json ) ) {
@@ -783,14 +765,10 @@ class NPR_CDS_WP {
 	 *   A formatted string of text
 	 */
 	function add_paragraph_tag( string $p ): string {
-		$output = '';
 		if ( preg_match( '/^<[a-zA-Z0-9 \="\-_\']+>.+<[a-zA-Z0-9\/]+>$/', $p ) ) {
 			if ( preg_match( '/^<(a href|em|strong)/', $p ) ) {
 				$output = '<p>' . $p . '</p>';
 			} else {
-				if ( str_contains( $p, '<div class="storyMajorUpdateDate">' ) ) {
-					$output = $p;
-				}
 				$output = $p;
 			}
 		} else {
@@ -851,11 +829,11 @@ class NPR_CDS_WP {
 	 * This function will format the body of the story with any provided assets inserted in the order they are in the layout
 	 * and return an array of the transformed body and flags for what sort of elements are returned
 	 *
-	 * @param $story Story object created during import
+	 * @param stdClass $story Story object created during import
 	 * @return array with reconstructed body and flags describing returned elements
 	 */
-	function get_body_with_layout( $story ) {
-		$returnary = [ 'body' => FALSE, 'has_image' => FALSE, 'has_video' => FALSE, 'has_external' => FALSE, 'has_slideshow' => FALSE, 'has_video_streaming' => FALSE ];
+	function get_body_with_layout( stdClass $story ): array {
+		$returnary = [ 'has_image' => FALSE, 'has_video' => FALSE, 'has_external' => FALSE, 'has_slideshow' => FALSE, 'has_video_streaming' => FALSE ];
 		$body_with_layout = "";
 		$use_npr_featured = !empty( get_option( 'npr_cds_query_use_featured' ) );
 		$profiles = $this->extract_profiles( $story->profiles );
@@ -874,7 +852,7 @@ class NPR_CDS_WP {
 					case 'promo-card' :
 						$promo_card = $this->get_document( $asset_current->documentLink->href );
 						$promo_card_url = '';
-						if ( !is_wp_error( $promo_card ) && !empty( $promo_card ) ) {
+						if ( !is_wp_error( $promo_card ) ) {
 							foreach ( $promo_card->webPages as $web ) {
 								if ( in_array( 'canonical', $web->rels ) ) {
 									$promo_card_url = $web->href;
@@ -953,6 +931,7 @@ class NPR_CDS_WP {
 						if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
 							break;
 						}
+						$thisimg = $asset_current->enclosures[0];
 						foreach ( $asset_current->enclosures as $img_enclose ) {
 							if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
 								$thisimg = $img_enclose;
@@ -979,6 +958,7 @@ class NPR_CDS_WP {
 						foreach ( $asset_current->layout as $ig_layout ) {
 							$ig_asset_id = $this->extract_asset_id( $ig_layout->href );
 							$ig_asset_current = $story->assets->{ $ig_asset_id };
+							$thisimg = $ig_asset_current->enclosures[0];
 							foreach ( $ig_asset_current->enclosures as $ig_img_enclose ) {
 								if ( !empty( $ig_img_enclose->rels ) && in_array( 'primary', $ig_img_enclose->rels ) ) {
 									$thisimg = $ig_img_enclose;
@@ -1038,7 +1018,7 @@ class NPR_CDS_WP {
 								if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
 									$returnary['has_video_streaming'] = true;
 									$video_asset = <<<EOT
-									<video id="{$asset_current->id}" controls="true"></video>
+									<video id="{$asset_current->id}" controls></video>
 									<script>
 										let video = document.getElementById('{$asset_current->id}');
 										if (Hls.isSupported()) {

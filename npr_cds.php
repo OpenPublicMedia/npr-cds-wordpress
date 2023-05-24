@@ -24,15 +24,10 @@
 */
 
 const NPR_STORY_ID_META_KEY = 'npr_story_id';
-const NPR_API_LINK_META_KEY = 'npr_api_link';
 const NPR_HTML_LINK_META_KEY = 'npr_html_link';
-const NPR_SHORT_LINK_META_KEY = 'npr_short_link';
 const NPR_BYLINE_LINK_META_KEY = 'npr_byline_link';
 const NPR_MULTI_BYLINE_META_KEY = 'npr_multi_byline';
-const NPR_IMAGE_GALLERY_META_KEY = 'npr_image_gallery';
-const NPR_HTML_ASSETS_META_KEY = 'npr_html_assets';
 const NPR_AUDIO_META_KEY = 'npr_audio';
-const NPR_AUDIO_M3U_META_KEY = 'npr_audio_m3u';
 const NPR_PUB_DATE_META_KEY = 'npr_pub_date';
 const NPR_STORY_DATE_MEATA_KEY = 'npr_story_date';
 const NPR_LAST_MODIFIED_DATE_KEY = 'npr_last_modified_date';
@@ -344,10 +339,8 @@ function npr_cds_add_header_meta(): void {
 		$id = $wp_query->queried_object_id;
 		$npr_story_id = get_post_meta( $id, 'npr_story_id', 1 );
 		if ( !empty( $npr_story_id ) ) {
-			$primary_cat = '';
 			$has_audio = ( preg_match( '/\[audio/', $wp_query->post->post_content ) ? 1 : 0 );
 			$word_count = str_word_count( strip_tags( $wp_query->post->post_content ) );
-			$byline = '';
 			$npr_retrieved_story = get_post_meta( $id, 'npr_retrieved_story', 1 );
 			if ( $npr_retrieved_story == 1 ) {
 				$byline = get_post_meta( $id, 'npr_byline', 1 );

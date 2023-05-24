@@ -17,12 +17,12 @@
  *
  * @see npr_cds_publish_meta_box_prompt
  */
-function npr_cds_add_options_page() {
+function npr_cds_add_options_page(): void {
 	add_options_page( 'NPR CDS', 'NPR CDS', 'manage_options', 'npr_cds', 'npr_cds_options_page' );
 }
 add_action( 'admin_menu', 'npr_cds_add_options_page' );
 
-function npr_cds_options_page() {
+function npr_cds_options_page(): void {
 	?>
 		<style>
 			h1 {
@@ -133,8 +133,8 @@ function npr_cds_options_page() {
 			const nprSections = document.querySelectorAll('.npr-selector > div');
 			const nprGroups = document.querySelectorAll('.npr-settings-group');
 			const hashMark = window.location.hash;
-			if ( hashMark == '#npr-general' || hashMark == '#npr-multi' || hashMark == '#npr-fields' ) {
-				var tabId = hashMark.replace('#', '');
+			if ( hashMark === '#npr-general' || hashMark === '#npr-multi' || hashMark === '#npr-fields' ) {
+				let tabId = hashMark.replace('#', '');
 				document.querySelector('[data-tab="'+tabId+'-tab"]').classList.add('active');
 				document.querySelector('[data-tab="'+tabId+'"]').classList.add('active');
 			} else {
@@ -145,7 +145,7 @@ function npr_cds_options_page() {
 			Array.from(nprSections).forEach((ns) => {
 				ns.addEventListener('click', (evt) => {
 					console.log(evt.target);
-					var tab = evt.target.getAttribute('data-tab');
+					let tab = evt.target.getAttribute('data-tab');
 					Array.from(nprSections).forEach((nse) => {
 						nse.classList.remove('active');
 					});
@@ -161,7 +161,7 @@ function npr_cds_options_page() {
 	<?php
 }
 
-function npr_cds_settings_init() {
+function npr_cds_settings_init(): void {
 	// NPR CDS Settings Group
 	add_settings_section( 'npr_cds_settings', 'General Settings', 'npr_cds_settings_callback', 'npr_cds' );
 
@@ -244,12 +244,12 @@ add_action( 'admin_init', 'npr_cds_settings_init' );
  */
 function npr_cds_settings_callback() { }
 
-function npr_cds_push_settings_callback() { ?>
+function npr_cds_push_settings_callback(): void { ?>
 	<p>Use this page to map your custom WordPress Meta fields to fields sent to the NPR CDS, and vice versa. Clicking the <strong>Use Custom Settings</strong> checkbox will enable these mappings. If you wish to use the default mapping for a field, select &mdash; default &mdash; and we will use the obvious WordPress field.</p>
 	<p>Select for the Meta fields for the <strong><?php echo npr_cds_get_push_post_type(); ?></strong> post type.</p> <?php
  }
 
-function npr_cds_get_multi_settings_callback() {
+function npr_cds_get_multi_settings_callback(): void {
 	$run_multi = get_option( 'npr_cds_query_run_multi' );
 	if ( $run_multi ) {
 		NPR_CDS::cron_pull();
@@ -268,7 +268,7 @@ function npr_cds_get_multi_settings_callback() {
 /**
  * Add cron intervals
  */
-function npr_cds_add_cron_interval( $schedules ) {
+function npr_cds_add_cron_interval( $schedules ): array {
 	$ds_interval = get_option( 'npr_cds_query_multi_cron_interval' );
 	//if for some reason we don't get a number in the option, use 60 minutes as the default.
 	if ( !is_numeric( $ds_interval ) || $ds_interval < 1 ) {
@@ -287,12 +287,12 @@ add_filter( 'cron_schedules', 'npr_cds_add_cron_interval' );
 /**
  * NPR General Settings Group Callbacks
  */
-function npr_cds_token_callback() {
+function npr_cds_token_callback(): void {
 	$option = get_option( 'npr_cds_token' );
 	echo npr_cds_esc_html( '<p><input type="text" value="' . $option . '" name="npr_cds_token" /></p><p><em>This is a bearer token provided by NPR. If you do not already have one, you can request one through <a href="https://studio.npr.org/">NPR Studio</a>.</em></p>' );
 }
 
-function npr_cds_pull_url_callback() {
+function npr_cds_pull_url_callback(): void {
 	$option = get_option( 'npr_cds_pull_url' );
 	$output = '<p><label><input type="radio" name="npr_cds_pull_url" value="https://stage-content.api.npr.org"' . ( $option == 'https://stage-content.api.npr.org' ? ' checked="checked"' : '' ) . ' /> Staging</label></p>';
 	$output .= '<p><label><input type="radio" name="npr_cds_pull_url" value="https://content.api.npr.org"' . ( $option == 'https://content.api.npr.org' ? ' checked="checked"' : '' ) . ' /> Production</label></p>';
@@ -300,7 +300,7 @@ function npr_cds_pull_url_callback() {
 	echo npr_cds_esc_html( $output );
 }
 
-function npr_cds_push_url_callback() {
+function npr_cds_push_url_callback(): void {
 	$option = get_option( 'npr_cds_push_url' );
 	$output = '<p><label><input type="radio" name="npr_cds_push_url" value="https://stage-content.api.npr.org"' . ( $option == 'https://stage-content.api.npr.org' ? ' checked="checked"' : '' ) . ' /> Staging</label></p>';
 	$output .= '<p><label><input type="radio" name="npr_cds_push_url" value="https://content.api.npr.org"' . ( $option == 'https://content.api.npr.org' ? ' checked="checked"' : '' ) . ' /> Production</label></p>';
@@ -308,17 +308,17 @@ function npr_cds_push_url_callback() {
 	echo npr_cds_esc_html( $output );
 }
 
-function npr_cds_org_id_callback() {
+function npr_cds_org_id_callback(): void {
 	$option = get_option( 'npr_cds_org_id' );
 	echo npr_cds_esc_html( '<input type="text" value="' . $option . '" name="npr_cds_org_id" />' );
 }
 
-function npr_cds_prefix_callback() {
+function npr_cds_prefix_callback(): void {
 	$option = get_option( 'npr_cds_prefix' );
 	echo npr_cds_esc_html( '<p><input type="text" value="' . $option . '" name="npr_cds_prefix" placeholder="callletters" /></p><p><em>When given write permission to the CDS, NPR will assign a code that will be prefixed on all of your document IDs (e.g. "kuhf-12345").</em></p>' );
 }
 
-function npr_cds_query_use_featured_callback() {
+function npr_cds_query_use_featured_callback(): void {
 	$use_featured = get_option( 'npr_cds_query_use_featured' );
 	$check_box_string = '<input id="npr_cds_query_use_feature" name="npr_cds_query_use_featured" type="checkbox" value="true"' .
 		( $use_featured ? ' checked="checked"' : '' ) . ' />';
@@ -326,27 +326,27 @@ function npr_cds_query_use_featured_callback() {
 	echo npr_cds_esc_html( '<p>' . $check_box_string . " If your theme uses the featured image, checking this box will remove the lead image from imported posts.</p>" );
 }
 
-function npr_cds_pull_post_type_callback() {
+function npr_cds_pull_post_type_callback(): void {
 	$post_types = get_post_types();
 	npr_cds_show_post_types_select( 'npr_cds_pull_post_type', $post_types );
 }
 
-function npr_cds_push_post_type_callback() {
+function npr_cds_push_post_type_callback(): void {
 	$post_types = get_post_types();
 	npr_cds_show_post_types_select( 'npr_cds_push_post_type', $post_types );
 	echo npr_cds_esc_html( '<p><em>If you change the Push Post Type setting remember to update the mappings for CDS Fields at <a href="' . admin_url( 'options-general.php?page=npr_cds#npr-fields' ) . '">NPR CDS Field Mapping</a> tab.</em></p>' );
 }
 
-function npr_cds_image_format_callback() {
+function npr_cds_image_format_callback(): void {
 	npr_cds_show_post_types_select( 'npr_cds_image_format', [ 'jpeg', 'png', 'webp' ] );
 }
 
-function npr_cds_image_quality_callback() {
+function npr_cds_image_quality_callback(): void {
 	$option = get_option( 'npr_cds_image_quality', 75 );
 	echo npr_cds_esc_html( '<p><input type="number" value="' . $option . '" name="npr_cds_image_quality" min="1" max="100" /></p><p><em>Set the quality level of the images from the NPR CDS (default: 75).</em></p>' );
 }
 
-function npr_cds_image_width_callback() {
+function npr_cds_image_width_callback(): void {
 	$option = get_option( 'npr_cds_image_width', 1200 );
 	echo npr_cds_esc_html( '<p><input type="number" value="' . $option . '" name="npr_cds_image_width" min="500" max="3000" /></p><p><em>Maximum width of images pulled in from the NPR CDS (default: 1200).</em></p>' );
 }
@@ -354,12 +354,12 @@ function npr_cds_image_width_callback() {
 /**
  * NPR Get Multi Settings Group Callbacks
  */
-function npr_cds_num_multi_callback() {
+function npr_cds_num_multi_callback(): void {
 	$option = get_option( 'npr_cds_num' );
 	echo npr_cds_esc_html( '<p><input type="number" value="' . $option . '" name="npr_cds_num" /></p><p><em>Increase the number of queries by changing the number in the field above, to a maximum of 10.</em></p>' );
 }
 
-function npr_cds_query_callback( $i ) {
+function npr_cds_query_callback( $i ): void {
 	if ( is_integer( $i ) ) {
 		$optionType = get_option( 'npr_cds_pull_post_type', 'post' );
 		$query = get_option( 'npr_cds_query_' . $i );
@@ -394,14 +394,14 @@ function npr_cds_query_callback( $i ) {
 	}
 }
 
-function npr_cds_query_run_multi_callback() {
+function npr_cds_query_run_multi_callback(): void {
 	$run_multi = get_option( 'npr_cds_query_run_multi' );
 	$check_box_string = '<input id="npr_cds_query_run_multi" name="npr_cds_query_run_multi" type="checkbox" value="true"' .
 		( $run_multi ? ' checked="checked"' : '' ) . ' />';
 	echo npr_cds_esc_html( $check_box_string );
 }
 
-function npr_cds_query_multi_cron_interval_callback() {
+function npr_cds_query_multi_cron_interval_callback(): void {
 	$option = get_option( 'npr_cds_query_multi_cron_interval' );
 	echo npr_cds_esc_html( '<p><input type="number" value="' . $option . '" name="npr_cds_query_multi_cron_interval" id="npr_cds_query_multi_cron_interval" /></p><p><em>How often, in minutes, should the Get Multi function run?  (default = 60)</em></p>' );
 }
@@ -409,47 +409,48 @@ function npr_cds_query_multi_cron_interval_callback() {
 /**
  * NPR Push Settings Group Callbacks
  */
-function npr_cds_use_custom_mapping_callback() {
+function npr_cds_use_custom_mapping_callback(): void {
 	$use_custom = get_option( 'npr_cds_push_use_custom_map' );
 	$check_box_string = '<input id="npr_cds_push_use_custom_map" name="npr_cds_push_use_custom_map" type="checkbox" value="true"' .
 		( $use_custom ? ' checked="checked"' : '' ) . ' />';
 	echo npr_cds_esc_html( $check_box_string );
 }
 
-function npr_cds_mapping_title_callback() {
+function npr_cds_mapping_title_callback(): void {
 	$push_post_type = npr_cds_get_push_post_type();
 	$keys = npr_cds_get_post_meta_keys( $push_post_type );
 	npr_cds_show_keys_select( 'npr_cds_mapping_title', $keys );
 }
 
-function npr_cds_mapping_body_callback() {
+function npr_cds_mapping_body_callback(): void {
 	$push_post_type = npr_cds_get_push_post_type();
 	$keys = npr_cds_get_post_meta_keys( $push_post_type );
 	npr_cds_show_keys_select( 'npr_cds_mapping_body', $keys );
 }
 
-function npr_cds_mapping_byline_callback() {
+function npr_cds_mapping_byline_callback(): void {
 	$push_post_type = npr_cds_get_push_post_type();
 	$keys = npr_cds_get_post_meta_keys( $push_post_type );
 	npr_cds_show_keys_select( 'npr_cds_mapping_byline', $keys );
 }
 
-function npr_cds_mapping_media_credit_callback() {
+function npr_cds_mapping_media_credit_callback(): void {
 	$keys = npr_cds_get_post_meta_keys( 'attachment' );
 	npr_cds_show_keys_select( 'npr_cds_mapping_media_credit', $keys );
 }
 
-function npr_cds_mapping_media_agency_callback() {
+function npr_cds_mapping_media_agency_callback(): void {
 	$keys = npr_cds_get_post_meta_keys( 'attachment' );
 	npr_cds_show_keys_select( 'npr_cds_mapping_media_agency', $keys );
 }
 
 /**
-* create the select widget where the Id is the value in the array
-* @param  $field_name
-* @param  $keys - an array like (1=>'Value1', 2=>'Value2', 3=>'Value3');
-*/
-function npr_cds_show_post_types_select( $field_name, $keys ) {
+ * create the select widget where the Id is the value in the array
+ *
+ * @param string $field_name
+ * @param array $keys - an array like (1=>'Value1', 2=>'Value2', 3=>'Value3');
+ */
+function npr_cds_show_post_types_select( string $field_name, array $keys ): void {
 	$selected = get_option( $field_name );
 
 	echo npr_cds_esc_html( '<div><select id="' . $field_name . '" name="' . $field_name . '">' );
@@ -469,14 +470,14 @@ function npr_cds_show_post_types_select( $field_name, $keys ) {
 /**
  * checkbox validation callback
  */
-function npr_cds_validation_callback_checkbox( $value ) {
-	return ( $value ) ? true : false;
+function npr_cds_validation_callback_checkbox( $value ): bool {
+	return (bool) $value;
 }
 
 /**
  * Prefix validation callback. We only want to save the prefix without the hyphen
  */
-function npr_cds_validation_callback_prefix( $value ) {
+function npr_cds_validation_callback_prefix( $value ): string {
 	$value = strtolower( $value );
 	preg_match( '/([a-z0-9]+)/', $value, $match );
 	if ( !empty( $match ) ) {
@@ -485,17 +486,15 @@ function npr_cds_validation_callback_prefix( $value ) {
 	add_settings_error(
 		'npr_cds_prefix',
 		'prefix-is-invalid',
-		esc_html( $value ) . __( ' is not a valid value for the NPR CDS Prefix. It can only contain lowercase alphanumeric characters.' ),
-		'error'
+		esc_html( $value ) . __( ' is not a valid value for the NPR CDS Prefix. It can only contain lowercase alphanumeric characters.' )
 	);
-	$value = '';
-	return $value;
+	return '';
 }
 
 /**
  * URL validation callbacks for the CDS URLs
  */
-function npr_cds_validation_callback_pull_url( $value ) {
+function npr_cds_validation_callback_pull_url( string $value ): string {
 	if ( $value == 'https://stage-content.api.npr.org' || $value == 'https://content.api.npr.org' ) {
 		return esc_attr( $value );
 	} elseif ( $value == 'other' ) {
@@ -504,15 +503,14 @@ function npr_cds_validation_callback_pull_url( $value ) {
 			add_settings_error(
 				'npr_cds_pull_url',
 				'not-https-url',
-				esc_html( $value ) . __( ' is not a valid value for the NPR CDS Pull URL. It must be a URL starting with <code>https</code>.' ),
-				'error'
+				esc_html( $value ) . __( ' is not a valid value for the NPR CDS Pull URL. It must be a URL starting with <code>https</code>.' )
 			);
 			$value = '';
 		}
 	}
 	return esc_attr( $value );
 }
-function npr_cds_validation_callback_push_url( $value ) {
+function npr_cds_validation_callback_push_url( string $value ): string {
 	if ( $value == 'https://stage-content.api.npr.org' || $value == 'https://content.api.npr.org' ) {
 		return esc_attr( $value );
 	} elseif ( $value == 'other' ) {
@@ -521,8 +519,7 @@ function npr_cds_validation_callback_push_url( $value ) {
 			add_settings_error(
 				'npr_cds_push_url',
 				'not-https-url',
-				esc_html( $value ) . __( ' is not a valid value for the NPR CDS Push URL. It must be a URL starting with <code>https</code>.' ),
-				'error'
+				esc_html( $value ) . __( ' is not a valid value for the NPR CDS Push URL. It must be a URL starting with <code>https</code>.' )
 			);
 			$value = '';
 		}
@@ -530,7 +527,7 @@ function npr_cds_validation_callback_push_url( $value ) {
 	return esc_attr( $value );
 }
 
-function npr_cds_validation_callback_org_id( $value ) {
+function npr_cds_validation_callback_org_id( $value ): string {
 	if ( preg_match( '/^[0-9]{1,4}$/', $value ) ) {
 		$value = 's' . $value;
 	}
@@ -539,10 +536,11 @@ function npr_cds_validation_callback_org_id( $value ) {
 
 /**
  * Create the select widget of all meta fields
- * @param  $field_name
- * @param  $keys
+ *
+ * @param string $field_name
+ * @param array $keys
  */
-function npr_cds_show_keys_select( $field_name, $keys ) {
+function npr_cds_show_keys_select( string $field_name, array $keys ): void {
 
 	$selected = get_option( $field_name );
 

@@ -13,7 +13,7 @@ require_once ( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
  * @param Int $post_ID
  * @param WP_Post $post
  */
-function npr_cds_push( $post_ID, $post ) {
+function npr_cds_push( int $post_ID, WP_Post $post ): void {
 	if ( !current_user_can( 'publish_posts' ) ) {
 		wp_die(
 			__( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.', 'nprcds' ),
@@ -76,9 +76,9 @@ function npr_cds_push( $post_ID, $post ) {
  *
  * Limited to users that can delete other users' posts
  *
- * @param unknown_type $post_ID
+ * @param int $post_ID
  */
-function npr_cds_delete( $post_ID ) {
+function npr_cds_delete( int $post_ID ): void {
 	if ( !current_user_can( 'delete_others_posts' ) ) {
 		wp_die(
 			__('You do not have permission to delete posts in the NPR CDS. Users that can delete other users\' posts have that ability: administrators and editors.'),
@@ -121,9 +121,12 @@ add_action( 'wp_trash_post', 'npr_cds_delete', 10, 2 );
  * Query the database for any meta fields for a post type, then store that in a WP transient/cache for a day.
  * I don't see the need for this cache to be any shorter, there's not a lot of adding of meta keys happening.
  * To clear this cache, after adding meta keys, you need to run delete_transient( 'npr_cds_' . $post_type . '_meta_keys' )
- * @param  $post_type
+ *
+ * @param string $post_type
+ *
+ * @return array
  */
-function npr_cds_push_meta_keys( $post_type = 'post' ) {
+function npr_cds_push_meta_keys( string $post_type = 'post' ): array {
 	global $wpdb;
 	$limit = (int) apply_filters( 'postmeta_form_limit', 30 );
 	$query = "
@@ -147,9 +150,11 @@ function npr_cds_push_meta_keys( $post_type = 'post' ) {
 /**
  * get the meta keys for a post type, they could be stored in a cache.
  *
- * @param  $post_type default is 'post'
+ * @param string $post_type default is 'post'
+ *
+ * @return array
  */
-function npr_cds_get_post_meta_keys( $post_type = 'post' ) {
+function npr_cds_get_post_meta_keys( string $post_type = 'post' ): array {
 	$cache = get_transient( 'npr_cds_' .  $post_type . '_meta_keys' );
 	if ( !empty( $cache ) ) {
 		$meta_keys = $cache;
@@ -162,7 +167,7 @@ function npr_cds_get_post_meta_keys( $post_type = 'post' ) {
 //add the bulk action to the dropdown on the post admin page
 add_action( 'admin_footer-edit.php', 'npr_cds_bulk_action_push_dropdown' );
 
-function npr_cds_bulk_action_push_dropdown() {
+function npr_cds_bulk_action_push_dropdown(): void {
 	$push_post_type = get_option( 'npr_cds_push_post_type' );
 	if ( empty( $push_post_type ) ) {
 		$push_post_type = 'post';
@@ -188,7 +193,7 @@ function npr_cds_bulk_action_push_dropdown() {
 //do the new bulk action
 add_action( 'load-edit.php', 'npr_cds_bulk_action_push_action' );
 
-function npr_cds_bulk_action_push_action() {
+function npr_cds_bulk_action_push_action(): void {
 	// 1. get the action
 	$wp_list_table = _get_list_table( 'WP_Posts_List_Table' );
 	$action = $wp_list_table->current_action();
@@ -213,18 +218,9 @@ function npr_cds_bulk_action_push_action() {
 					$exported++;
 				}
 			}
-
-			// build the redirect url
-			//$sendback = add_query_arg( array('exported' => $exported, 'ids' => join(',', $post_ids) ), $sendback );
 			break;
-		default: return;
+		default:
 	}
-
-	// ...
-
-	// 4. Redirect client
-	//wp_redirect($sendback);
-	//exit();
 }
 
 /**
@@ -233,10 +229,11 @@ function npr_cds_bulk_action_push_action() {
  * The meta name here is '_send_to_nprone' for backwards compatibility with plugin versions 1.6 and prior
  *
  * @param Int $post_ID The post ID of the post we're saving
+ *
  * @since 1.6 at least
  * @see npr_cds_publish_meta_box
  */
-function npr_cds_save_send_to_cds( $post_ID ) {
+function npr_cds_save_send_to_cds( Int $post_ID ): bool {
 	// safety checks
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
@@ -249,6 +246,7 @@ function npr_cds_save_send_to_cds( $post_ID ) {
 
 	// see historical note
 	update_post_meta( $post_ID, '_send_to_nprone', $value );
+	return true;
 }
 add_action( 'save_post', 'npr_cds_save_send_to_cds');
 
@@ -260,7 +258,7 @@ add_action( 'save_post', 'npr_cds_save_send_to_cds');
  * @param Int $post_ID The post ID of the post we're saving
  * @since 1.7
  */
-function npr_cds_save_send_to_one( $post_ID ) {
+function npr_cds_save_send_to_one( int $post_ID ): bool {
 	// safety checks
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
@@ -276,6 +274,7 @@ function npr_cds_save_send_to_one( $post_ID ) {
 		&& $_POST['send_to_cds'] == 1
 	) ? 1 : 0;
 	update_post_meta( $post_ID, '_send_to_one', $value );
+	return true;
 }
 add_action( 'save_post', 'npr_cds_save_send_to_one' );
 
@@ -288,7 +287,7 @@ add_action( 'save_post', 'npr_cds_save_send_to_one' );
  * @param Int $post_ID The post ID of the post we're saving
  * @since 1.7
  */
-function npr_cds_save_nprone_featured( $post_ID ) {
+function npr_cds_save_nprone_featured( int $post_ID ): bool {
 	// safety checks
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
@@ -306,6 +305,7 @@ function npr_cds_save_nprone_featured( $post_ID ) {
 		&& $_POST['send_to_one'] == 1
 	) ? 1 : 0;
 	update_post_meta( $post_ID, '_nprone_featured', $value );
+	return true;
 }
 add_action( 'save_post', 'npr_cds_save_nprone_featured' );
 
@@ -320,7 +320,7 @@ add_action( 'save_post', 'npr_cds_save_nprone_featured' );
  * @uses npr_cds_get_datetimezone
  * @link https://en.wikipedia.org/wiki/ISO_8601
  */
-function npr_cds_save_datetime( $post_ID ) {
+function npr_cds_save_datetime( int $post_ID ): bool {
 	// safety checks
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
@@ -335,7 +335,6 @@ function npr_cds_save_datetime( $post_ID ) {
 
 	// If the post is not published and values are not set, save an empty post meta
 	if ( isset( $date ) && 'publish' === $post->status ) {
-		$timezone = get_option( 'gmt_offset' );
 		$datetime = date_create( $date, npr_cds_get_datetimezone() );
 		$time = explode( ':', $time );
 		$datetime->setTime( $time[0], $time[1] );
@@ -344,6 +343,7 @@ function npr_cds_save_datetime( $post_ID ) {
 	} else {
 		delete_post_meta( $post_ID, '_nprone_expiry_8601' );
 	}
+	return true;
 }
 add_action( 'save_post', 'npr_cds_save_datetime');
 
@@ -353,14 +353,15 @@ add_action( 'save_post', 'npr_cds_save_datetime');
  * The datetime is stored in post meta _nprone_expiry_8601
  * This assumes that the post has been published
  *
- * @param WP_Post|int $post the post ID or WP_Post object
+ * @param int|WP_Post $post the post ID or WP_Post object
+ *
  * @return DateTime the DateTime object created from the post expiry date
  * @see note on DATE_ATOM and DATE_ISO8601 https://secure.php.net/manual/en/class.datetime.php#datetime.constants.types
  * @uses npr_cds_get_datetimezone
  * @since 1.7
  * @todo rewrite this to use fewer queries, so it's using the WP_Post internally instead of the post ID
  */
-function npr_cds_get_post_expiry_datetime( $post ) {
+function npr_cds_get_post_expiry_datetime( int|WP_Post $post ): DateTime {
 	$post = ( $post instanceof WP_Post ) ? $post->ID : $post ;
 	$iso_8601 = get_post_meta( $post, '_nprone_expiry_8601', true );
 	$timezone = npr_cds_get_datetimezone();
@@ -386,7 +387,7 @@ function npr_cds_get_post_expiry_datetime( $post ) {
  * @since 1.9.4
  * @return DateTimeZone
  */
-function npr_cds_get_datetimezone() {
+function npr_cds_get_datetimezone(): DateTimeZone {
 	$offset = get_option( 'timezone_string', '+0000' );
 	try {
 		$return = new DateTimeZone( $offset );
@@ -400,7 +401,7 @@ function npr_cds_get_datetimezone() {
 /**
  * Add an admin notice to the post editor with the post's error message if it exists
  */
-function npr_cds_post_admin_message_error() {
+function npr_cds_post_admin_message_error(): void {
 	// only run on a post edit page
 	$screen = get_current_screen();
 	if ( $screen->id !== 'post' ) {
@@ -432,7 +433,7 @@ add_action( 'admin_notices', 'npr_cds_post_admin_message_error' );
 /**
  * Edit the post admin notices to include the post's id when it has been pushed successfully
  */
-function npr_cds_post_updated_messages_success( $messages ) {
+function npr_cds_post_updated_messages_success( $messages ): array {
 	$id = get_post_meta( get_the_ID(), NPR_STORY_ID_META_KEY, true ); // single
 
 	if ( !empty( $id ) ) {

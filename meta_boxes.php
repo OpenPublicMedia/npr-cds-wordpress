@@ -7,6 +7,7 @@
  * Output the NPR CDS publishing options metabox for the edit page admin interface
  *
  * @param WP_Post $post the WordPress post object.
+ *
  * @see npr_cds_save_send_to_api
  * @see npr_cds_save_send_to_one
  * @see npr_cds_save_nprone_featured
@@ -14,14 +15,7 @@
  * @since 1.7
  *
  */
-function npr_cds_publish_meta_box( $post ) {
-	$is_disabled = ( 'publish' !== $post->post_status );
-	$attrs = [ 'id' => 'npr-cds-update-push' ];
-
-	if ( $is_disabled ) {
-		$attrs['disabled'] = 'disabled';
-	}
-
+function npr_cds_publish_meta_box( WP_Post $post ): void {
 	wp_enqueue_style( 'npr_cds_publish_meta_box_stylesheet' );
 	wp_enqueue_script( 'npr_cds_publish_meta_box_script' );
 	$npr_id = get_post_meta( $post->ID, 'npr_story_id', true ); ?>
@@ -100,7 +94,7 @@ function npr_cds_publish_meta_box( $post ) {
  * @since 1.7
  * @see npr_cds_publish_meta_box
  */
-function npr_cds_publish_meta_box_assets() {
+function npr_cds_publish_meta_box_assets(): void {
 	wp_register_style(
 		'npr_cds_publish_meta_box_stylesheet',
 		NPR_CDS_PLUGIN_URL . 'assets/css/meta-box.css'
@@ -117,14 +111,15 @@ function npr_cds_publish_meta_box_assets() {
 /**
  * Alternate meta box output if the CDS Push URL option is not set
  *
- * Propmts the user to set that option.
+ * Prompts the user to set that option.
  * @link https://github.com/npr/nprapi-wordpress/issues/51
  *
  * @param WP_Post $post the WordPress post object.
+ *
  * @since 1.8
  * @see npr_cds_add_options_page
  */
-function npr_cds_publish_meta_box_prompt( $post ) {
+function npr_cds_publish_meta_box_prompt( WP_Post $post ): void {
 	if ( current_user_can( 'manage_options' ) ) { // this should match the value in npr_cds_add_options_page
 		printf(
 			'<p>%1$s</p>',

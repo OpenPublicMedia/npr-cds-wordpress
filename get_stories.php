@@ -7,21 +7,21 @@ require_once( NPR_CDS_PLUGIN_DIR . 'get_stories_ui.php' );
 require_once( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
 
 class NPR_CDS {
-	var $created_message = '';
+	var string $created_message = '';
 
 	/**
 	 * What is the post type that pulled stories should be created as?
 	 *
 	 * @return string The post type
 	 */
-	public static function get_pull_post_type() {
+	public static function get_pull_post_type(): string {
 		return get_option( 'npr_cds_pull_post_type', 'post' );
 	}
 
 	/**
 	 * The cron job to pull stories from the API
 	 */
-	public static function cron_pull() {
+	public static function cron_pull(): void {
 		// here we should get the list of IDs/full urls that need to be checked hourly
 		//because this is run on cron, and may be fired off by an non-admin, we need to load a bunch of stuff
 		require_once( ABSPATH . 'wp-admin/includes/file.php' );
@@ -91,8 +91,9 @@ class NPR_CDS {
 
 	/**
 	 * Function to convert an alleged NPR story URL or ID into a story ID, then request it
+	 * @throws Exception
 	 */
-	public function load_page_hook() {
+	public function load_page_hook(): void {
 		// if the current user shouldn't be doing this, fail
 		if ( !current_user_can( 'edit_posts' ) ) {
 			wp_die(
@@ -101,10 +102,10 @@ class NPR_CDS {
 				403
 			);
 		}
-
+		$publish = false;
 		// find the input that is allegedly a story id
 		// We validate these later
-		if ( isset( $_POST ) && isset( $_POST[ 'story_id' ] ) ) {
+		if ( isset( $_POST['story_id'] ) ) {
 			if ( !check_admin_referer( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ) ) {
 				wp_die(
 					__( 'Nonce did not verify in NPR_CDS::load_page_hook. Are you sure you should be doing this?' ),
@@ -121,17 +122,14 @@ class NPR_CDS {
 			}
 		} elseif ( isset( $_GET['story_id'] ) && isset( $_GET['create_draft'] ) ) {
 			$story_id = sanitize_text_field( $_GET['story_id'] );
-			$publish = false;
 		}
 
 		// try to get the ID of the story from the URL
 		if ( isset( $story_id ) ) {
 			//check to see if we got an ID or a URL
-			if ( is_numeric( $story_id ) ) {
-				if ( strlen( $story_id ) >= 8 ) {
-					$story_id = $story_id;
-				}
-			} elseif ( strpos( $story_id, 'npr.org' ) !== false ) {
+			if ( is_numeric( $story_id ) && strlen( $story_id ) >= 8 ) {
+				$story_id = trim( $story_id );
+			} elseif ( str_contains( $story_id, 'npr.org' ) ) {
 				$story_id = sanitize_url( $story_id );
 				// url format: /yyyy/mm/dd/id
 				// url format: /blogs/name/yyyy/mm/dd/id
@@ -178,7 +176,6 @@ class NPR_CDS {
 				if ( empty( $story ) ) {
 					npr_cds_show_message( 'Error retrieving story for id = ' . $story_id . '<br> CDS Message =' . $api->message, TRUE );
 					error_log( 'Not going to save the return from query for story_id=' . $story_id .', we got an error=' . $api->message . ' from the NPR CDS' ); // debug use
-					return;
 				}
 			}
 		}
@@ -198,7 +195,7 @@ class NPR_CDS {
 	/**
 	 * Register the admin menu for "Get NPR Stories"
 	 */
-	public function admin_menu() {
+	public function admin_menu(): void {
 		add_posts_page( 'Get NPR Stories', 'Get NPR Stories', 'edit_posts', 'get-npr-stories',   'npr_cds_get_stories' );
 	}
 }
