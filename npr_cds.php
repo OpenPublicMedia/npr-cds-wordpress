@@ -134,7 +134,7 @@ function npr_cds_activate(): void {
 						if ( in_array( 'image', $ra_exp ) ) {
 							$profileIds[] = 'has-images';
 						}
-						if ( in_array( 'audio', $ra_exp ) || strpos( $profile, '15' ) !== false ) {
+						if ( in_array( 'audio', $ra_exp ) || str_contains( $profile, '15' ) ) {
 							$profileIds[] = 'has-audio';
 						}
 					}
