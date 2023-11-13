@@ -44,6 +44,9 @@ class NPR_CDS {
 				//if the query string contains the pull url and 'query', just make request from the API
 				$url = $pull_url . '/' . NPR_CDS_WP::NPR_CDS_VERSION . '/documents?';
 				$query_array = [];
+				if ( empty( $query['filters'] ) && empty( $query['sorting'] ) ) {
+					continue;
+				}
 				if ( !empty( $query['filters'] ) ) {
 					$filters = explode( '&', $query['filters'] );
 					if ( !empty( $filters ) ) {
@@ -71,7 +74,7 @@ class NPR_CDS {
 				$api->parse();
 				try {
 					if ( empty( $api->message ) ) {
-						//check the publish flag and send that along.
+						// check the publish flag and send that along.
 						$pub_flag = FALSE;
 						if ( $query['publish'] == 'Publish' ) {
 							$pub_flag = TRUE;
@@ -79,7 +82,7 @@ class NPR_CDS {
 						$story = $api->update_posts_from_stories( $pub_flag, $i );
 					} else {
 						if ( empty( $story ) ) {
-							error_log( 'NPR CDS: not going to save story. Query ' . $query_string . ' returned an error ' . $api->message . ' error' ); // debug use
+							error_log( 'NPR CDS: not going to save story. Query ' . implode( '&', $query_array ) . ' returned an error ' . $api->message . ' error' ); // debug use
 						}
 					}
 				} catch( Exception $e ) {

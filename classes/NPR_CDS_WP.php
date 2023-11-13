@@ -418,7 +418,7 @@ class NPR_CDS_WP {
 							$file_OK = TRUE;
 							// If error storing temporarily, unlink
 							if ( is_wp_error( $tmp ) ) {
-								@unlink( $file_array['tmp_name'] );
+								//@unlink( $file_array['tmp_name'] );
 								$file_array['tmp_name'] = '';
 								$file_OK = FALSE;
 							}
@@ -439,7 +439,7 @@ class NPR_CDS_WP {
 									delete_post_thumbnail( $post_id );
 								}
 								set_post_thumbnail( $post_id, $image_upload_id );
-								//get any image meta data and attatch it to the image post
+								//get any image metadata and attach it to the image post
 								if ( NPR_IMAGE_CREDIT_META_KEY === NPR_IMAGE_AGENCY_META_KEY ) {
 									$image_credits = [ $image_current->producer, $image_current->provider ];
 									$image_metas = [
@@ -1068,7 +1068,7 @@ class NPR_CDS_WP {
 							$audio_file = '<p><iframe class="npr-embed-audio" style="width: 100%; height: 235px;" src="' . $audio_current->embeddedPlayerLink->href . '"></iframe></p>';
 						} elseif ( $audio_current->isDownloadable ) {
 							foreach ( $audio_current->enclosures as $enclose ) {
-								if ( $enclose->type == 'audio/mpeg' && !in_array( 'premium', $enclose->rels ) ) {
+								if ( !empty( $enclose->rels ) && $enclose->type == 'audio/mpeg' && !in_array( 'premium', $enclose->rels ) ) {
 									$audio_file = '[audio mp3="' . $enclose->href . '"][/audio]';
 								}
 							}

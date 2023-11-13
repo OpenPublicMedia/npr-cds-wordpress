@@ -204,7 +204,7 @@ function npr_cds_settings_init(): void {
 	add_settings_field( 'npr_cds_num', 'Number of things to get', 'npr_cds_num_multi_callback', 'npr_cds_get_multi_settings', 'npr_cds_get_multi_settings' );
 	register_setting( 'npr_cds_get_multi_settings', 'npr_cds_num', [ 'type' => 'integer' ] );
 
-	$num =  get_option( 'npr_cds_num', 5 );
+	$num = get_option( 'npr_cds_num', 5 );
 	for ( $i = 0; $i < $num; $i++ ) {
 		add_settings_field( 'npr_cds_query_' . $i, 'Query ' . $i, 'npr_cds_query_callback', 'npr_cds_get_multi_settings', 'npr_cds_get_multi_settings', $i );
 		register_setting( 'npr_cds_get_multi_settings', 'npr_cds_query_' . $i, [ 'type' => 'array', 'default' => [ 'filters' => '', 'sorting' => '', 'publish' => '', 'category' => '', 'tags' => '' ] ] );
@@ -251,7 +251,16 @@ function npr_cds_push_settings_callback(): void { ?>
 
 function npr_cds_get_multi_settings_callback(): void {
 	$run_multi = get_option( 'npr_cds_query_run_multi' );
-	if ( $run_multi ) {
+
+	$num = get_option( 'npr_cds_num', 5 );
+	$enable = false;
+	for ( $i = 0; $i < $num; $i++ ) {
+		$option = get_option( 'npr_cds_query_' . $i );
+		if ( !empty( $option['filters'] ) || !empty( $options['sorting'] ) ) {
+			$enable = true;
+		}
+	}
+	if ( $run_multi && $enable ) {
 		NPR_CDS::cron_pull();
 	}
 
@@ -396,8 +405,19 @@ function npr_cds_query_callback( $i ): void {
 
 function npr_cds_query_run_multi_callback(): void {
 	$run_multi = get_option( 'npr_cds_query_run_multi' );
-	$check_box_string = '<input id="npr_cds_query_run_multi" name="npr_cds_query_run_multi" type="checkbox" value="true"' .
-		( $run_multi ? ' checked="checked"' : '' ) . ' />';
+	$num = get_option( 'npr_cds_num', 5 );
+	$enable = false;
+	for ( $i = 0; $i < $num; $i++ ) {
+		$option = get_option( 'npr_cds_query_' . $i );
+		if ( !empty( $option['filters'] ) || !empty( $options['sorting'] ) ) {
+			$enable = true;
+		}
+	}
+	if ( $enable ) {
+		$check_box_string = '<p><input id="npr_cds_query_run_multi" name="npr_cds_query_run_multi" type="checkbox" value="true"' . ( $run_multi ? ' checked="checked"' : '' ) . ' /></p>';
+	} else {
+		$check_box_string = '<p><input id="npr_cds_query_run_multi" name="npr_cds_query_run_multi" type="checkbox" value="true" disabled /> <em>Add filters or sorting to the queries above to enable this option</em></p>';
+	}
 	echo npr_cds_esc_html( $check_box_string );
 }
 
