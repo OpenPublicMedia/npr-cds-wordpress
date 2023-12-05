@@ -334,7 +334,7 @@ function npr_cds_save_datetime( int $post_ID ): bool {
 	$time = ( isset( $_POST['nprone-expiry-time'] ) ) ? sanitize_text_field( $_POST['nprone-expiry-time'] ) : '00:00';
 
 	// If the post is not published and values are not set, save an empty post meta
-	if ( isset( $date ) && 'publish' === $post->status ) {
+	if ( !empty( $date ) && !empty( $post->status ) && 'publish' === $post->status ) {
 		$datetime = date_create( $date, npr_cds_get_datetimezone() );
 		$time = explode( ':', $time );
 		$datetime->setTime( $time[0], $time[1] );
