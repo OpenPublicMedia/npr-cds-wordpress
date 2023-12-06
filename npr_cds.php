@@ -264,6 +264,7 @@ function npr_cds_create_post_type(): void {
 		],
 		'description' => 'Stories pulled from NPR or member stations via the NPR CDS',
 		'public' => true,
+		'show_in_rest' => true,
 		'menu_position' => 5,
 		'menu_icon' => 'dashicons-admin-post',
 		'has_archive' => true,
