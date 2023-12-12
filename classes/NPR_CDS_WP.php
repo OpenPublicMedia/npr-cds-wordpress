@@ -344,7 +344,7 @@ class NPR_CDS_WP {
 					// keep WP from stripping content from NPR posts
 					kses_remove_filters();
 
-					$args = apply_filters( 'npr_pre_insert_post', $args, $post_id, $story, $created );
+					$args = apply_filters( 'npr_pre_insert_post', $args, $post_id, $story, $created, $qnum );
 					$post_id = wp_insert_post( $args );
 					wp_set_post_terms( $post_id, $wp_category_ids, 'category', true );
 
@@ -474,7 +474,7 @@ class NPR_CDS_WP {
 					 * @param stdClass $story Story object created during import
 					 * @param bool $created true if not pre-existing, false otherwise
 					 */
-					$metas = apply_filters( 'npr_pre_update_post_metas', $metas, $post_id, $story, $created );
+					$metas = apply_filters( 'npr_pre_update_post_metas', $metas, $post_id, $story, $created, $qnum );
 
 					foreach ( $metas as $k => $v ) {
 						update_post_meta( $post_id, $k, $v );
@@ -529,7 +529,7 @@ class NPR_CDS_WP {
 					// keep WP from stripping content from NPR posts
 					kses_remove_filters();
 
-					$args = apply_filters( 'npr_pre_update_post', $args, $post_id, $story );
+					$args = apply_filters( 'npr_pre_update_post', $args, $post_id, $story, $qnum );
 					$post_id = wp_insert_post( $args );
 
 					// re-enable content stripping
@@ -556,7 +556,7 @@ class NPR_CDS_WP {
 							 */
 							$topic = $this->get_document( $collect->href );
 							if ( !is_wp_error( $topic ) && in_array( 'topic', $collect->rels ) ) {
-								$term_name = apply_filters( 'npr_resolve_category_term', $topic->title, $post_id, $story );
+								$term_name = apply_filters( 'npr_resolve_category_term', $topic->title, $post_id, $story, $qnum );
 								$category_id = get_cat_ID( $term_name );
 
 								if ( !empty( $category_id ) ) {
@@ -580,7 +580,7 @@ class NPR_CDS_WP {
 				* @param int $post_id Post ID or NULL if no post ID.
 				* @param stdClass $story Story object created during import
 				*/
-				$category_ids = apply_filters( 'npr_pre_set_post_categories', $category_ids, $post_id, $story );
+				$category_ids = apply_filters( 'npr_pre_set_post_categories', $category_ids, $post_id, $story, $qnum );
 				if ( 0 < count( $category_ids ) && is_integer( $post_id ) ) {
 					wp_set_post_categories( $post_id, $category_ids );
 				}
