@@ -1,5 +1,5 @@
 <?php
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * @file
  * Defines basic OOP containers for NPR JSON.
@@ -94,7 +94,7 @@ class NPR_CDS_WP {
 				if ( $response['body'] ) {
 					$this->json = $response['body'];
 				} else {
-					$this->notice[] = __( 'No data available.' );
+					$this->notice[] = __( 'No data available.', 'npr_cds' );
 				}
 			} else {
 				npr_cds_show_message( 'An error occurred pulling your story from the NPR CDS.  The CDS responded with message = ' . $response['response']['message'], TRUE );
@@ -1018,22 +1018,20 @@ class NPR_CDS_WP {
 							} elseif ( $asset_profile == 'stream-player-video' ) {
 								if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
 									$returnary['has_video_streaming'] = true;
-									$video_asset = <<<EOT
-									<video id="{$asset_current->id}" controls></video>
-									<script>
-										let video = document.getElementById('{$asset_current->id}');
-										if (Hls.isSupported()) {
-											let hls = new Hls();
-											hls.attachMedia(video);
-											hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-												hls.loadSource("{$asset_current->enclosures[0]->href}");
-												hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-													console.log("manifest loaded, found " + data.levels.length + " quality level");
-												});
-											});
-										}
-									</script>
-									EOT;
+									$video_asset = '<video id="'. $asset_current->id .'" controls></video>' .
+									'<script>' .
+										'let video = document.getElementById("' . $asset_current->id . '");' .
+										'if (Hls.isSupported()) {' .
+											'let hls = new Hls();' .
+											'hls.attachMedia(video);' .
+											'hls.on(Hls.Events.MEDIA_ATTACHED, () => {' .
+												'hls.loadSource("' . $asset_current->enclosures[0]->href .'");' .
+												'hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {'.
+													'console.log("manifest loaded, found " + data.levels.length + " quality level");' .
+												'});' .
+											'});' .
+										'}' .
+									'</script>';
 								}
 							}
 							$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
@@ -1088,7 +1086,7 @@ class NPR_CDS_WP {
 				'<script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/splide-settings.js"></script>';
 		}
 		if ( $returnary['has_video_streaming'] ) {
-			$body_with_layout = '<style>.is-type-video video {max-width: 100%; width: 100%;}</style><script src="//cdn.jsdelivr.net/npm/hls.js@latest"></script>' . $body_with_layout;
+			$body_with_layout = '<style>.is-type-video video {max-width: 100%; width: 100%;}</style><script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/hls.js"></script>' . $body_with_layout;
 		}
 		$returnary['body'] = npr_cds_esc_html( $body_with_layout );
 		return $returnary;

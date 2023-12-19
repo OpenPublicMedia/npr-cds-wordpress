@@ -3,6 +3,7 @@
  * Functions relating to pushing content to the NPR CDS
  */
 
+if ( ! defined( 'ABSPATH' ) ) exit;
 require_once ( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
 
 /**
@@ -16,8 +17,8 @@ require_once ( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
 function npr_cds_push( int $post_ID, WP_Post $post ): void {
 	if ( !current_user_can( 'publish_posts' ) ) {
 		wp_die(
-			__( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.', 'nprcds' ),
-			__( 'NPR CDS Error', 'nprcds' ),
+			__( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.', 'npr_cds' ),
+			__( 'NPR CDS Error', 'npr_cds' ),
 			403
 		);
 	}
@@ -81,8 +82,8 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 function npr_cds_delete( int $post_ID ): void {
 	if ( !current_user_can( 'delete_others_posts' ) ) {
 		wp_die(
-			__('You do not have permission to delete posts in the NPR CDS. Users that can delete other users\' posts have that ability: administrators and editors.'),
-			__('NPR CDS Error'),
+			__('You do not have permission to delete posts in the NPR CDS. Users that can delete other users\' posts have that ability: administrators and editors.', 'npr_cds'),
+			__('NPR CDS Error', 'npr_cds'),
 			403
 		);
 	}
@@ -181,8 +182,10 @@ function npr_cds_bulk_action_push_dropdown(): void {
 	?>
 	<script type="text/javascript">
 		jQuery(document).ready(function($) {
-			$('<option>').val('pushNprStory').text('<?php _e('Push Story to NPR'); ?>').appendTo("select[name='action']");
-			$('<option>').val('pushNprStory').text('<?php _e('Push Story to NPR'); ?>').appendTo("select[name='action2']");
+			$('<option>').val('pushNprStory').text('<?php esc_html_e( 'Push Story to NPR', 'npr_cds' ); ?>').appendTo
+			("select[name='action']");
+			$('<option>').val('pushNprStory').text('<?php esc_html_e('Push Story to NPR', 'npr_cds' ); ?>').appendTo
+			("select[name='action2']");
 		});
 
 	</script>
@@ -423,7 +426,7 @@ function npr_cds_post_admin_message_error(): void {
 		printf(
 			'<div class="%1$s"><p>%2$s</p>%3$s</div>',
 			'notice notice-error',
-			__( 'An error occurred when pushing this post to NPR:' ),
+			esc_html__( 'An error occurred when pushing this post to NPR:', 'npr_cds' ),
 			$errortext
 		);
 	}
@@ -445,7 +448,7 @@ function npr_cds_post_updated_messages_success( $messages ): array {
 
 		// Create the message about the thing being updated
 		$messages['post'][4] = sprintf(
-			__( '%s updated. This post\'s NPR ID is %s. ' ),
+			__( '%s updated. This post\'s NPR ID is %s. ', 'npr_cds' ),
 			esc_attr( $singular ),
 			(string) $id
 		);

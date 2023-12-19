@@ -2,7 +2,7 @@
 /**
  * File containing meta box callback functions
  */
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Output the NPR CDS publishing options metabox for the edit page admin interface
  *
@@ -20,7 +20,7 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 	wp_enqueue_script( 'npr_cds_publish_meta_box_script' );
 	$npr_id = get_post_meta( $post->ID, 'npr_story_id', true ); ?>
 	<div id="npr-cds-publish-actions">
-<?PHP
+<?php
 	if ( !empty( $npr_id ) ) {
 		echo "<h2>Current CDS ID: <strong>" . $npr_id . "</strong></h2>";
 	} ?>
@@ -35,7 +35,7 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 			echo '<li>';
 			printf(
 				'<label><input value="1" type="checkbox" name="send_to_cds" id="send_to_cds" %2$s/> %1$s</label>',
-				__( 'Send to NPR CDS', 'nprcds' ),
+				esc_html__( 'Send to NPR CDS', 'npr_cds' ),
 				checked( $nprapi, '1', false )
 				// @see npr_cds_save_send_to_api for a historical note on this metadata name
 			);
@@ -45,13 +45,13 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 			// send to nprone
 			printf(
 				'<li><label><input value="1" type="checkbox" name="send_to_one" id="send_to_one" %2$s/> %1$s</label> %3$s </li>',
-				__( 'Include for listening in NPR One', 'nprcds' ),
+				esc_html__( 'Include for listening in NPR One', 'npr_cds' ),
 				checked( get_post_meta( $post->ID, '_send_to_one', true ), '1', false ),
 				// the following is an ul li within the "Send to npr one" li
 				// set the story as featured in NPR One
 				sprintf(
 					'<ul><li><label><input value="1" type="checkbox" name="nprone_featured" id="nprone_featured" %2$s/> %1$s</label></li></ul>',
-					__( 'Set as featured story in NPR One', 'nprcds' ),
+					esc_html__( 'Set as featured story in NPR One', 'npr_cds' ),
 					checked( get_post_meta( $post->ID, '_nprone_featured', true ), '1', false )
 				)
 			);
@@ -74,14 +74,19 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 					'<time style="font-weight: bold;">%1$s</time>',
 					date_format( $datetime, 'M j, Y @ H:i' ) // Nov 30, 2017 @ 20:45
 				); ?>
-			<button id="nprone-expiry-edit" class="link-effect"><?php esc_html_e( 'Edit', 'nprcds' ); ?></button>
+			<button id="nprone-expiry-edit" class="link-effect"><?php esc_html_e( 'Edit', 'npr_cds' ); ?></button>
 		</div>
 		<div id="nprone-expiry-form" class="hidden">
 <?php
-				echo '<input type="datetime-local" id="nprone-expiry-datetime" name="nprone-expiry-datetime" value="' . date_format( $datetime, 'Y-m-d\TH:i' ) . '" />'; ?>
+				esc_html_e(
+					sprintf(
+						'<input type="datetime-local" id="nprone-expiry-datetime" name="nprone-expiry-datetime" value="%s" />',
+						date_format( $datetime, 'Y-m-d\TH:i' )
+					), 'npr_cds' ); ?>
 			<div class="row">
-				<button id="nprone-expiry-ok" class="button"><?php esc_html_e( 'OK', 'nprcds' ); ?></button>
-				<button id="nprone-expiry-cancel" class="link-effect"><?php esc_html_e( 'Cancel', 'nprcds' ); ?></button>
+				<button id="nprone-expiry-ok" class="button"><?php esc_html_e( 'OK', 'npr_cds' ); ?></button>
+				<button id="nprone-expiry-cancel" class="link-effect"><?php esc_html_e( 'Cancel', 'npr_cds' );
+				?></button>
 			</div>
 		</div>
 	</div>
@@ -123,19 +128,19 @@ function npr_cds_publish_meta_box_prompt( WP_Post $post ): void {
 	if ( current_user_can( 'manage_options' ) ) { // this should match the value in npr_cds_add_options_page
 		printf(
 			'<p>%1$s</p>',
-			wp_kses_post( __( 'The NPR CDS plugin\'s settings must be configured to push stories to the NPR CDS. Instructions are <a href="https://github.com/openpublicmedia/npr-cds-wordpress/blob/master/docs/settings.md">here</a>.', 'nprcds' ) )
+			wp_kses_post( __( 'The NPR CDS plugin\'s settings must be configured to push stories to the NPR CDS. Instructions are <a href="https://github.com/openpublicmedia/npr-cds-wordpress/blob/master/docs/settings.md">here</a>.', 'npr_cds' ) )
 		);
 
 		$url = menu_page_url( 'npr_cds', false ); // this should match the value in npr_cds_add_options_page
 		printf(
 			'<a href="%2$s" class="button button-primary button-large">%1$s</a>',
-			wp_kses_post( __( 'Configure the Plugin', 'nprcds' ) ),
+			wp_kses_post( __( 'Configure the Plugin', 'npr_cds' ) ),
 			esc_attr( $url )
 		);
 	} else {
 		printf(
 			'<p>%1$s</p>',
-			wp_kses_post( __( 'Your site administrator must set the NPR CDS Push URL in the NPR CDS plugin\'s settings in order to push to the NPR CDS.', 'nprcds' ) )
+			wp_kses_post( __( 'Your site administrator must set the NPR CDS Push URL in the NPR CDS plugin\'s settings in order to push to the NPR CDS.', 'npr_cds' ) )
 		);
 	}
 }

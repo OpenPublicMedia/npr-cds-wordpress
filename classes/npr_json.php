@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  *
  * Do the mapping from WP post to the array that we're going to build the JSON from.

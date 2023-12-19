@@ -5,6 +5,7 @@
  * Version: 1.0
  * Author: Open Public Media
  * License: GPLv2
+ * Text Domain: npr_cds
 */
 /*
 	Copyright 2022 Open Public Media
@@ -22,7 +23,7 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 const NPR_STORY_ID_META_KEY = 'npr_story_id';
 const NPR_HTML_LINK_META_KEY = 'npr_html_link';
 const NPR_BYLINE_LINK_META_KEY = 'npr_byline_link';
@@ -171,7 +172,7 @@ function npr_cds_activate(): void {
 	}
 	$run_multi = get_option( 'dp_npr_query_run_multi' );
 	if ( !empty( $run_multi ) ) {
-		update_option( 'dp_npr_query_run_multi', $run_multi );
+		update_option( 'npr_cds_query_run_multi', $run_multi );
 	}
 	$featured = get_option( 'dp_npr_query_use_featured' );
 	if ( !empty( $featured ) ) {
@@ -253,22 +254,22 @@ add_action( 'init', 'npr_cds_create_post_type' );
 function npr_cds_create_post_type(): void {
 	register_post_type( NPR_POST_TYPE, [
 		'labels' => [
-			'name' => __( 'NPR Stories' ),
-			'singular_name' => __( 'NPR Story' ),
-			'menu_name' => __( 'NPR Stories' ),
-			'edit_item' => __( 'Edit NPR Story' ),
-			'view_item' => __( 'View NPR Story' ),
-			'search_items' => __( 'Search NPR Stories' ),
-			'not_found' => __( 'NPR Story Not Found' ),
-			'not_found_in_trash' => __( 'NPR Story not found in trash' )
+			'name' => __( 'NPR Stories', 'npr_cds' ),
+			'singular_name' => __( 'NPR Story', 'npr_cds' ),
+			'menu_name' => __( 'NPR Stories', 'npr_cds' ),
+			'edit_item' => __( 'Edit NPR Story', 'npr_cds' ),
+			'view_item' => __( 'View NPR Story', 'npr_cds' ),
+			'search_items' => __( 'Search NPR Stories', 'npr_cds' ),
+			'not_found' => __( 'NPR Story Not Found', 'npr_cds' ),
+			'not_found_in_trash' => __( 'NPR Story not found in trash', 'npr_cds' )
 		],
-		'description' => 'Stories pulled from NPR or member stations via the NPR CDS',
+		'description' => __('Stories pulled from NPR or member stations via the NPR CDS', 'npr_cds' ),
 		'public' => true,
 		'menu_position' => 5,
 		'menu_icon' => 'dashicons-admin-post',
 		'has_archive' => true,
 		'rewrite' => [
-			'slug' => __( 'npr-story' ),
+			'slug' => __( 'npr-story', 'npr_cds' ),
 			'with_front' => false,
 			'feeds' => true,
 			'pages' => true
@@ -328,7 +329,7 @@ function npr_cds_error_log( $thing ): void {
  * Function to help with escaping HTML, especially for admin screens
  */
 function npr_cds_esc_html( $string ): string {
-	return html_entity_decode( esc_html( $string ), ENT_QUOTES );
+	return html_entity_decode( esc_html__( $string, 'npr_cds' ), ENT_QUOTES );
 }
 
 function npr_cds_add_header_meta(): void {

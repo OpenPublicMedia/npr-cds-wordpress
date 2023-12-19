@@ -2,7 +2,7 @@
 /**
  * The class DS_NPR_API and related functions for getting stories from the API
  */
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 require_once( NPR_CDS_PLUGIN_DIR . 'get_stories_ui.php' );
 require_once( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
 
@@ -100,8 +100,8 @@ class NPR_CDS {
 		// if the current user shouldn't be doing this, fail
 		if ( !current_user_can( 'edit_posts' ) ) {
 			wp_die(
-				__( 'You do not have permission to edit posts, and therefore you do not have permission to pull posts from the NPR CDS' ),
-				__( 'NPR CDS Error' ),
+				__( 'You do not have permission to edit posts, and therefore you do not have permission to pull posts from the NPR CDS', 'npr_cds' ),
+				__( 'NPR CDS Error', 'npr_cds' ),
 				403
 			);
 		}
@@ -111,8 +111,8 @@ class NPR_CDS {
 		if ( isset( $_POST['story_id'] ) ) {
 			if ( !check_admin_referer( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ) ) {
 				wp_die(
-					__( 'Nonce did not verify in NPR_CDS::load_page_hook. Are you sure you should be doing this?' ),
-					__( 'NPR CDS Error' ),
+					__( 'Nonce did not verify in NPR_CDS::load_page_hook. Are you sure you should be doing this?', 'npr_cds' ),
+					__( 'NPR CDS Error', 'npr_cds' ),
 					403
 				);
 			}

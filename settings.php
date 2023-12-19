@@ -5,7 +5,7 @@
  * Also includes the cron jobs.
  */
 
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Push/Pull URLs:
  * Production: https://content.api.npr.org/
@@ -286,8 +286,11 @@ function npr_cds_add_cron_interval( $schedules ): array {
 	}
 	$new_interval = $ds_interval * 60;
 	$schedules['ds_interval'] = [
-	  'interval' => $new_interval,
-	  'display' => __( 'DS Cron, run Once every ' . $ds_interval . ' minutes' )
+		'interval' => $new_interval,
+		'display' => sprintf(
+			__( 'DS Cron, run Once every %s minutes', 'npr_cds' ),
+			__( $ds_interval, 'npr_cds' )
+		)
 	];
 	return $schedules;
 }
@@ -384,7 +387,7 @@ function npr_cds_query_callback( $i ): void {
 				'</select></div>';
 		if ( $optionType == 'post' ) {
 			$args = [
-				'show_option_none'	=> __( 'Select category', '' ),
+				'show_option_none'	=> __( 'Select category', 'npr_cds' ),
 				'name'				=> 'npr_query_' . $i . '[category]',
 				'hierarchical'		=> true,
 				'show_count'		=> 0,
@@ -506,7 +509,7 @@ function npr_cds_validation_callback_prefix( $value ): string {
 	add_settings_error(
 		'npr_cds_prefix',
 		'prefix-is-invalid',
-		esc_html( $value ) . __( ' is not a valid value for the NPR CDS Prefix. It can only contain lowercase alphanumeric characters.' )
+		esc_html( $value ) . __( ' is not a valid value for the NPR CDS Prefix. It can only contain lowercase alphanumeric characters.', 'npr_cds' )
 	);
 	return '';
 }
@@ -518,12 +521,12 @@ function npr_cds_validation_callback_pull_url( string $value ): string {
 	if ( $value == 'https://stage-content.api.npr.org' || $value == 'https://content.api.npr.org' ) {
 		return esc_attr( $value );
 	} elseif ( $value == 'other' ) {
-		$value = rtrim( $_POST['npr_cds_pull_url_other'], "/" );
+		$value = rtrim( sanitize_url( $_POST['npr_cds_pull_url_other'] ), "/" );
 		if ( !preg_match( '/https:\/\/[a-z0-9\.\-]+/', $value ) ) {
 			add_settings_error(
 				'npr_cds_pull_url',
 				'not-https-url',
-				esc_html( $value ) . __( ' is not a valid value for the NPR CDS Pull URL. It must be a URL starting with <code>https</code>.' )
+				esc_url( $value ) . __( ' is not a valid value for the NPR CDS Pull URL. It must be a URL starting with <code>https</code>.', 'npr_cds' )
 			);
 			$value = '';
 		}
@@ -534,12 +537,12 @@ function npr_cds_validation_callback_push_url( string $value ): string {
 	if ( $value == 'https://stage-content.api.npr.org' || $value == 'https://content.api.npr.org' ) {
 		return esc_attr( $value );
 	} elseif ( $value == 'other' ) {
-		$value = $_POST['npr_cds_push_url_other'];
+		$value = sanitize_url( $_POST['npr_cds_push_url_other'] );
 		if ( !preg_match( '/https:\/\/[a-z0-9\.\-]+/', $value ) ) {
 			add_settings_error(
 				'npr_cds_push_url',
 				'not-https-url',
-				esc_html( $value ) . __( ' is not a valid value for the NPR CDS Push URL. It must be a URL starting with <code>https</code>.' )
+				esc_url( $value ) . __( ' is not a valid value for the NPR CDS Push URL. It must be a URL starting with <code>https</code>.', 'npr_cds' )
 			);
 			$value = '';
 		}

@@ -2,7 +2,7 @@
 /**
  * Functions related to the user interface for fetching stories from the API
  */
-
+if ( ! defined( 'ABSPATH' ) ) exit;
 // Add the update story column to the page listing the posts for the pull-type
 add_filter( 'manage_edit-' . NPR_CDS::get_pull_post_type() . '_columns', 'npr_cds_add_new_story_columns' );
 
@@ -33,8 +33,10 @@ function npr_cds_bulk_action_update_dropdown(): void {
 	?>
 	<script type="text/javascript">
 		jQuery(document).ready(function($) {
-			$('<option>').val('updateNprStory').text('<?php _e( 'Update NPR Story' ); ?>').appendTo("select[name='action']");
-			$('<option>').val('updateNprStory').text('<?php _e( 'Update NPR Story' ); ?>').appendTo("select[name='action2']");
+			$('<option>').val('updateNprStory').text('<?php esc_html_e( 'Update NPR Story', 'npr_cds'  ); ?>').appendTo
+			("select[name='action']");
+			$('<option>').val('updateNprStory').text('<?php esc_html_e( 'Update NPR Story', 'npr_cds'  ); ?>').appendTo
+			("select[name='action2']");
 		});
 	</script>
 	<?php
