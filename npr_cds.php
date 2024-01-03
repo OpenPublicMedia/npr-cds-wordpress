@@ -5,7 +5,7 @@
  * Version: 1.0
  * Author: Open Public Media
  * License: GPLv2
- * Text Domain: npr_cds
+ * Text Domain: npr-content-distribution-service
 */
 /*
 	Copyright 2022 Open Public Media
@@ -254,22 +254,22 @@ add_action( 'init', 'npr_cds_create_post_type' );
 function npr_cds_create_post_type(): void {
 	register_post_type( NPR_POST_TYPE, [
 		'labels' => [
-			'name' => __( 'NPR Stories', 'npr_cds' ),
-			'singular_name' => __( 'NPR Story', 'npr_cds' ),
-			'menu_name' => __( 'NPR Stories', 'npr_cds' ),
-			'edit_item' => __( 'Edit NPR Story', 'npr_cds' ),
-			'view_item' => __( 'View NPR Story', 'npr_cds' ),
-			'search_items' => __( 'Search NPR Stories', 'npr_cds' ),
-			'not_found' => __( 'NPR Story Not Found', 'npr_cds' ),
-			'not_found_in_trash' => __( 'NPR Story not found in trash', 'npr_cds' )
+			'name' => __( 'NPR Stories', 'npr-content-distribution-service' ),
+			'singular_name' => __( 'NPR Story', 'npr-content-distribution-service' ),
+			'menu_name' => __( 'NPR Stories', 'npr-content-distribution-service' ),
+			'edit_item' => __( 'Edit NPR Story', 'npr-content-distribution-service' ),
+			'view_item' => __( 'View NPR Story', 'npr-content-distribution-service' ),
+			'search_items' => __( 'Search NPR Stories', 'npr-content-distribution-service' ),
+			'not_found' => __( 'NPR Story Not Found', 'npr-content-distribution-service' ),
+			'not_found_in_trash' => __( 'NPR Story not found in trash', 'npr-content-distribution-service' )
 		],
-		'description' => __('Stories pulled from NPR or member stations via the NPR CDS', 'npr_cds' ),
+		'description' => __('Stories pulled from NPR or member stations via the NPR CDS', 'npr-content-distribution-service' ),
 		'public' => true,
 		'menu_position' => 5,
 		'menu_icon' => 'dashicons-admin-post',
 		'has_archive' => true,
 		'rewrite' => [
-			'slug' => __( 'npr-story', 'npr_cds' ),
+			'slug' => __( 'npr-story', 'npr-content-distribution-service' ),
 			'with_front' => false,
 			'feeds' => true,
 			'pages' => true
@@ -329,7 +329,7 @@ function npr_cds_error_log( $thing ): void {
  * Function to help with escaping HTML, especially for admin screens
  */
 function npr_cds_esc_html( $string ): string {
-	return html_entity_decode( esc_html__( $string, 'npr_cds' ), ENT_QUOTES );
+	return html_entity_decode( esc_html__( $string, 'npr-content-distribution-service' ), ENT_QUOTES );
 }
 
 function npr_cds_add_header_meta(): void {
@@ -364,14 +364,14 @@ function npr_cds_add_header_meta(): void {
 				$primary_cat = $keywords[0];
 			} ?>
 		<meta name="datePublished" content="<?php echo get_the_date( 'c', $id ); ?>" />
-		<meta name="story_id" content="<?php echo $npr_story_id; ?>" />
-		<meta name="has_audio" content="<?php echo $has_audio; ?>" />
-		<meta name="org_id" content="<?php echo get_option( 'ds_npr_api_org_id' ); ?>" />
-		<meta name="category" content="<?php echo $primary_cat; ?>" />
-		<meta name="author" content="<?php echo $byline; ?>" />
+		<meta name="story_id" content="<?php echo esc_html( $npr_story_id ); ?>" />
+		<meta name="has_audio" content="<?php echo esc_html( $has_audio ); ?>" />
+		<meta name="org_id" content="<?php echo esc_html( get_option( 'ds_npr_api_org_id' ) ); ?>" />
+		<meta name="category" content="<?php echo esc_html( $primary_cat ); ?>" />
+		<meta name="author" content="<?php echo esc_html( $byline ); ?>" />
 		<meta name="programs" content="none" />
 		<meta name="wordCount" content="<?php echo $word_count; ?>" />
-		<meta name="keywords" content="<?php echo implode( ',', $keywords ); ?>" />
+		<meta name="keywords" content="<?php echo esc_html( implode( ',', $keywords ) ); ?>" />
 <?php
 		}
 	}

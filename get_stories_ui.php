@@ -33,9 +33,9 @@ function npr_cds_bulk_action_update_dropdown(): void {
 	?>
 	<script type="text/javascript">
 		jQuery(document).ready(function($) {
-			$('<option>').val('updateNprStory').text('<?php esc_html_e( 'Update NPR Story', 'npr_cds'  ); ?>').appendTo
+			$('<option>').val('updateNprStory').text('<?php esc_html_e( 'Update NPR Story', 'npr-content-distribution-service' ); ?>').appendTo
 			("select[name='action']");
-			$('<option>').val('updateNprStory').text('<?php esc_html_e( 'Update NPR Story', 'npr_cds'  ); ?>').appendTo
+			$('<option>').val('updateNprStory').text('<?php esc_html_e( 'Update NPR Story', 'npr-content-distribution-service' ); ?>').appendTo
 			("select[name='action2']");
 		});
 	</script>

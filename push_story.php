@@ -17,8 +17,8 @@ require_once ( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
 function npr_cds_push( int $post_ID, WP_Post $post ): void {
 	if ( !current_user_can( 'publish_posts' ) ) {
 		wp_die(
-			__( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.', 'npr_cds' ),
-			__( 'NPR CDS Error', 'npr_cds' ),
+			__( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.', 'npr-content-distribution-service' ),
+			__( 'NPR CDS Error', 'npr-content-distribution-service' ),
 			403
 		);
 	}
@@ -33,7 +33,10 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 		if ( $post->post_type !== $push_post_type || $post->post_status != 'publish' ) {
 			return;
 		}
-
+		$send_to_cds = get_post_meta( $post->ID, '_send_to_nprone' );
+		if ( $send_to_cds == 0 ) {
+			return;
+		}
 		/*
 		 * If there's a custom mapping for the post content,
 		 * use that content instead of the post's post_content
@@ -82,8 +85,8 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 function npr_cds_delete( int $post_ID ): void {
 	if ( !current_user_can( 'delete_others_posts' ) ) {
 		wp_die(
-			__('You do not have permission to delete posts in the NPR CDS. Users that can delete other users\' posts have that ability: administrators and editors.', 'npr_cds'),
-			__('NPR CDS Error', 'npr_cds'),
+			__('You do not have permission to delete posts in the NPR CDS. Users that can delete other users\' posts have that ability: administrators and editors.', ),
+			__('NPR CDS Error', ),
 			403
 		);
 	}
@@ -109,14 +112,10 @@ function npr_cds_delete( int $post_ID ): void {
  * Register npr_cds_npr_push and npr_cds_npr_delete on appropriate hooks
  * this is where the magic happens
  */
-if ( isset( $_POST['send_to_cds'] ) ) {
-	// No need to validate the npr_cds_update_push contents; we're checking only for its existence
-	// permissions check is handled by npr_cds_push
-	add_action( 'save_post', 'npr_cds_push', 10, 2 );
-}
-add_action( 'trash_post', 'npr_cds_delete', 10, 2 );
+add_action( 'save_post', 'npr_cds_push', 100, 2 );
+add_action( 'trash_post', 'npr_cds_delete', 100, 2 );
 //this may need to check version and use 'wp_trash_post'
-add_action( 'wp_trash_post', 'npr_cds_delete', 10, 2 );
+add_action( 'wp_trash_post', 'npr_cds_delete', 100, 2 );
 
 /**
  * Query the database for any meta fields for a post type, then store that in a WP transient/cache for a day.
@@ -130,18 +129,8 @@ add_action( 'wp_trash_post', 'npr_cds_delete', 10, 2 );
 function npr_cds_push_meta_keys( string $post_type = 'post' ): array {
 	global $wpdb;
 	$limit = (int) apply_filters( 'postmeta_form_limit', 30 );
-	$query = "
-		SELECT DISTINCT( $wpdb->postmeta.meta_key )
-		FROM $wpdb->posts
-		LEFT JOIN $wpdb->postmeta
-		ON $wpdb->posts.ID = $wpdb->postmeta.post_id
-		WHERE $wpdb->posts.post_type = '%s'
-		AND $wpdb->postmeta.meta_key != ''
-		AND $wpdb->postmeta.meta_key NOT LIKE '_oembed_%'
-		AND $wpdb->postmeta.meta_key NOT RegExp '(^[0-9]+$)'
-	";
 	//AND $wpdb->postmeta.meta_key NOT RegExp '(^[_0-9].+$)'
-	$keys = $wpdb->get_col( $wpdb->prepare( $query, $post_type ) );
+	$keys = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT( $wpdb->postmeta.meta_key ) FROM $wpdb->posts LEFT JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE $wpdb->posts.post_type = '%s' AND $wpdb->postmeta.meta_key != '' AND $wpdb->postmeta.meta_key NOT LIKE '_oembed_%' AND $wpdb->postmeta.meta_key NOT RegExp '(^[0-9]+$)'", $post_type ) );
 	if ( $keys ) natcasesort( $keys );
 
 	set_transient( 'npr_cds_' . $post_type . '_meta_keys', $keys, 60*60*24 ); # 1 Day Expiration
@@ -182,9 +171,9 @@ function npr_cds_bulk_action_push_dropdown(): void {
 	?>
 	<script type="text/javascript">
 		jQuery(document).ready(function($) {
-			$('<option>').val('pushNprStory').text('<?php esc_html_e( 'Push Story to NPR', 'npr_cds' ); ?>').appendTo
+			$('<option>').val('pushNprStory').text('<?php esc_html_e( 'Push Story to NPR', 'npr-content-distribution-service' ); ?>').appendTo
 			("select[name='action']");
-			$('<option>').val('pushNprStory').text('<?php esc_html_e('Push Story to NPR', 'npr_cds' ); ?>').appendTo
+			$('<option>').val('pushNprStory').text('<?php esc_html_e('Push Story to NPR', 'npr-content-distribution-service' ); ?>').appendTo
 			("select[name='action2']");
 		});
 
@@ -241,7 +230,7 @@ function npr_cds_save_send_to_cds( Int $post_ID ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
-
+	if ( !wp_verify_nonce( $_POST['npr_cds_send_nonce'], 'npr_cds-' . $post_ID ) ) return false;
 	global $post;
 
 	if ( get_post_type( $post ) !== get_option( 'npr_cds_push_post_type' ) ) return false;
@@ -251,7 +240,7 @@ function npr_cds_save_send_to_cds( Int $post_ID ): bool {
 	update_post_meta( $post_ID, '_send_to_nprone', $value );
 	return true;
 }
-add_action( 'save_post', 'npr_cds_save_send_to_cds');
+add_action( 'save_post', 'npr_cds_save_send_to_cds', 15 );
 
 /**
  * Save the "Send to NPR One" metadata
@@ -266,6 +255,7 @@ function npr_cds_save_send_to_one( int $post_ID ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
+	if ( !wp_verify_nonce( $_POST['npr_cds_send_nonce'], 'npr_cds-' . $post_ID ) ) return false;
 
 	global $post;
 
@@ -279,7 +269,7 @@ function npr_cds_save_send_to_one( int $post_ID ): bool {
 	update_post_meta( $post_ID, '_send_to_one', $value );
 	return true;
 }
-add_action( 'save_post', 'npr_cds_save_send_to_one' );
+add_action( 'save_post', 'npr_cds_save_send_to_one', 15 );
 
 /**
  * Save the "NPR One Featured" metadata
@@ -295,6 +285,7 @@ function npr_cds_save_nprone_featured( int $post_ID ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
+	if ( !wp_verify_nonce( $_POST['npr_cds_send_nonce'], 'npr_cds-' . $post_ID ) ) return false;
 
 	global $post;
 
@@ -310,7 +301,7 @@ function npr_cds_save_nprone_featured( int $post_ID ): bool {
 	update_post_meta( $post_ID, '_nprone_featured', $value );
 	return true;
 }
-add_action( 'save_post', 'npr_cds_save_nprone_featured' );
+add_action( 'save_post', 'npr_cds_save_nprone_featured', 15 );
 
 /**
  * Save the NPR One expiry datetime
@@ -328,6 +319,7 @@ function npr_cds_save_datetime( int $post_ID ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
+	if ( !wp_verify_nonce( $_POST['npr_cds_send_nonce'], 'npr_cds-' . $post_ID ) ) return false;
 
 	global $post;
 
@@ -348,7 +340,7 @@ function npr_cds_save_datetime( int $post_ID ): bool {
 	}
 	return true;
 }
-add_action( 'save_post', 'npr_cds_save_datetime');
+add_action( 'save_post', 'npr_cds_save_datetime', 15 );
 
 /**
  * Helper function to get the post expiry datetime
@@ -426,7 +418,7 @@ function npr_cds_post_admin_message_error(): void {
 		printf(
 			'<div class="%1$s"><p>%2$s</p>%3$s</div>',
 			'notice notice-error',
-			esc_html__( 'An error occurred when pushing this post to NPR:', 'npr_cds' ),
+			esc_html__( 'An error occurred when pushing this post to NPR:',  ),
 			$errortext
 		);
 	}
@@ -448,7 +440,7 @@ function npr_cds_post_updated_messages_success( $messages ): array {
 
 		// Create the message about the thing being updated
 		$messages['post'][4] = sprintf(
-			__( '%s updated. This post\'s NPR ID is %s. ', 'npr_cds' ),
+			__( '%s updated. This post\'s NPR ID is %s. ',  ),
 			esc_attr( $singular ),
 			(string) $id
 		);

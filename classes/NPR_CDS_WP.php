@@ -94,7 +94,7 @@ class NPR_CDS_WP {
 				if ( $response['body'] ) {
 					$this->json = $response['body'];
 				} else {
-					$this->notice[] = __( 'No data available.', 'npr_cds' );
+					$this->notice[] = __( 'No data available.', 'npr-content-distribution-service' );
 				}
 			} else {
 				npr_cds_show_message( 'An error occurred pulling your story from the NPR CDS.  The CDS responded with message = ' . $response['response']['message'], TRUE );

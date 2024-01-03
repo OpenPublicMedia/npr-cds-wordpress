@@ -100,8 +100,8 @@ class NPR_CDS {
 		// if the current user shouldn't be doing this, fail
 		if ( !current_user_can( 'edit_posts' ) ) {
 			wp_die(
-				__( 'You do not have permission to edit posts, and therefore you do not have permission to pull posts from the NPR CDS', 'npr_cds' ),
-				__( 'NPR CDS Error', 'npr_cds' ),
+				__( 'You do not have permission to edit posts, and therefore you do not have permission to pull posts from the NPR CDS', 'npr-content-distribution-service' ),
+				__( 'NPR CDS Error', 'npr-content-distribution-service' ),
 				403
 			);
 		}
@@ -111,8 +111,8 @@ class NPR_CDS {
 		if ( isset( $_POST['story_id'] ) ) {
 			if ( !check_admin_referer( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ) ) {
 				wp_die(
-					__( 'Nonce did not verify in NPR_CDS::load_page_hook. Are you sure you should be doing this?', 'npr_cds' ),
-					__( 'NPR CDS Error', 'npr_cds' ),
+					__( 'Nonce did not verify in NPR_CDS::load_page_hook. Are you sure you should be doing this?', 'npr-content-distribution-service' ),
+					__( 'NPR CDS Error', 'npr-content-distribution-service' ),
 					403
 				);
 			}
