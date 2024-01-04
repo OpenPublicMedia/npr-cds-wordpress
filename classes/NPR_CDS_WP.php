@@ -147,12 +147,12 @@ class NPR_CDS_WP {
 	 * available from the NPR API if the pubDate on the API is after the pubDate originally stored locally.
 	 *
 	 * @param bool $publish
-	 * @param bool $qnum
+	 * @param int $qnum
 	 *
 	 * @return int $post_id or 0
 	 * @throws Exception
 	 */
-	function update_posts_from_stories( bool $publish = TRUE, bool $qnum = false ): int {
+	function update_posts_from_stories( bool $publish = TRUE, int $qnum = 0 ): int {
 		$pull_post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 
 		$post_id = null;
@@ -218,7 +218,7 @@ class NPR_CDS_WP {
 				];
 				$wp_category_ids = [];
 				$wp_category_id = "";
-				if ( false !== $qnum ) {
+				if ( 0 !== $qnum ) {
 					$args['tags_input'] = get_option( 'npr_cds_query_tags_' . $qnum );
 					if ( $pull_post_type == 'post' ) {
 						// Get Default category from options table and store in array for post_array
