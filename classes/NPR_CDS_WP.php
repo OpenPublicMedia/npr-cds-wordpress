@@ -163,13 +163,13 @@ class NPR_CDS_WP {
 				$single_story = FALSE;
 			}
 			foreach ( $this->stories as $story ) {
-				$exists = new WP_Query([
+				$exists = new WP_Query( apply_filters( 'npr_story_exists_args', [
 					'meta_key' => NPR_STORY_ID_META_KEY,
 					'meta_value' => $story->id,
 					'post_type' => $pull_post_type,
 					'post_status' => 'any',
 					'no_found_rows' => true
-				]);
+				], $publish, $qnum, $this ) );
 
 				// set the mod_date and pub_date to now so that for a new story we will fail the test below and do the update
 				$post_mod_date = strtotime( date( 'Y-m-d H:i:s' ) );
