@@ -30,16 +30,14 @@ function npr_cds_bulk_action_update_dropdown(): void {
 	$pull_post_type = NPR_CDS::get_pull_post_type();
 	global $post_type;
 	if ( $post_type == $pull_post_type ) {
-	?>
-	<script type="text/javascript">
-		jQuery(document).ready(function($) {
-			$('<option>').val('updateNprStory').text('<?php esc_html_e( 'Update NPR Story', 'npr-content-distribution-service' ); ?>').appendTo
-			("select[name='action']");
-			$('<option>').val('updateNprStory').text('<?php esc_html_e( 'Update NPR Story', 'npr-content-distribution-service' ); ?>').appendTo
-			("select[name='action2']");
-		});
-	</script>
-	<?php
+		add_action( 'admin_print_scripts', function() {
+			echo '<script>' .
+				'jQuery(document).ready(function($) {'.
+					'$("<option>").val("updateNprStory").text("' . __( 'Update NPR Story', 'npr-content-distribution-service' ) . '").appendTo("select[name=\'action\']");' .
+					'$("<option>").val("updateNprStory").text("' . __( 'Update NPR Story', 'npr-content-distribution-service' ) . '").appendTo("select[name=\'action2\']");' .
+				'});' .
+			'</script>';
+		} );
 	}
 }
 

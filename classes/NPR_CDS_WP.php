@@ -292,17 +292,22 @@ class NPR_CDS_WP {
 					$metas = [
 						NPR_STORY_ID_META_KEY		  => $story->id,
 						NPR_HTML_LINK_META_KEY		  => $webPage,
-						// NPR_SHORT_LINK_META_KEY	  => $story->link['short']->value,
 						NPR_STORY_CONTENT_META_KEY	  => $story->body,
 						NPR_BYLINE_META_KEY			  => $by_lines[0]['name'],
 						NPR_BYLINE_LINK_META_KEY	  => $by_lines[0]['link'],
 						NPR_MULTI_BYLINE_META_KEY	  => $multi_by_line,
 						NPR_RETRIEVED_STORY_META_KEY  => 1,
 						NPR_PUB_DATE_META_KEY		  => $story->publishDateTime,
-						NPR_STORY_DATE_MEATA_KEY	  => $story->publishDateTime,
+						NPR_STORY_DATE_META_KEY	      => $story->publishDateTime,
 						NPR_LAST_MODIFIED_DATE_KEY	  => $story->editorialLastModifiedDateTime,
 						NPR_STORY_HAS_VIDEO_META_KEY  => $npr_has_video
 					];
+					if ( $npr_layout['has_video_streaming'] ) {
+						$metas[NPR_HAS_VIDEO_STREAMING_META_KEY] = $npr_layout['has_video_streaming'];
+					}
+					if ( $npr_layout['has_slideshow'] ) {
+						$metas[NPR_HAS_SLIDESHOW_META_KEY] = $npr_layout['has_slideshow'];
+					}
 					// get audio
 					if ( in_array( 'has-audio', $profiles ) && !empty( $story->audio ) ) {
 						$mp3_array = [];
@@ -1078,15 +1083,6 @@ class NPR_CDS_WP {
 			if ( !empty( $audio_file ) ) {
 				$body_with_layout = $audio_file . "\n" . $body_with_layout;
 			}
-		}
-		if ( $returnary['has_slideshow'] ) {
-			$body_with_layout = '<link rel="stylesheet" href="' . NPR_CDS_PLUGIN_URL . 'assets/css/splide.min.css" />' .
-				$body_with_layout .
-				'<script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/splide.min.js"></script>' .
-				'<script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/splide-settings.js"></script>';
-		}
-		if ( $returnary['has_video_streaming'] ) {
-			$body_with_layout = '<style>.is-type-video video {max-width: 100%; width: 100%;}</style><script src="' . NPR_CDS_PLUGIN_URL . 'assets/js/hls.js"></script>' . $body_with_layout;
 		}
 		$returnary['body'] = npr_cds_esc_html( $body_with_layout );
 		return $returnary;

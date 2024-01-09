@@ -202,9 +202,9 @@ function npr_cds_settings_init(): void {
 	add_settings_section( 'npr_cds_get_multi_settings', 'Multiple Get Settings', 'npr_cds_get_multi_settings_callback', 'npr_cds_get_multi_settings' );
 
 	add_settings_field( 'npr_cds_num', 'Number of things to get', 'npr_cds_num_multi_callback', 'npr_cds_get_multi_settings', 'npr_cds_get_multi_settings' );
-	register_setting( 'npr_cds_get_multi_settings', 'npr_cds_num', [ 'type' => 'integer' ] );
+	register_setting( 'npr_cds_get_multi_settings', 'npr_cds_num', [ 'type' => 'integer', 'sanitize_callback' => 'npr_cds_num_validation' ] );
 
-	$num = get_option( 'npr_cds_num', 5 );
+	$num = get_option( 'npr_cds_num', 1 );
 	for ( $i = 0; $i < $num; $i++ ) {
 		add_settings_field( 'npr_cds_query_' . $i, 'Query ' . $i, 'npr_cds_query_callback', 'npr_cds_get_multi_settings', 'npr_cds_get_multi_settings', $i );
 		register_setting( 'npr_cds_get_multi_settings', 'npr_cds_query_' . $i, [ 'type' => 'array', 'default' => [ 'filters' => '', 'sorting' => '', 'publish' => '', 'category' => '', 'tags' => '' ] ] );
@@ -246,7 +246,8 @@ function npr_cds_settings_callback() { }
 
 function npr_cds_push_settings_callback(): void { ?>
 	<p>Use this page to map your custom WordPress Meta fields to fields sent to the NPR CDS, and vice versa. Clicking the <strong>Use Custom Settings</strong> checkbox will enable these mappings. If you wish to use the default mapping for a field, select &mdash; default &mdash; and we will use the obvious WordPress field.</p>
-	<p>Select for the Meta fields for the <strong><?php echo npr_cds_get_push_post_type(); ?></strong> post type.</p> <?php
+	<p>Select for the Meta fields for the <strong><?php echo esc_html( npr_cds_get_push_post_type() ); ?></strong> post
+		type.</p> <?php
  }
 
 function npr_cds_get_multi_settings_callback(): void {
@@ -368,7 +369,7 @@ function npr_cds_image_width_callback(): void {
  */
 function npr_cds_num_multi_callback(): void {
 	$option = get_option( 'npr_cds_num' );
-	echo npr_cds_esc_html( '<p><input type="number" value="' . $option . '" name="npr_cds_num" /></p><p><em>Increase the number of queries by changing the number in the field above, to a maximum of 10.</em></p>' );
+	echo npr_cds_esc_html( '<p><input type="number" value="' . $option . '" min="0" max="' . NPR_MAX_QUERIES . '" name="npr_cds_num" /></p><p><em>Increase the number of queries by changing the number in the field above, to a maximum of 10.</em></p>' );
 }
 
 function npr_cds_query_callback( $i ): void {
@@ -501,7 +502,7 @@ function npr_cds_validation_callback_checkbox( $value ): bool {
  * Prefix validation callback. We only want to save the prefix without the hyphen
  */
 function npr_cds_validation_callback_prefix( $value ): string {
-	if ( !wp_verify_nonce( $_POST['_wpnonce'], esc_attr( $_POST['option_page'] ) . '-options' ) ) {
+	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
 		return '';
 	}
 	$value = strtolower( $value );
@@ -521,7 +522,7 @@ function npr_cds_validation_callback_prefix( $value ): string {
  * URL validation callbacks for the CDS URLs
  */
 function npr_cds_validation_callback_pull_url( string $value ): string {
-	if ( !wp_verify_nonce( $_POST['_wpnonce'], esc_attr( $_POST['option_page'] ) . '-options' ) ) {
+	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
 		return '';
 	}
 	if ( $value == 'https://stage-content.api.npr.org' || $value == 'https://content.api.npr.org' ) {
@@ -540,7 +541,7 @@ function npr_cds_validation_callback_pull_url( string $value ): string {
 	return esc_attr( $value );
 }
 function npr_cds_validation_callback_push_url( string $value ): string {
-	if ( !wp_verify_nonce( $_POST['_wpnonce'], esc_attr( $_POST['option_page'] ) . '-options' ) ) {
+	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
 		return '';
 	}
 	if ( $value == 'https://stage-content.api.npr.org' || $value == 'https://content.api.npr.org' ) {
@@ -559,8 +560,20 @@ function npr_cds_validation_callback_push_url( string $value ): string {
 	return esc_attr( $value );
 }
 
+function npr_cds_num_validation( int $value ): int {
+	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
+		return 0;
+	}
+	if ( $value < 0 ) {
+		return 0;
+	}
+	if ( $value > NPR_MAX_QUERIES ) {
+		return NPR_MAX_QUERIES;
+	}
+	return $value;
+}
 function npr_cds_validation_callback_org_id( $value ): string {
-	if ( !wp_verify_nonce( $_POST['_wpnonce'], esc_attr( $_POST['option_page'] ) . '-options' ) ) {
+	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
 		return '';
 	}
 	if ( preg_match( '/^[0-9]{1,4}$/', $value ) ) {

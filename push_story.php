@@ -168,17 +168,14 @@ function npr_cds_bulk_action_push_dropdown(): void {
 
 	//make sure we have the right post_type and that the push URL is filled in, so we know we want to push this post-type
 	if ( $post_type == $push_post_type && !empty( $push_url ) ) {
-	?>
-	<script type="text/javascript">
-		jQuery(document).ready(function($) {
-			$('<option>').val('pushNprStory').text('<?php esc_html_e( 'Push Story to NPR', 'npr-content-distribution-service' ); ?>').appendTo
-			("select[name='action']");
-			$('<option>').val('pushNprStory').text('<?php esc_html_e('Push Story to NPR', 'npr-content-distribution-service' ); ?>').appendTo
-			("select[name='action2']");
-		});
-
-	</script>
-	<?php
+		add_action( 'admin_print_scripts', function() {
+			echo '<script>' .
+				'jQuery(document).ready(function($) {'.
+					'$("<option>").val("pushNprStory").text("' . __( 'Push Story to NPR', 'npr-content-distribution-service' ) . '").appendTo("select[name=\'action\']");' .
+					'$("<option>").val("pushNprStory").text("' . __( 'Push Story to NPR', 'npr-content-distribution-service' ) . '").appendTo("select[name=\'action2\']");' .
+				'});' .
+			'</script>';
+		} );
 	}
 }
 
@@ -230,7 +227,7 @@ function npr_cds_save_send_to_cds( Int $post_ID ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
-	if ( !wp_verify_nonce( $_POST['npr_cds_send_nonce'], 'npr_cds-' . $post_ID ) ) return false;
+	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 	global $post;
 
 	if ( get_post_type( $post ) !== get_option( 'npr_cds_push_post_type' ) ) return false;
@@ -255,7 +252,7 @@ function npr_cds_save_send_to_one( int $post_ID ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
-	if ( !wp_verify_nonce( $_POST['npr_cds_send_nonce'], 'npr_cds-' . $post_ID ) ) return false;
+	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 
 	global $post;
 
@@ -285,7 +282,7 @@ function npr_cds_save_nprone_featured( int $post_ID ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
-	if ( !wp_verify_nonce( $_POST['npr_cds_send_nonce'], 'npr_cds-' . $post_ID ) ) return false;
+	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 
 	global $post;
 
@@ -319,7 +316,7 @@ function npr_cds_save_datetime( int $post_ID ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
 	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
-	if ( !wp_verify_nonce( $_POST['npr_cds_send_nonce'], 'npr_cds-' . $post_ID ) ) return false;
+	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 
 	global $post;
 

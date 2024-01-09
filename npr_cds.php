@@ -30,11 +30,13 @@ const NPR_BYLINE_LINK_META_KEY = 'npr_byline_link';
 const NPR_MULTI_BYLINE_META_KEY = 'npr_multi_byline';
 const NPR_AUDIO_META_KEY = 'npr_audio';
 const NPR_PUB_DATE_META_KEY = 'npr_pub_date';
-const NPR_STORY_DATE_MEATA_KEY = 'npr_story_date';
+const NPR_STORY_DATE_META_KEY = 'npr_story_date';
 const NPR_LAST_MODIFIED_DATE_KEY = 'npr_last_modified_date';
 const NPR_RETRIEVED_STORY_META_KEY = 'npr_retrieved_story';
 const NPR_IMAGE_CAPTION_META_KEY = 'npr_image_caption';
 const NPR_STORY_HAS_VIDEO_META_KEY = 'npr_has_video';
+const NPR_HAS_VIDEO_STREAMING_META_KEY = 'npr_has_video_streaming';
+const NPR_HAS_SLIDESHOW_META_KEY = 'npr_has_slideshow';
 const NPR_PUSH_STORY_ERROR = 'npr_push_story_error';
 const NPR_MAX_QUERIES = 10;
 const NPR_POST_TYPE = 'npr_story_post';
@@ -86,7 +88,7 @@ function npr_cds_activate(): void {
 
 	// Check for number of cron queries from old plugin, migrate to new
 	$num_old = get_option( 'ds_npr_num' );
-	$num = get_option( 'npr_cds_num', 5 );
+	$num = get_option( 'npr_cds_num', 1 );
 
 	if ( !empty( $num_old ) ) {
 		$num = $num_old;
@@ -339,13 +341,13 @@ function npr_cds_add_header_meta(): void {
 		( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || get_post_type() === get_option( 'npr_cds_push_post_type' ) )
 	) {
 		$id = $wp_query->queried_object_id;
-		$npr_story_id = get_post_meta( $id, 'npr_story_id', 1 );
+		$npr_story_id = get_post_meta( $id, NPR_STORY_ID_META_KEY, 1 );
 		if ( !empty( $npr_story_id ) ) {
 			$has_audio = ( preg_match( '/\[audio/', $wp_query->post->post_content ) ? 1 : 0 );
 			$word_count = str_word_count( strip_tags( $wp_query->post->post_content ) );
-			$npr_retrieved_story = get_post_meta( $id, 'npr_retrieved_story', 1 );
+			$npr_retrieved_story = get_post_meta( $id, NPR_RETRIEVED_STORY_META_KEY, 1 );
 			if ( $npr_retrieved_story == 1 ) {
-				$byline = get_post_meta( $id, 'npr_byline', 1 );
+				$byline = get_post_meta( $id, NPR_BYLINE_META_KEY, 1 );
 			} elseif ( function_exists( 'get_coauthors' ) ) {
 				$byline = coauthors( ', ', ', ', '', '', false );
 			} else {
@@ -363,15 +365,27 @@ function npr_cds_add_header_meta(): void {
 			$primary_cat = get_post_meta( $id, 'epc_primary_category', true );
 			if ( empty( $primary_cat ) && !empty( $keywords ) ) {
 				$primary_cat = $keywords[0];
-			} ?>
-		<meta name="datePublished" content="<?php echo get_the_date( 'c', $id ); ?>" />
-		<meta name="story_id" content="<?php echo esc_html( $npr_story_id ); ?>" />
-		<meta name="has_audio" content="<?php echo esc_html( $has_audio ); ?>" />
-		<meta name="org_id" content="<?php echo esc_html( get_option( 'ds_npr_api_org_id' ) ); ?>" />
-		<meta name="category" content="<?php echo esc_html( $primary_cat ); ?>" />
-		<meta name="author" content="<?php echo esc_html( $byline ); ?>" />
+			}
+			$npr_has_video_streaming = get_post_meta( $id, NPR_HAS_VIDEO_STREAMING_META_KEY, 1 );
+			$npr_has_slideshow = get_post_meta( $id, NPR_HAS_SLIDESHOW_META_KEY, 1 );
+			if ( $npr_has_video_streaming ) {
+				wp_enqueue_script( 'npr-hls-js', NPR_CDS_PLUGIN_URL . 'assets/js/hls.js', [], '1.4.13', [ 'in_footer' => true ] );
+				wp_enqueue_style( 'npr_hls-css', NPR_CDS_PLUGIN_URL . 'assets/css/hls.css' );
+			}
+			if ( $npr_has_slideshow ) {
+				wp_enqueue_script( 'npr-splide-js', NPR_CDS_PLUGIN_URL . 'assets/js/splide.min.js', [], '3.6.12', [ 'in_footer' => true ] );
+				wp_enqueue_script( 'npr-splide-settings-js', NPR_CDS_PLUGIN_URL . 'assets/js/splide-settings.js', [], '3.6.12', [ 'in_footer' => true ] );
+				wp_enqueue_style( 'npr-splide-css', NPR_CDS_PLUGIN_URL . 'assets/css/splide.min.css' );
+			}
+			?>
+		<meta name="datePublished" content="<?php echo esc_attr( get_the_date( 'c', $id ) ); ?>" />
+		<meta name="story_id" content="<?php echo esc_attr( $npr_story_id ); ?>" />
+		<meta name="has_audio" content="<?php echo esc_attr( $has_audio ); ?>" />
+		<meta name="org_id" content="<?php echo esc_attr( get_option( 'ds_npr_api_org_id' ) ); ?>" />
+		<meta name="category" content="<?php echo esc_attr( $primary_cat ); ?>" />
+		<meta name="author" content="<?php echo esc_attr( $byline ); ?>" />
 		<meta name="programs" content="none" />
-		<meta name="wordCount" content="<?php echo $word_count; ?>" />
+		<meta name="wordCount" content="<?php echo esc_attr( $word_count ); ?>" />
 		<meta name="keywords" content="<?php echo esc_html( implode( ',', $keywords ) ); ?>" />
 <?php
 		}
