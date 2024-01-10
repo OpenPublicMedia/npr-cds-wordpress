@@ -348,6 +348,11 @@ function npr_cds_add_header_meta(): void {
 			$npr_retrieved_story = get_post_meta( $id, NPR_RETRIEVED_STORY_META_KEY, 1 );
 			if ( $npr_retrieved_story == 1 ) {
 				$byline = get_post_meta( $id, NPR_BYLINE_META_KEY, 1 );
+				if ( function_exists( 'rel_canonical' ) ) {
+					remove_action( 'wp_head', 'rel_canonical' );
+				}
+				$original_url = get_post_meta( $id, NPR_HTML_LINK_META_KEY, 1 );
+				echo '<link rel="canonical" href="' . esc_url( $original_url ) . '" />' . "\n";
 			} elseif ( function_exists( 'get_coauthors' ) ) {
 				$byline = coauthors( ', ', ', ', '', '', false );
 			} else {
@@ -391,4 +396,4 @@ function npr_cds_add_header_meta(): void {
 		}
 	}
 }
-add_action( 'wp_head', 'npr_cds_add_header_meta', 100 );
+add_action( 'wp_head', 'npr_cds_add_header_meta', 9 );
