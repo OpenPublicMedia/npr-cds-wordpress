@@ -30,17 +30,14 @@ function npr_cds_bulk_action_update_dropdown(): void {
 	$pull_post_type = NPR_CDS::get_pull_post_type();
 	global $post_type;
 	if ( $post_type == $pull_post_type ) {
-		add_action( 'admin_print_scripts', function() {
-			echo '<script>' .
-				'jQuery(document).ready(function($) {'.
-					'$("<option>").val("updateNprStory").text("' . __( 'Update NPR Story', 'npr-content-distribution-service' ) . '").appendTo("select[name=\'action\']");' .
-					'$("<option>").val("updateNprStory").text("' . __( 'Update NPR Story', 'npr-content-distribution-service' ) . '").appendTo("select[name=\'action2\']");' .
-				'});' .
-			'</script>';
-		} );
+		printf(
+			'<script>jQuery(document).ready(function($) {$("<option>").val("updateNprStory").text("%s").appendTo("select[name=\'action\']");$("<option>").val("updateNprStory").text("%s").appendTo("select[name=\'action2\']");});</script>',
+			__( 'Update NPR Story', 'npr-content-distribution-service' ),
+			__( 'Update NPR Story', 'npr-content-distribution-service' )
+		);
 	}
 }
-
+add_action( 'admin_print_footer_scripts', 'npr_cds_bulk_action_update_dropdown' );
 //do the new bulk action
 add_action( 'load-edit.php', 'npr_cds_bulk_action_update_action' );
 
@@ -98,12 +95,14 @@ function npr_cds_get_stories(): void {
 
 				// Get the story ID from the URL, then paste it into the input's value field with esc_attr
 				$story_id = '';
-				if ( ( isset( $_POST['story_id'] ) ) || ( isset( $_GET ) && isset( $_GET['story_id'] ) ) ) {
-					if ( !empty( $_POST['story_id'] ) ) {
-						$story_id = sanitize_text_field( $_POST['story_id'] );
-					}
-					if ( !empty( $_GET['story_id'] ) ) {
-						$story_id = sanitize_text_field( $_GET['story_id'] );
+				if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'npr_cds_nonce_story_id_field' ) ) {
+					if ( ( isset( $_POST['story_id'] ) ) || ( isset( $_GET ) && isset( $_GET['story_id'] ) ) ) {
+						if ( !empty( $_POST['story_id'] ) ) {
+							$story_id = sanitize_text_field( $_POST['story_id'] );
+						}
+						if ( !empty( $_GET['story_id'] ) ) {
+							$story_id = sanitize_text_field( $_GET['story_id'] );
+						}
 					}
 				}
 			?>

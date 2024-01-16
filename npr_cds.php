@@ -332,7 +332,7 @@ function npr_cds_error_log( $thing ): void {
  * Function to help with escaping HTML, especially for admin screens
  */
 function npr_cds_esc_html( $string ): string {
-	return html_entity_decode( esc_html__( $string, 'npr-content-distribution-service' ), ENT_QUOTES );
+	return html_entity_decode( sprintf( esc_html__( '%s', 'npr-content-distribution-service' ), esc_html( $string ) ), ENT_QUOTES );
 }
 
 function npr_cds_add_header_meta(): void {

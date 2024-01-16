@@ -130,7 +130,7 @@ function npr_cds_push_meta_keys( string $post_type = 'post' ): array {
 	global $wpdb;
 	$limit = (int) apply_filters( 'postmeta_form_limit', 30 );
 	//AND $wpdb->postmeta.meta_key NOT RegExp '(^[_0-9].+$)'
-	$keys = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT( $wpdb->postmeta.meta_key ) FROM $wpdb->posts LEFT JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE $wpdb->posts.post_type = '%s' AND $wpdb->postmeta.meta_key != '' AND $wpdb->postmeta.meta_key NOT LIKE '_oembed_%' AND $wpdb->postmeta.meta_key NOT RegExp '(^[0-9]+$)'", $post_type ) );
+	$keys = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT( $wpdb->postmeta.meta_key ) FROM $wpdb->posts LEFT JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE $wpdb->posts.post_type = %s AND $wpdb->postmeta.meta_key != '' AND $wpdb->postmeta.meta_key NOT LIKE %s AND $wpdb->postmeta.meta_key NOT RegExp '(^[0-9]+$)'", $post_type, '_oembed_%' ) );
 	if ( $keys ) natcasesort( $keys );
 
 	set_transient( 'npr_cds_' . $post_type . '_meta_keys', $keys, 60*60*24 ); # 1 Day Expiration
@@ -168,16 +168,14 @@ function npr_cds_bulk_action_push_dropdown(): void {
 
 	//make sure we have the right post_type and that the push URL is filled in, so we know we want to push this post-type
 	if ( $post_type == $push_post_type && !empty( $push_url ) ) {
-		add_action( 'admin_print_scripts', function() {
-			echo '<script>' .
-				'jQuery(document).ready(function($) {'.
-					'$("<option>").val("pushNprStory").text("' . __( 'Push Story to NPR', 'npr-content-distribution-service' ) . '").appendTo("select[name=\'action\']");' .
-					'$("<option>").val("pushNprStory").text("' . __( 'Push Story to NPR', 'npr-content-distribution-service' ) . '").appendTo("select[name=\'action2\']");' .
-				'});' .
-			'</script>';
-		} );
+		printf(
+			'<script>jQuery(document).ready(function($) {$("<option>").val("pushNprStory").text("%s").appendTo("select[name=\'action\']");$("<option>").val("pushNprStory").text("%s").appendTo("select[name=\'action2\']");});</script>',
+			__( 'Push Story to NPR', 'npr-content-distribution-service' ),
+			__( 'Push Story to NPR', 'npr-content-distribution-service' )
+		);
 	}
 }
+add_action( 'admin_print_footer_scripts', 'npr_cds_bulk_action_push_dropdown' );
 
 //do the new bulk action
 add_action( 'load-edit.php', 'npr_cds_bulk_action_push_action' );

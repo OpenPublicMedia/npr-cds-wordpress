@@ -23,7 +23,10 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 	<div id="npr-cds-publish-actions">
 <?php
 	if ( !empty( $npr_id ) ) {
-		echo "<h2>Current CDS ID: <strong>" . $npr_id . "</strong></h2>";
+		printf(
+			esc_html__( "<h2>Current CDS ID: <strong>%s</strong></h2>", 'npr-content-distribution-service' ),
+			esc_html( $npr_id )
+		);
 	} ?>
 		<ul>
 		<?php
