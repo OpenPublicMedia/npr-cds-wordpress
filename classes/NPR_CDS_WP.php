@@ -175,6 +175,9 @@ class NPR_CDS_WP {
 				$post_mod_date = strtotime( date( 'Y-m-d H:i:s' ) );
 				$post_pub_date = $post_mod_date;
 				$cats = [];
+				if ( empty( $story->body ) ) {
+					$story->body = null;
+				}
 				if ( $exists->posts ) {
 					$existing = $exists->post;
 					$post_id = $existing->ID;
@@ -295,8 +298,8 @@ class NPR_CDS_WP {
 						NPR_STORY_ID_META_KEY		  => $story->id,
 						NPR_HTML_LINK_META_KEY		  => $webPage,
 						NPR_STORY_CONTENT_META_KEY	  => $story->body,
-						NPR_BYLINE_META_KEY			  => $by_lines[0]['name'],
-						NPR_BYLINE_LINK_META_KEY	  => $by_lines[0]['link'],
+						NPR_BYLINE_META_KEY			  => ( !empty( $by_lines[0]['name'] ) ? $by_lines[0]['name'] : '' ),
+						NPR_BYLINE_LINK_META_KEY	  => ( !empty( $by_lines[0]['link'] ) ? $by_lines[0]['link'] : '' ),
 						NPR_MULTI_BYLINE_META_KEY	  => $multi_by_line,
 						NPR_RETRIEVED_STORY_META_KEY  => 1,
 						NPR_PUB_DATE_META_KEY		  => $story->publishDateTime,
@@ -432,8 +435,9 @@ class NPR_CDS_WP {
 							}
 
 							// do the validation and storage stuff
+							$image_title = !empty( $image_current->title ) ? $image_current->title : '';
 							require_once( ABSPATH . 'wp-admin/includes/image.php' ); // needed for wp_read_image_metadata used by media_handle_sideload during cron
-							$image_upload_id = media_handle_sideload( $file_array, $post_id, $image_current->title );
+							$image_upload_id = media_handle_sideload( $file_array, $post_id, $image_title );
 							// If error storing permanently, unlink
 							if ( is_wp_error( $image_upload_id ) ) {
 								@unlink( $file_array['tmp_name'] );
