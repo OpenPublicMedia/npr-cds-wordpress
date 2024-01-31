@@ -154,9 +154,6 @@ function npr_cds_get_post_meta_keys( string $post_type = 'post' ): array {
 	return $meta_keys;
 }
 
-//add the bulk action to the dropdown on the post admin page
-add_action( 'admin_footer-edit.php', 'npr_cds_bulk_action_push_dropdown' );
-
 function npr_cds_bulk_action_push_dropdown(): void {
 	$push_post_type = get_option( 'npr_cds_push_post_type' );
 	if ( empty( $push_post_type ) ) {

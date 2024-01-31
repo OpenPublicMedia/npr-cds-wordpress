@@ -236,6 +236,7 @@ class NPR_CDS_WP {
 					// merge arrays and remove duplicate ids
 					$wp_category_ids = array_unique( array_merge( $wp_category_ids, $cats ) );
 				}
+				$by_line = '';
 				// check the last modified date and pub date (sometimes the API just updates the pub date), if the story hasn't changed, just go on
 				if ( $post_mod_date != strtotime( $story->editorialLastModifiedDateTime ) || $post_pub_date != strtotime( $story->publishDateTime ) ) {
 					$by_lines = [];
@@ -265,18 +266,19 @@ class NPR_CDS_WP {
 							}
 						}
 					}
-
-					$by_line = $by_lines[0]['name'];
-					if ( count( $by_lines ) > 1 ) {
-						$all_bylines = [];
-						foreach ( $by_lines as $bl ) {
-							if ( !empty( $bl['link'] ) ) {
-								$all_bylines[] = '<a href="' . $bl['link'] . '">' . $bl['name'] . '</a>';
-							} else {
-								$all_bylines[] = $bl['name'];
+					if ( !empty( $bylines ) ) {
+						$by_line = $by_lines[0]['name'];
+						if ( count( $by_lines ) > 1 ) {
+							$all_bylines = [];
+							foreach ( $by_lines as $bl ) {
+								if ( ! empty( $bl['link'] ) ) {
+									$all_bylines[] = '<a href="' . $bl['link'] . '">' . $bl['name'] . '</a>';
+								} else {
+									$all_bylines[] = $bl['name'];
+								}
 							}
+							$multi_by_line = implode( '|', $all_bylines );
 						}
-						$multi_by_line = implode( '|', $all_bylines );
 					}
 					$webPage = '';
 					if ( !empty( $story->webPages ) ) {
@@ -446,17 +448,20 @@ class NPR_CDS_WP {
 								}
 								set_post_thumbnail( $post_id, $image_upload_id );
 								//get any image metadata and attach it to the image post
+								$image_producer = !empty( $image_current->producer ) ? $image_current->producer : '';
+								$image_provider = !empty( $image_current->provider ) ? $image_current->provider : '';
+								$image_caption = !empty( $image_current->caption ) ? $image_current->caption : '';
 								if ( NPR_IMAGE_CREDIT_META_KEY === NPR_IMAGE_AGENCY_META_KEY ) {
-									$image_credits = [ $image_current->producer, $image_current->provider ];
+									$image_credits = [ $image_producer, $image_provider ];
 									$image_metas = [
 										NPR_IMAGE_CREDIT_META_KEY => implode( ' | ', $image_credits ),
-										NPR_IMAGE_CAPTION_META_KEY => $image_current->caption
+										NPR_IMAGE_CAPTION_META_KEY => $image_caption
 									];
 								} else {
 									$image_metas = [
-										NPR_IMAGE_CREDIT_META_KEY => $image_current->producer,
-										NPR_IMAGE_AGENCY_META_KEY => $image_current->provider,
-										NPR_IMAGE_CAPTION_META_KEY => $image_current->caption
+										NPR_IMAGE_CREDIT_META_KEY => $image_producer,
+										NPR_IMAGE_AGENCY_META_KEY => $image_provider,
+										NPR_IMAGE_CAPTION_META_KEY => $image_caption
 									];
 								}
 								foreach ( $image_metas as $k => $v ) {
@@ -865,7 +870,8 @@ class NPR_CDS_WP {
 								}
 							}
 						}
-						$body_with_layout .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper"><h3>' . $asset_current->eyebrowText . '</h3><p><a href="' . $promo_card_url . '">' . $asset_current->linkText . '</a></p></div></figure>';
+						$body_with_layout .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . ( !empty( $asset_current->eyebrowText ) ? '<h3>' . $asset_current->eyebrowText . '</h3>' : '' ) .
+							'<p><a href="' . $promo_card_url . '">' . $asset_current->linkText . '</a></p></div></figure>';
 						break;
 					case 'html-block' :
 						if ( !empty( $asset_current->html ) ) {

@@ -23,9 +23,6 @@ function npr_cds_update_column_content( string $column_name, int $post_ID ): voi
 	}
 }
 
-//add the bulk action to the dropdown on the post admin page
-add_action( 'admin_footer-edit.php', 'npr_cds_bulk_action_update_dropdown' );
-
 function npr_cds_bulk_action_update_dropdown(): void {
 	$pull_post_type = NPR_CDS::get_pull_post_type();
 	global $post_type;

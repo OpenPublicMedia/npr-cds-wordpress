@@ -5,8 +5,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Contributors: jwcounts, tamw-wnet, bdivver
 - Original developers: NPRDS, INN Labs
 - Requires at least: 3.8.14
-- Tested up to: 6.4
-- Stable tag: 1.0
+- Tested up to: 6.4.2
+- Stable tag: 1.0.1
 - License: GPLv2
 - License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,6 +70,11 @@ NPR Stories having got gotten
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.0.1
+* Fixing a bunch of warnings in `classes/NPR_CDS_WP.php`
+* Changing the behavior the `Get Multi` setting `Run the queries on saving changes` so that it runs once and then turns off. That way, it doesn't run every time you save changes on the page.
+* Fixed issue where updates to bulk actions dropdowns were being duplicated
+
 ### V1.0
 * Overhaul to enable pulling from NPR's Content Distribution Service, which is the next generation of the Story API.
 * Previous version notes can be found in the [NPR Story API plugin repository](https://github.com/OpenPublicMedia/nprapi-wordpress)

@@ -262,6 +262,7 @@ function npr_cds_get_multi_settings_callback(): void {
 		}
 	}
 	if ( $run_multi && $enable ) {
+		update_option( 'npr_cds_query_run_multi', false );
 		NPR_CDS::cron_pull();
 	}
 
