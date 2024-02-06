@@ -4,7 +4,7 @@ Donate link: https://www.npr.org/series/750002/support-public-radio
 Tags: npr, news, public radio, api
 Requires at least: 3.8.14
 Tested up to: 6.4.2
-Stable tag: 1.0.1
+Stable tag: 1.0.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: nprapi
@@ -70,6 +70,9 @@ NPR Stories having got gotten
 
 
 == Changelog ==
+= V1.0.3 =
+* Fixing warnings and a few fatal errors in `NPR_CDS_WP.php`
+
 = V1.0.2 =
 * Fixing improperly escaped HTML in post editor meta boxes
 

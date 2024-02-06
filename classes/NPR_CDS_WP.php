@@ -138,7 +138,11 @@ class NPR_CDS_WP {
 			return $response;
 		}
 		$json = json_decode( $response['body'], false );
-		return $json->resources[0];
+		if ( !empty( $json->resources ) ) {
+			return $json->resources[0];
+		} else {
+			return new WP_Error( 404, 'Sorry, no resources were returned' );
+		}
 	}
 
 	/**
@@ -865,17 +869,19 @@ class NPR_CDS_WP {
 						}
 						break;
 					case 'promo-card' :
-						$promo_card = $this->get_document( $asset_current->documentLink->href );
-						$promo_card_url = '';
-						if ( !is_wp_error( $promo_card ) ) {
-							foreach ( $promo_card->webPages as $web ) {
-								if ( in_array( 'canonical', $web->rels ) ) {
-									$promo_card_url = $web->href;
+						if ( !empty( $asset_current->documentLink ) ) {
+							$promo_card     = $this->get_document( $asset_current->documentLink->href );
+							$promo_card_url = '';
+							if ( ! is_wp_error( $promo_card ) ) {
+								foreach ( $promo_card->webPages as $web ) {
+									if ( in_array( 'canonical', $web->rels ) ) {
+										$promo_card_url = $web->href;
+									}
 								}
 							}
+							$body_with_layout .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . ( ! empty( $asset_current->eyebrowText ) ? '<h3>' . $asset_current->eyebrowText . '</h3>' : '' ) .
+							                     '<p><a href="' . $promo_card_url . '">' . $asset_current->linkText . '</a></p></div></figure>';
 						}
-						$body_with_layout .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . ( !empty( $asset_current->eyebrowText ) ? '<h3>' . $asset_current->eyebrowText . '</h3>' : '' ) .
-							'<p><a href="' . $promo_card_url . '">' . $asset_current->linkText . '</a></p></div></figure>';
 						break;
 					case 'html-block' :
 						if ( !empty( $asset_current->html ) ) {
@@ -960,7 +966,7 @@ class NPR_CDS_WP {
 							$figclass .= ' alignright';
 							$fightml .= " width=200";
 						}
-						$thiscaption = ( !empty( trim( $asset_current->caption ) ) ? trim( $asset_current->caption ) : '' );
+						$thiscaption = ( !empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
 						$fightml .= ( !empty( $fightml ) && !empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
 						$fightml .= ( !empty( $fightml ) ? '>' : '' );
 						$thiscaption .= ( !empty( $cites ) ? " <cite>" . $this->parse_credits( $asset_current ) . "</cite>" : '' );
@@ -1074,16 +1080,18 @@ class NPR_CDS_WP {
 		if ( !empty( $story->audio ) ) {
 			$audio_file = '';
 			foreach ( $story->audio as $audio ) {
-				if ( in_array( 'primary', $audio->rels ) && !in_array( 'premium', $audio->rels ) ) {
-					$audio_id = $this->extract_asset_id( $audio->href );
-					$audio_current = $story->assets->{ $audio_id };
-					if ( $audio_current->isAvailable ) {
-						if ( $audio_current->isEmbeddable ) {
-							$audio_file = '<p><iframe class="npr-embed-audio" style="width: 100%; height: 235px;" src="' . $audio_current->embeddedPlayerLink->href . '"></iframe></p>';
-						} elseif ( $audio_current->isDownloadable ) {
-							foreach ( $audio_current->enclosures as $enclose ) {
-								if ( !empty( $enclose->rels ) && $enclose->type == 'audio/mpeg' && !in_array( 'premium', $enclose->rels ) ) {
-									$audio_file = '[audio mp3="' . $enclose->href . '"][/audio]';
+				if ( !empty( $audio->rels ) ) {
+					if ( in_array( 'primary', $audio->rels ) && ! in_array( 'premium', $audio->rels ) ) {
+						$audio_id      = $this->extract_asset_id( $audio->href );
+						$audio_current = $story->assets->{$audio_id};
+						if ( $audio_current->isAvailable ) {
+							if ( $audio_current->isEmbeddable ) {
+								$audio_file = '<p><iframe class="npr-embed-audio" style="width: 100%; height: 235px;" src="' . $audio_current->embeddedPlayerLink->href . '"></iframe></p>';
+							} elseif ( $audio_current->isDownloadable ) {
+								foreach ( $audio_current->enclosures as $enclose ) {
+									if ( ! empty( $enclose->rels ) && $enclose->type == 'audio/mpeg' && ! in_array( 'premium', $enclose->rels ) ) {
+										$audio_file = '[audio mp3="' . $enclose->href . '"][/audio]';
+									}
 								}
 							}
 						}

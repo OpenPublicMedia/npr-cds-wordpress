@@ -6,7 +6,7 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Original developers: NPRDS, INN Labs
 - Requires at least: 3.8.14
 - Tested up to: 6.4.2
-- Stable tag: 1.0.2
+- Stable tag: 1.0.3
 - License: GPLv2
 - License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,6 +70,9 @@ NPR Stories having got gotten
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.0.3
+* Fixing warnings and a few fatal errors in `NPR_CDS_WP.php`
+
 ### V1.0.2
 * Fixing improperly escaped HTML in post editor meta boxes
 
