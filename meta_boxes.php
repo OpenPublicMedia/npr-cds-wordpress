@@ -23,10 +23,7 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 	<div id="npr-cds-publish-actions">
 <?php
 	if ( !empty( $npr_id ) ) {
-		printf(
-			esc_html__( "<h2>Current CDS ID: <strong>%s</strong></h2>", 'npr-content-distribution-service' ),
-			esc_html( $npr_id )
-		);
+		echo npr_cds_esc_html( '<h2>Current CDS ID: <strong>' . $npr_id . '</strong></h2>' );
 	} ?>
 		<ul>
 		<?php
@@ -73,19 +70,11 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 	<div id="nprone-expiry">
 		<div id="nprone-expiry-display">
 			<span>Expires on:</span>
-<?php
-				printf(
-					esc_html__( '<time style="font-weight: bold;">%1$s</time>' ),
-					esc_html( date_format( $datetime, 'M j, Y @ H:i' ) )
-				); ?>
+			<?php echo npr_cds_esc_html( '<time style="font-weight: bold;">' . date_format( $datetime, 'M j, Y @ H:i' ) . '</time>' ); ?>
 			<button id="nprone-expiry-edit" class="link-effect"><?php esc_html_e( 'Edit', 'npr-content-distribution-service' ); ?></button>
 		</div>
 		<div id="nprone-expiry-form" class="hidden">
-<?php
-				printf(
-					esc_html__( '<input type="datetime-local" id="nprone-expiry-datetime" name="nprone-expiry-datetime" value="%s" />' ),
-					esc_html( date_format( $datetime, 'Y-m-d\TH:i' ) )
-				); ?>
+			<?php echo npr_cds_esc_html( '<input type="datetime-local" id="nprone-expiry-datetime" name="nprone-expiry-datetime" value="' . date_format( $datetime, 'Y-m-d\TH:i' ) . '" />' ); ?>
 			<div class="row">
 				<button id="nprone-expiry-ok" class="button"><?php esc_html_e( 'OK', 'npr-content-distribution-service' ); ?></button>
 				<button id="nprone-expiry-cancel" class="link-effect"><?php esc_html_e( 'Cancel', 'npr-content-distribution-service' );

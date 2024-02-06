@@ -6,7 +6,7 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Original developers: NPRDS, INN Labs
 - Requires at least: 3.8.14
 - Tested up to: 6.4.2
-- Stable tag: 1.0.1
+- Stable tag: 1.0.2
 - License: GPLv2
 - License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,6 +70,9 @@ NPR Stories having got gotten
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.0.2
+* Fixing improperly escaped HTML in post editor meta boxes
+
 ### V1.0.1
 * Fixing a bunch of warnings in `classes/NPR_CDS_WP.php`
 * Changing the behavior the `Get Multi` setting `Run the queries on saving changes` so that it runs once and then turns off. That way, it doesn't run every time you save changes on the page.

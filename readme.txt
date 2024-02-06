@@ -70,6 +70,9 @@ NPR Stories having got gotten
 
 
 == Changelog ==
+= V1.0.2 =
+* Fixing improperly escaped HTML in post editor meta boxes
+
 = V1.0.1 =
 * Fixing a bunch of warnings in `classes/NPR_CDS_WP.php`
 * Changing the behavior the `Get Multi` setting `Run the queries on saving changes` so that it runs once and then turns off. That way, it doesn't run every time you save changes on the page.
