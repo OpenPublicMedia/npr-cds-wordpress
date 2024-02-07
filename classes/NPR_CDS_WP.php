@@ -376,7 +376,7 @@ class NPR_CDS_WP {
 					$args['meta_input'] = $metas;
 
 					$post_id = wp_insert_post( $args );
-					if ( is_wp_error ( $post_id ) ) {
+					if ( is_wp_error ( $post_id ) && WP_DEBUG ) {
 						npr_cds_error_log( 'Cron '. $qnum . ': CDS ID ' . $story->id . ' database insertion failed' );
 					}
 					wp_set_post_terms( $post_id, $wp_category_ids, 'category', true );
@@ -422,8 +422,9 @@ class NPR_CDS_WP {
 									}
 								}
 							}
-
-							npr_cds_error_log( 'Got image from: ' . $image_url );
+							if ( WP_DEBUG ) {
+								npr_cds_error_log( 'Got image from: ' . $image_url );
+							}
 
 							$imagep_url_parse = parse_url( $image_url );
 							$imagep_url_parts = pathinfo( $imagep_url_parse['path'] );
@@ -628,7 +629,13 @@ class NPR_CDS_WP {
 					}
 					wp_set_post_terms( $post_id, $coauthor_terms, $coauthors_plus->coauthor_taxonomy );
 				}
-				npr_cds_error_log( 'Cron '. $qnum . ': CDS ID ' . $story->id . ' story posted to database' );
+				if ( WP_DEBUG ) {
+					if ( $existing ) {
+						npr_cds_error_log( 'Cron ' . $qnum . ': CDS ID ' . $story->id . ' story updated' );
+					} else {
+						npr_cds_error_log( 'Cron ' . $qnum . ': CDS ID ' . $story->id . ' story posted to database' );
+					}
+				}
 			}
 			if ( $single_story ) {
 				return $post_id ?? 0;
