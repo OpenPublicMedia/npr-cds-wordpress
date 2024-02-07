@@ -6,7 +6,7 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Original developers: NPRDS, INN Labs
 - Requires at least: 3.8.14
 - Tested up to: 6.4.2
-- Stable tag: 1.0.3
+- Stable tag: 1.0.4
 - License: GPLv2
 - License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,6 +70,10 @@ NPR Stories having got gotten
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.0.4
+* Fixing a problem where Get Multi queries run via WP_Cron would silently fail because `npr_cds_push()` would check if the current user had publishing rights and execute `wp_die()`. WP_Cron doesn't run as a specific user, therefore it doesn't technically have publishing rights. `npr_cds_push()` 
+  now checks if the post was retrieved from the CDS first before checking publishing rights. 
+
 ### V1.0.3
 * Fixing warnings and a few fatal errors in `NPR_CDS_WP.php`
 

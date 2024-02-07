@@ -158,8 +158,7 @@ class NPR_CDS_WP {
 	 */
 	function update_posts_from_stories( bool $publish = TRUE, int $qnum = 0 ): int {
 		$pull_post_type = get_option( 'npr_cds_pull_post_type', 'post' );
-
-		$post_id = null;
+		$cds_query = get_option( 'npr_cds_query_' . $qnum );
 
 		if ( !empty( $this->stories ) ) {
 			$single_story = TRUE;
@@ -167,6 +166,7 @@ class NPR_CDS_WP {
 				$single_story = FALSE;
 			}
 			foreach ( $this->stories as $story ) {
+				$post_id = null;
 				$exists = new WP_Query( apply_filters( 'npr_story_exists_args', [
 					'meta_key' => NPR_STORY_ID_META_KEY,
 					'meta_value' => $story->id,
@@ -182,7 +182,7 @@ class NPR_CDS_WP {
 				if ( empty( $story->body ) ) {
 					$story->body = null;
 				}
-				if ( $exists->posts ) {
+				if ( $exists->have_posts() ) {
 					$existing = $exists->post;
 					$post_id = $existing->ID;
 					$existing_status = $exists->posts[0]->post_status;
@@ -225,23 +225,23 @@ class NPR_CDS_WP {
 				];
 				$wp_category_ids = [];
 				$wp_category_id = "";
-				if ( 0 !== $qnum ) {
-					$args['tags_input'] = get_option( 'npr_cds_query_tags_' . $qnum );
-					if ( $pull_post_type == 'post' ) {
+				if ( $existing === null ) {
+					if ( $pull_post_type === 'post' ) {
 						// Get Default category from options table and store in array for post_array
-						$wp_category_id = intval( get_option( 'npr_cds_query_category_' . $qnum ) );
-						$wp_category_ids[] = $wp_category_id;
-					}
-				} else {
-					// Assign default category to new post
-					if ( $existing === null ) {
+						if ( !empty( $cds_query['category'] ) ) {
+							$wp_category_id = intval( $cds_query['category'] );
+						} else {
+							$wp_category_id = intval( get_option( 'default_category' ) );
+						}
+					} else {
 						$wp_category_id = intval( get_option( 'default_category' ) );
-						$wp_category_ids[] = $wp_category_id;
 					}
-				}
-				if ( 0 < sizeof( $cats ) ) {
-					// merge arrays and remove duplicate ids
-					$wp_category_ids = array_unique( array_merge( $wp_category_ids, $cats ) );
+					$wp_category_ids[] = $wp_category_id;
+				} else {
+					if ( 0 < sizeof( $cats ) ) {
+						// merge arrays and remove duplicate ids
+						$wp_category_ids = array_unique( array_merge( $wp_category_ids, $cats ) );
+					}
 				}
 				$by_line = '';
 				// check the last modified date and pub date (sometimes the API just updates the pub date), if the story hasn't changed, just go on
@@ -341,6 +341,23 @@ class NPR_CDS_WP {
 					} else {
 						$created = true;
 					}
+					// keep WP from stripping content from NPR posts
+					kses_remove_filters();
+
+					/**
+					 * Filters the post meta before series of update_post_meta() calls
+					 *
+					 * Allow a site to modify the post meta values prior to
+					 * passing each element via update_post_meta().
+					 *
+					 * @since 1.7
+					 *
+					 * @param array $metas Array of key/value pairs to be updated
+					 * @param int $post_id Post ID or NULL if no post ID.
+					 * @param stdClass $story Story object created during import
+					 * @param bool $created true if not pre-existing, false otherwise
+					 */
+					$metas = apply_filters( 'npr_pre_update_post_metas', $metas, $post_id, $story, $created, $qnum );
 
 					/**
 					 * Filters the $args passed to wp_insert_post()
@@ -355,11 +372,13 @@ class NPR_CDS_WP {
 					 * @param bool $created true if not pre-existing, false otherwise
 					 */
 
-					// keep WP from stripping content from NPR posts
-					kses_remove_filters();
-
 					$args = apply_filters( 'npr_pre_insert_post', $args, $post_id, $story, $created, $qnum );
+					$args['meta_input'] = $metas;
+
 					$post_id = wp_insert_post( $args );
+					if ( is_wp_error ( $post_id ) ) {
+						npr_cds_error_log( 'Cron '. $qnum . ': CDS ID ' . $story->id . ' database insertion failed' );
+					}
 					wp_set_post_terms( $post_id, $wp_category_ids, 'category', true );
 
 					// re-enable the built-in content stripping
@@ -479,25 +498,6 @@ class NPR_CDS_WP {
 						}
 					}
 
-					/**
-					 * Filters the post meta before series of update_post_meta() calls
-					 *
-					 * Allow a site to modify the post meta values prior to
-					 * passing each element via update_post_meta().
-					 *
-					 * @since 1.7
-					 *
-					 * @param array $metas Array of key/value pairs to be updated
-					 * @param int $post_id Post ID or NULL if no post ID.
-					 * @param stdClass $story Story object created during import
-					 * @param bool $created true if not pre-existing, false otherwise
-					 */
-					$metas = apply_filters( 'npr_pre_update_post_metas', $metas, $post_id, $story, $created, $qnum );
-
-					foreach ( $metas as $k => $v ) {
-						update_post_meta( $post_id, $k, $v );
-					}
-
 					$args = [
 						'post_title'	=> $story->title,
 						'post_content'	=> $story->body,
@@ -557,6 +557,12 @@ class NPR_CDS_WP {
 				// set categories for story
 				$category_ids = $npr_tags = [];
 				$category_ids = array_merge( $category_ids, $wp_category_ids );
+				if ( !empty( $cds_query['tags'] ) ) {
+					$tag_ex = explode( ',', $cds_query['tags'] );
+					foreach ( $tag_ex as $tx ) {
+						$npr_tags[] = trim( $tx );
+					}
+				}
 				if ( !empty( $story->collections ) ) {
 					foreach ( $story->collections as $collect ) {
 						if ( in_array( 'topic', $collect->rels ) || in_array( 'category', $collect->rels ) ) {
@@ -588,16 +594,16 @@ class NPR_CDS_WP {
 				}
 
 				/**
-				* Filters category_ids prior to setting assigning to the post.
-				*
-				* Allow a site to modify category IDs before assigning to the post.
-				*
-				* @since 1.7
-				*
-				* @param int[] $category_ids Array of Category IDs to assign to post identified by $post_id
-				* @param int $post_id Post ID or NULL if no post ID.
-				* @param stdClass $story Story object created during import
-				*/
+				 * Filters category_ids prior to setting assigning to the post.
+				 *
+				 * Allow a site to modify category IDs before assigning to the post.
+				 *
+				 * @since 1.7
+				 *
+				 * @param int[] $category_ids Array of Category IDs to assign to post identified by $post_id
+				 * @param int $post_id Post ID or NULL if no post ID.
+				 * @param stdClass $story Story object created during import
+				 */
 				$category_ids = apply_filters( 'npr_pre_set_post_categories', $category_ids, $post_id, $story, $qnum );
 				if ( 0 < count( $category_ids ) && is_integer( $post_id ) ) {
 					wp_set_post_categories( $post_id, $category_ids );
@@ -622,6 +628,7 @@ class NPR_CDS_WP {
 					}
 					wp_set_post_terms( $post_id, $coauthor_terms, $coauthors_plus->coauthor_taxonomy );
 				}
+				npr_cds_error_log( 'Cron '. $qnum . ': CDS ID ' . $story->id . ' story posted to database' );
 			}
 			if ( $single_story ) {
 				return $post_id ?? 0;
@@ -636,7 +643,7 @@ class NPR_CDS_WP {
 	 * @param string $json
 	 * @param int $post_ID
 	 *
-		  *@see NPRCDS::send_request()
+	 * @see NPRCDS::send_request()
 	 *
 	 */
 	function send_request( string $json, int $post_ID ): void {

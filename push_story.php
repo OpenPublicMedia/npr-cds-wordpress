@@ -15,6 +15,12 @@ require_once ( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
  * @param WP_Post $post
  */
 function npr_cds_push( int $post_ID, WP_Post $post ): void {
+	// Don't push stories to the NPR CDS if they were originally pulled from the NPR CDS
+	$retrieved = get_post_meta( $post_ID, NPR_RETRIEVED_STORY_META_KEY, true );
+	if ( !empty( $retrieved ) ) {
+		npr_cds_error_log( 'Not pushing the story with post_ID ' . $post_ID . ' to the NPR CDS because it was retrieved from the CDS' );
+		return;
+	}
 	if ( !current_user_can( 'publish_posts' ) ) {
 		wp_die(
 			__( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.', 'npr-content-distribution-service' ),
@@ -64,14 +70,7 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 		}
 
 		$api = new NPR_CDS_WP();
-
-		// Don't push stories to the NPR CDS if they were originally pulled from the NPR CDS
-		$retrieved = get_post_meta( $post_ID, NPR_RETRIEVED_STORY_META_KEY, true );
-		if ( empty( $retrieved ) || $retrieved == 0 ) {
-			$api->send_request( $api->create_json( $post ), $post_ID );
-		} else {
-			npr_cds_error_log( 'Not pushing the story with post_ID ' . $post_ID . ' to the NPR CDS because it came from the CDS' );
-		}
+		$api->send_request( $api->create_json( $post ), $post_ID );
 	}
 }
 
