@@ -4,7 +4,7 @@ Donate link: https://www.npr.org/series/750002/support-public-radio
 Tags: npr, news, public radio, api
 Requires at least: 3.8.14
 Tested up to: 6.4.2
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: nprapi
@@ -70,6 +70,10 @@ NPR Stories having got gotten
 
 
 == Changelog ==
+= V1.0.5 =
+* Default cron job timing is now 1 hour (was previously a minute because it wasn't properly being converted into seconds)
+* Cron jobs are no longer scheduled if there are no queries configured
+
 = V1.0.4 =
 * Fixing a problem where Get Multi queries run via WP_Cron would silently fail because `npr_cds_push()` would check if the current user had publishing rights and execute `wp_die()`. WP_Cron doesn't run as a specific user, therefore it doesn't technically have publishing rights. `npr_cds_push()`
   now checks if the post was retrieved from the CDS first before checking publishing rights.

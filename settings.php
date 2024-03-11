@@ -270,8 +270,10 @@ function npr_cds_get_multi_settings_callback(): void {
 	if ( wp_next_scheduled( 'npr_cds_hourly_cron' ) ) {
 		wp_clear_scheduled_hook( 'npr_cds_hourly_cron' );
 	}
-	npr_cds_error_log( 'NPR CDS plugin: updating the npr_cds_hourly_cron event timer' );
-	wp_schedule_event( time(), 'ds_interval', 'npr_cds_hourly_cron');
+	if ( $enable ) {
+		npr_cds_error_log( 'NPR CDS plugin: updating the npr_cds_hourly_cron event timer' );
+		wp_schedule_event( time(), 'ds_interval', 'npr_cds_hourly_cron' );
+	}
 	?>
 	<p>Create an NPR CDS query. Enter your queries into one of the rows below to have stories on that query automatically publish to your site. Please note, you do not need to include your CDS token in the query.</p><?php
 }
@@ -284,7 +286,7 @@ function npr_cds_add_cron_interval( $schedules ): array {
 	//if for some reason we don't get a number in the option, use 60 minutes as the default.
 	if ( !is_numeric( $ds_interval ) || $ds_interval < 1 ) {
 		$ds_interval = 60;
-		update_option( 'npr_cds_query_multi_cron_interval', 60 );
+		update_option( 'npr_cds_query_multi_cron_interval', $ds_interval * 60 );
 	}
 	$new_interval = $ds_interval * 60;
 	$schedules['ds_interval'] = [

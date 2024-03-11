@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NPR Content Distribution Service
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: Open Public Media
  * License: GPLv2
  * Text Domain: npr-content-distribution-service
