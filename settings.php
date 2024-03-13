@@ -181,7 +181,7 @@ function npr_cds_settings_init(): void {
 	register_setting( 'npr_cds', 'npr_cds_prefix', [ 'sanitize_callback' => 'npr_cds_validation_callback_prefix' ] );
 
 	add_settings_field( 'npr_cds_query_use_featured', 'Theme uses Featured Image', 'npr_cds_query_use_featured_callback', 'npr_cds', 'npr_cds_settings' );
-	register_setting( 'npr_cds_settings', 'npr_cds_query_use_featured', [ 'sanitize_callback' => 'npr_cds_validation_callback_checkbox' ] );
+	register_setting( 'npr_cds', 'npr_cds_query_use_featured', [ 'sanitize_callback' => 'npr_cds_validation_callback_checkbox' ] );
 
 	add_settings_field( 'npr_cds_pull_post_type', 'NPR Pull Post Type', 'npr_cds_pull_post_type_callback', 'npr_cds', 'npr_cds_settings' );
 	register_setting( 'npr_cds', 'npr_cds_pull_post_type' );
@@ -336,7 +336,7 @@ function npr_cds_prefix_callback(): void {
 
 function npr_cds_query_use_featured_callback(): void {
 	$use_featured = get_option( 'npr_cds_query_use_featured' );
-	$check_box_string = '<input id="npr_cds_query_use_feature" name="npr_cds_query_use_featured" type="checkbox" value="true"' .
+	$check_box_string = '<input id="npr_cds_query_use_featured" name="npr_cds_query_use_featured" type="checkbox" value="true"' .
 		( $use_featured ? ' checked="checked"' : '' ) . ' />';
 
 	echo npr_cds_esc_html( '<p>' . $check_box_string . " If your theme uses the featured image, checking this box will remove the lead image from imported posts.</p>" );
