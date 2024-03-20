@@ -63,7 +63,7 @@ class NPR_CDS_WP {
 	}
 
 	function get_token_options(): array {
-		$token = get_option( 'npr_cds_token' );
+		$token = NPR_CDS_WP::get_cds_token();
 		if ( empty( $token ) ) {
 			npr_cds_show_message( 'No CDS bearer token present. Please enter one on the main settings page.', TRUE );
 		}
@@ -72,6 +72,15 @@ class NPR_CDS_WP {
 				"Authorization" => "Bearer " . $token
 			]
 		];
+	}
+
+	static public function get_cds_token(): string {
+		if ( defined( 'NPR_CDS_TOKEN' ) ) {
+			$token = NPR_CDS_TOKEN;
+		} else {
+			$token = get_option( 'npr_cds_token' );
+		}
+		return $token;
 	}
 
 	function query_by_url( $url ): void {

@@ -225,7 +225,7 @@ function npr_cds_to_json( $post ): bool|string {
 	 * Attach images to the post
 	 */
 	$args = [
-		'order'=> 'DESC',
+		'order' => 'DESC',
 		'post_mime_type' => 'image',
 		'post_parent' => $post->ID,
 		'post_status' => null,

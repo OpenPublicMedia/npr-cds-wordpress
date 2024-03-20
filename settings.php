@@ -304,8 +304,14 @@ add_filter( 'cron_schedules', 'npr_cds_add_cron_interval' );
  * NPR General Settings Group Callbacks
  */
 function npr_cds_token_callback(): void {
-	$option = get_option( 'npr_cds_token' );
-	echo npr_cds_esc_html( '<p><input type="text" value="' . $option . '" name="npr_cds_token" /></p><p><em>This is a bearer token provided by NPR. If you do not already have one, you can request one through <a href="https://studio.npr.org/">NPR Studio</a>.</em></p>' );
+	$attr = '';
+	if ( defined( 'NPR_CDS_TOKEN' ) ) {
+		$option = 'This field managed in wp-config.php';
+		$attr = 'disabled ';
+	} else {
+		$option = get_option( 'npr_cds_token' );
+	}
+	echo npr_cds_esc_html( '<p><input type="text" value="' . $option . '" name="npr_cds_token" ' . $attr . '/></p><p><em>This is a bearer token provided by NPR. If you do not already have one, you can request one through <a href="https://studio.npr.org/">NPR Studio</a>.<br /><br />You can also manage your token by adding the following to wp-config.php: <code>define( \'NPR_CDS_TOKEN\', \'{ TOKEN STRING }\' );</code></em></p>' );
 }
 
 function npr_cds_pull_url_callback(): void {
@@ -472,7 +478,7 @@ function npr_cds_mapping_media_agency_callback(): void {
 }
 
 /**
- * create the select widget where the Id is the value in the array
+ * create the select widget where the ID is the value in the array
  *
  * @param string $field_name
  * @param array $keys - an array like (1=>'Value1', 2=>'Value2', 3=>'Value3');
