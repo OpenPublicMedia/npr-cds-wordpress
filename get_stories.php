@@ -97,8 +97,12 @@ class NPR_CDS {
 	 * @throws Exception
 	 */
 	public function load_page_hook(): void {
+		
+
+		$required_capability = apply_filters( 'npr_cds_get_stories_capability', 'edit_posts' );
+
 		// if the current user shouldn't be doing this, fail
-		if ( !current_user_can( 'edit_posts' ) ) {
+		if ( !current_user_can( $required_capability ) ) {
 			wp_die(
 				__( 'You do not have permission to edit posts, and therefore you do not have permission to pull posts from the NPR CDS', 'npr-content-distribution-service' ),
 				__( 'NPR CDS Error', 'npr-content-distribution-service' ),
@@ -191,15 +195,33 @@ class NPR_CDS {
 		if ( !is_admin() ) {
 			return;
 		}
+
+		// Allow customization of the post type used for the loading screen
+		$post_type  = apply_filters( 'npr_cds_get_stories_post_type_page', 'posts_page' );
+
 		add_action( 'admin_menu', [ $this, 'admin_menu' ] );
-		add_action( 'load-posts_page_get-npr-stories', [ $this, 'load_page_hook' ] );
+		add_action( 'load-' . $post_type . '_get-npr-stories', [ $this, 'load_page_hook' ] );
 	}
 
 	/**
 	 * Register the admin menu for "Get NPR Stories"
 	 */
 	public function admin_menu(): void {
-		add_posts_page( 'Get NPR Stories', 'Get NPR Stories', 'edit_posts', 'get-npr-stories',   'npr_cds_get_stories' );
+		$required_capability = apply_filters( 'npr_cds_get_stories_capability', 'edit_posts' );
+		$post_type           = apply_filters( 'npr_cds_get_stories_post_type', 'post' );
+
+		if ( ! post_type_exists( $post_type ) ) {
+			$post_type = 'post';
+		}
+
+		add_submenu_page(
+			'edit.php?post_type=' . $post_type,
+			'Get NPR Stories',
+			'Get NPR Stories',
+			$required_capability,
+			'get-npr-stories',
+			'npr_cds_get_stories'
+		);
 	}
 }
 
