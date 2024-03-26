@@ -288,7 +288,7 @@ class NPR_CDS_WP {
 							}
 						}
 					}
-					if ( !empty( $bylines ) ) {
+					if ( !empty( $by_lines ) ) {
 						$by_line = $by_lines[0]['name'];
 						if ( count( $by_lines ) > 1 ) {
 							$all_bylines = [];
