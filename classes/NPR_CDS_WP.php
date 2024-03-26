@@ -279,10 +279,16 @@ class NPR_CDS_WP {
 										'link' => $byl_link
 									];
 								}
+							} else {
+								if (!empty($byl_current->name)) {
+									$by_lines[] = [
+										'name' => $byl_current->name
+									];
+								}
 							}
 						}
 					}
-					if ( !empty( $bylines ) ) {
+					if ( !empty( $by_lines ) ) {
 						$by_line = $by_lines[0]['name'];
 						if ( count( $by_lines ) > 1 ) {
 							$all_bylines = [];
