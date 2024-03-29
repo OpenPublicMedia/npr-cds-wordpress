@@ -21,14 +21,6 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 		npr_cds_error_log( 'Not pushing the story with post_ID ' . $post_ID . ' to the NPR CDS because it was retrieved from the CDS' );
 		return;
 	}
-	if ( !current_user_can( 'publish_posts' ) ) {
-		wp_die(
-			__( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.', 'npr-content-distribution-service' ),
-			__( 'NPR CDS Error', 'npr-content-distribution-service' ),
-			403
-		);
-	}
-
 	$push_post_type = get_option( 'npr_cds_push_post_type', 'post' );
 
 	//if the push url isn't set, don't even try to push.
@@ -36,42 +28,48 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 
 	if ( !empty ( $push_url ) ) {
 		// For now, only submit the sort of post that is the push post type, and then only if published
-		if ( $post->post_type !== $push_post_type || $post->post_status != 'publish' ) {
+		if ( $post->post_type !== $push_post_type || $post->post_status !== 'publish' ) {
 			return;
 		}
 		$send_to_cds = get_post_meta( $post->ID, '_send_to_nprone' );
 		if ( $send_to_cds == 0 ) {
 			return;
 		}
-		/*
-		 * If there's a custom mapping for the post content,
-		 * use that content instead of the post's post_content
-		 */
-		$content = $post->post_content;
-		$use_custom = get_option( 'npr_cds_push_use_custom_map' );
-		$body_field = 'Body';
-		if ( $use_custom ) {
-			// Get the list of post meta keys available for this post.
-			$post_metas = get_post_custom_keys( $post->ID );
-
-			$custom_content_meta = get_option( 'npr_cds_mapping_body' );
-			$body_field = $custom_content_meta;
-			if ( !empty( $custom_content_meta ) && $custom_content_meta !== '#NONE#' && in_array( $custom_content_meta, $post_metas, true ) ) {
-				$content = get_post_meta( $post->ID, $custom_content_meta, true );
-			}
-		}
-
-		// Abort pushing to NPR if the post has no content
-		if ( empty( $content ) ) {
-			update_post_meta( $post_ID, NPR_PUSH_STORY_ERROR, esc_html( $body_field ) . ' is required for a post to be pushed to the NPR CDS.' );
-			return;
-		} else {
-			delete_post_meta( $post_ID, NPR_PUSH_STORY_ERROR, esc_html( $body_field ) . ' is required for a post to be pushed to the NPR CDS.' );
-		}
-
-		$api = new NPR_CDS_WP();
-		$api->send_request( $api->create_json( $post ), $post_ID );
 	}
+	if ( !current_user_can( 'publish_posts' ) ) {
+		npr_cds_error_log( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.' );
+		return;
+	}
+
+
+	/*
+	 * If there's a custom mapping for the post content,
+	 * use that content instead of the post's post_content
+	 */
+	$content = $post->post_content;
+	$use_custom = get_option( 'npr_cds_push_use_custom_map' );
+	$body_field = 'Body';
+	if ( $use_custom ) {
+		// Get the list of post meta keys available for this post.
+		$post_metas = get_post_custom_keys( $post->ID );
+
+		$custom_content_meta = get_option( 'npr_cds_mapping_body' );
+		$body_field = $custom_content_meta;
+		if ( !empty( $custom_content_meta ) && $custom_content_meta !== '#NONE#' && in_array( $custom_content_meta, $post_metas, true ) ) {
+			$content = get_post_meta( $post->ID, $custom_content_meta, true );
+		}
+	}
+
+	// Abort pushing to NPR if the post has no content
+	if ( empty( $content ) ) {
+		update_post_meta( $post_ID, NPR_PUSH_STORY_ERROR, esc_html( $body_field ) . ' is required for a post to be pushed to the NPR CDS.' );
+		return;
+	} else {
+		delete_post_meta( $post_ID, NPR_PUSH_STORY_ERROR, esc_html( $body_field ) . ' is required for a post to be pushed to the NPR CDS.' );
+	}
+
+	$api = new NPR_CDS_WP();
+	$api->send_request( $api->create_json( $post ), $post_ID );
 }
 
 /**
