@@ -70,6 +70,9 @@ NPR Stories having got gotten
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.0.6
+* npr_cds_push(): lack of publishing rights exits the function instead of killing the process
+
 ### V1.0.5
 * Default cron job timing is now 1 hour (was previously a minute because it wasn't properly being converted into seconds)
 * Cron jobs are no longer scheduled if there are no queries configured
