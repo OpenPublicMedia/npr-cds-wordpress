@@ -64,12 +64,18 @@ Getting an NPR Story by Story ID
 
 ![Getting NPR Stories by Story ID](docs/assets/img/get-npr-stories-link.png)
 
-NPR Stories having got gotten
+NPR Stories having been retrieved
 
-![NPR Stories having got gotten](docs/assets/img/npr-stories.png)
+![NPR Stories having been retrieved](docs/assets/img/npr-stories.png)
 
 
 == Changelog ==
+= V1.0.7 =
+* Bug fixes related to bylines: plugin now saves bylines under the proper metadata key, no longer ignore non-reference bylines, and doesn't write empty bylines when the Co-Authors Plus plugin is present (h/t Andrew Reynolds at WAMU)
+* 'Get NPR Stories' menu option now aligns to whichever `pull_post_type` is selected in settings (h/t Kaym Yusuf at WAMU)
+* Fixed a couple of typos that were preventing the 'Theme Uses Featured Image' settings from being honored (h/t David Purdy)
+* Adding documentation for all of the filters that are available in the plugin
+
 = V1.0.6 =
 * npr_cds_push(): lack of publishing rights exits the function instead of killing the process
 

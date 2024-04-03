@@ -125,7 +125,6 @@ add_action( 'wp_trash_post', 'npr_cds_delete', 100, 2 );
  */
 function npr_cds_push_meta_keys( string $post_type = 'post' ): array {
 	global $wpdb;
-	$limit = (int) apply_filters( 'postmeta_form_limit', 30 );
 	//AND $wpdb->postmeta.meta_key NOT RegExp '(^[_0-9].+$)'
 	$keys = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT( $wpdb->postmeta.meta_key ) FROM $wpdb->posts LEFT JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE $wpdb->posts.post_type = %s AND $wpdb->postmeta.meta_key != '' AND $wpdb->postmeta.meta_key NOT LIKE %s AND $wpdb->postmeta.meta_key NOT RegExp '(^[0-9]+$)'", $post_type, '_oembed_%' ) );
 	if ( $keys ) natcasesort( $keys );

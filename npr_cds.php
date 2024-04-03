@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NPR Content Distribution Service
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 1.0.6
+ * Version: 1.0.7
  * Author: Open Public Media
  * License: GPLv2
  * Text Domain: npr-content-distribution-service
@@ -42,7 +42,7 @@ const NPR_MAX_QUERIES = 10;
 const NPR_POST_TYPE = 'npr_story_post';
 
 define( 'NPR_STORY_CONTENT_META_KEY', get_option( 'npr_cds_mapping_body', 'npr_story_content' ) );
-define( 'NPR_BYLINE_META_KEY', get_option( 'npr_cds_mapping_media_credit', 'npr_byline' ) );
+define( 'NPR_BYLINE_META_KEY', get_option( 'npr_cds_mapping_byline', 'npr_byline' ) );
 define( 'NPR_IMAGE_CREDIT_META_KEY', get_option( 'npr_cds_mapping_media_credit', 'npr_image_credit' ) );
 define( 'NPR_IMAGE_AGENCY_META_KEY', get_option( 'npr_cds_mapping_media_agency', 'npr_image_agency' ) );
 define( 'NPR_CDS_PULL_URL', get_option( 'npr_cds_pull_url', 'https://content.api.npr.org' ) );

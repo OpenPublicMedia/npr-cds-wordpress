@@ -44,6 +44,10 @@ Push requires an Organization ID in the NPR CDS, which is typically given out to
 
 There is documentation in the NPR's [Github site](https://npr.github.io/content-distribution-service/).
 
+### Where can I find this plugin's documentation?
+
+You can find it in the [Docs folder](docs).
+
 ## Screenshots
 
 NPR CDS Plugin General Settings screen
@@ -62,16 +66,22 @@ Getting an NPR Story by Story ID
 
 ![Getting NPR Stories by Story ID](docs/assets/img/get-npr-stories-link.png.webp)
 
-NPR Stories having got gotten
+NPR Stories having been retrieved
 
-![NPR Stories having got gotten](docs/assets/img/npr-stories.png.webp)
+![NPR Stories having been retrieved](docs/assets/img/npr-stories.png.webp)
 
 
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.0.7
+* Bug fixes related to bylines: plugin now saves bylines under the proper metadata key, no longer ignore non-reference bylines, and doesn't write empty bylines when the Co-Authors Plus plugin is present (h/t Andrew Reynolds at WAMU)
+* 'Get NPR Stories' menu option now aligns to whichever `pull_post_type` is selected in settings (h/t Kaym Yusuf at WAMU)
+* Fixed a couple of typos that were preventing the 'Theme Uses Featured Image' settings from being honored (h/t David Purdy)
+* Adding documentation for all of the filters that are available in the plugin
+
 ### V1.0.6
-* npr_cds_push(): lack of publishing rights exits the function instead of killing the process
+* `npr_cds_push()`: lack of publishing rights exits the function instead of killing the process
 
 ### V1.0.5
 * Default cron job timing is now 1 hour (was previously a minute because it wasn't properly being converted into seconds)

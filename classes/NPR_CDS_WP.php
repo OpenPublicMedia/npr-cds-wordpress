@@ -182,12 +182,10 @@ class NPR_CDS_WP {
 					'post_type' => $pull_post_type,
 					'post_status' => 'any',
 					'no_found_rows' => true
-				], $publish, $qnum, $this ) );
+				], $publish, $qnum, $story ) );
 
-				// set the mod_date and pub_date to now so that for a new story we will fail the test below and do the update
-				$post_mod_date = strtotime( date( 'Y-m-d H:i:s' ) );
-				$post_pub_date = $post_mod_date;
 				$cats = [];
+				$post_mod_date = $post_pub_date = 0;
 				if ( empty( $story->body ) ) {
 					$story->body = null;
 				}
@@ -203,6 +201,10 @@ class NPR_CDS_WP {
 					$post_pub_date_meta = get_post_meta( $existing->ID, NPR_PUB_DATE_META_KEY );
 					if ( !empty( $post_pub_date_meta[0] ) ) {
 						$post_pub_date = strtotime( $post_pub_date_meta[0] );
+					}
+
+					if ( $post_mod_date === strtotime( $story->editorialLastModifiedDateTime ) || $post_pub_date === strtotime( $story->publishDateTime ) ) {
+						continue;
 					}
 					// get ids of existing categories for post
 					$cats = wp_get_post_categories( $post_id );
@@ -252,323 +254,317 @@ class NPR_CDS_WP {
 						$wp_category_ids = array_unique( array_merge( $wp_category_ids, $cats ) );
 					}
 				}
-				$by_line = '';
-				// check the last modified date and pub date (sometimes the API just updates the pub date), if the story hasn't changed, just go on
-				if ( $post_mod_date != strtotime( $story->editorialLastModifiedDateTime ) || $post_pub_date != strtotime( $story->publishDateTime ) ) {
-					$by_lines = [];
-					$multi_by_line = '';
-					// continue to save single byline into npr_byline as is, but also set multi to false
-					if ( !empty( $story->bylines ) ) { // Always treats like an array, because it *should* always be an array
-						foreach ( $story->bylines as $byline ) {
-							$byl_id = $this->extract_asset_id( $byline->href );
-							$byl_current = $story->assets->{$byl_id};
-							$byl_profile = $this->extract_asset_profile( $byl_current );
-							if ( $byl_profile === 'reference-byline' ) {
-								foreach ( $byl_current->bylineDocuments as $byl_doc ) {
-									$byl_data = $this->get_document( $byl_doc->href );
-									$byl_link = '';
-									if ( !empty( $byl_data->webPages ) ) {
-										foreach ( $byl_data->webPages as $byl_web ) {
-											if ( !empty( $byl_web->rels ) && in_array( 'canonical', $byl_web->rels ) ) {
-												$byl_link = $byl_web->href;
-											}
-										}
-									}
-									$by_lines[] = [
-										'name' => $byl_data->title,
-										'link' => $byl_link
-									];
-								}
-							} else {
-								if (!empty($byl_current->name)) {
-									$by_lines[] = [
-										'name' => $byl_current->name
-									];
-								}
-							}
-						}
-					}
-					if ( !empty( $by_lines ) ) {
-						$by_line = $by_lines[0]['name'];
-						if ( count( $by_lines ) > 1 ) {
-							$all_bylines = [];
-							foreach ( $by_lines as $bl ) {
-								if ( ! empty( $bl['link'] ) ) {
-									$all_bylines[] = '<a href="' . $bl['link'] . '">' . $bl['name'] . '</a>';
-								} else {
-									$all_bylines[] = $bl['name'];
-								}
-							}
-							$multi_by_line = implode( '|', $all_bylines );
-						}
-					}
-					$webPage = '';
-					if ( !empty( $story->webPages ) ) {
-						foreach ( $story->webPages as $web ) {
-							if ( in_array( 'canonical', $web->rels ) ) {
-								$webPage = $web->href;
-							}
-						}
-					}
-					$profiles = $this->extract_profiles( $story->profiles );
+				$by_lines = [];
+				$multi_by_line = '';
 
-					// set the meta RETRIEVED so when we publish the post, we don't try ingesting it
-					$metas = [
-						NPR_STORY_ID_META_KEY		  => $story->id,
-						NPR_HTML_LINK_META_KEY		  => $webPage,
-						NPR_STORY_CONTENT_META_KEY	  => $story->body,
-						NPR_BYLINE_META_KEY			  => ( !empty( $by_lines[0]['name'] ) ? $by_lines[0]['name'] : '' ),
-						NPR_BYLINE_LINK_META_KEY	  => ( !empty( $by_lines[0]['link'] ) ? $by_lines[0]['link'] : '' ),
-						NPR_MULTI_BYLINE_META_KEY	  => $multi_by_line,
-						NPR_RETRIEVED_STORY_META_KEY  => 1,
-						NPR_PUB_DATE_META_KEY		  => $story->publishDateTime,
-						NPR_STORY_DATE_META_KEY	      => $story->publishDateTime,
-						NPR_LAST_MODIFIED_DATE_KEY	  => $story->editorialLastModifiedDateTime,
-						NPR_STORY_HAS_VIDEO_META_KEY  => $npr_has_video
-					];
-					if ( $npr_layout['has_video_streaming'] ) {
-						$metas[NPR_HAS_VIDEO_STREAMING_META_KEY] = $npr_layout['has_video_streaming'];
-					}
-					if ( $npr_layout['has_slideshow'] ) {
-						$metas[NPR_HAS_SLIDESHOW_META_KEY] = $npr_layout['has_slideshow'];
-					}
-					// get audio
-					if ( in_array( 'has-audio', $profiles ) && !empty( $story->audio ) ) {
-						$mp3_array = [];
-						foreach ( $story->audio as $audio ) {
-							$audio_id = $this->extract_asset_id( $audio->href );
-							if ( in_array( 'primary', $audio->rels ) && !in_array( 'premium', $audio->rels ) ) {
-								$audio_current = $story->assets->{ $audio_id };
-								if ( $audio_current->isAvailable && $audio_current->isDownloadable ) {
-									foreach ( $audio_current->enclosures as $enclose ) {
-										if ( $enclose->type == 'audio/mpeg' ) {
-											$mp3_array[] = $enclose->href;
+				// continue to save single byline into npr_byline as is, but also set multi to false
+				if ( !empty( $story->bylines ) ) { // Always treats like an array, because it *should* always be an array
+					foreach ( $story->bylines as $byline ) {
+						$byl_id = $this->extract_asset_id( $byline->href );
+						$byl_current = $story->assets->{$byl_id};
+						$byl_profile = $this->extract_asset_profile( $byl_current );
+						if ( $byl_profile === 'reference-byline' ) {
+							foreach ( $byl_current->bylineDocuments as $byl_doc ) {
+								$byl_data = $this->get_document( $byl_doc->href );
+								$byl_link = '';
+								if ( !empty( $byl_data->webPages ) ) {
+									foreach ( $byl_data->webPages as $byl_web ) {
+										if ( !empty( $byl_web->rels ) && in_array( 'canonical', $byl_web->rels ) ) {
+											$byl_link = $byl_web->href;
 										}
 									}
 								}
+								$by_lines[] = [
+									'name' => trim( $byl_data->title ),
+									'link' => $byl_link
+								];
 							}
-						}
-						$metas[NPR_AUDIO_META_KEY] = implode( ',', $mp3_array );
-					}
-					if ( $existing ) {
-						$created = false;
-						$args['ID'] = $existing->ID;
-					} else {
-						$created = true;
-					}
-					// keep WP from stripping content from NPR posts
-					kses_remove_filters();
-
-					/**
-					 * Filters the post meta before series of update_post_meta() calls
-					 *
-					 * Allow a site to modify the post meta values prior to
-					 * passing each element via update_post_meta().
-					 *
-					 * @since 1.7
-					 *
-					 * @param array $metas Array of key/value pairs to be updated
-					 * @param int $post_id Post ID or NULL if no post ID.
-					 * @param stdClass $story Story object created during import
-					 * @param bool $created true if not pre-existing, false otherwise
-					 */
-					$metas = apply_filters( 'npr_pre_update_post_metas', $metas, $post_id, $story, $created, $qnum );
-
-					/**
-					 * Filters the $args passed to wp_insert_post()
-					 *
-					 * Allow a site to modify the $args passed to wp_insert_post() prior to post being inserted.
-					 *
-					 * @since 1.7
-					 *
-					 * @param array $args Parameters passed to wp_insert_post()
-					 * @param int $post_id Post ID or NULL if no post ID.
-					 * @param stdClass $story Story object created during import
-					 * @param bool $created true if not pre-existing, false otherwise
-					 */
-
-					$args = apply_filters( 'npr_pre_insert_post', $args, $post_id, $story, $created, $qnum );
-					$args['meta_input'] = $metas;
-
-					$post_id = wp_insert_post( $args );
-					if ( is_wp_error ( $post_id ) && WP_DEBUG ) {
-						npr_cds_error_log( 'Cron '. $qnum . ': CDS ID ' . $story->id . ' database insertion failed' );
-					}
-					wp_set_post_terms( $post_id, $wp_category_ids, 'category', true );
-
-					// re-enable the built-in content stripping
-					kses_init_filters();
-
-					// now that we have an id, we can add images
-					// this is the way WP seems to do it, but we couldn't call media_sideload_image or media_ because that returned only the URL
-					// for the attachment, and we want to be able to set the primary image, so we had to use this method to get the attachment ID.
-					if ( in_array( 'has-images', $profiles ) && !empty( $story->images ) ) {
-
-						// are there any images saved for this post, probably on update, but no sense looking of the post didn't already exist
-						if ( $existing ) {
-							$image_args = [
-								'order'=> 'ASC',
-								'post_mime_type' => 'image',
-								'post_parent' => $post_id,
-								'post_status' => null,
-								'post_type' => 'attachment',
-								'post_date'	=> $post_date
-							];
-							$attached_images = get_children( $image_args );
-						}
-						foreach ( $story->images as $image ) {
-							if ( empty( $image->rels ) || !in_array( 'primary', $image->rels ) ) {
-								continue;
-							}
-							$image_url = '';
-							$image_id = $this->extract_asset_id( $image->href );
-							$image_current = $story->assets->{ $image_id };
-							if ( !empty( $image_current->enclosures ) ) {
-								foreach ( $image_current->enclosures as $enclosure ) {
-									if ( in_array( 'primary', $enclosure->rels ) ) {
-										$image_url = $enclosure->href;
-									}
-								}
-							}
-							if ( $image_url == '' ) {
-								foreach ( $image_current->enclosures as $enclosure ) {
-									if ( in_array( 'enlargement', $enclosure->rels ) ) {
-										$image_url = $enclosure->href;
-									}
-								}
-							}
-							if ( WP_DEBUG ) {
-								npr_cds_error_log( 'Got image from: ' . $image_url );
-							}
-
-							$imagep_url_parse = parse_url( $image_url );
-							$imagep_url_parts = pathinfo( $imagep_url_parse['path'] );
-							if ( !empty( $attached_images ) ) {
-								foreach( $attached_images as $att_image ) {
-									// see if the filename is very similar
-									$attach_url = wp_get_original_image_url( $att_image->ID );
-									$attach_url_parse = parse_url( $attach_url );
-									$attach_url_parts = pathinfo( $attach_url_parse['path'] );
-
-									// so if the already attached image name is part of the name of the file
-									// coming in, ignore the new/temp file, it's probably the same
-									if ( strtolower( $attach_url_parts['filename'] ) === strtolower( $imagep_url_parts['filename'] ) ) {
-										continue 2;
-									}
-								}
-							}
-
-							// Download file to temp location
-							$tmp = download_url( $image_url );
-
-							// Set variables for storage
-							$file_array['name'] = $imagep_url_parts['basename'];
-							$file_array['tmp_name'] = $tmp;
-
-							$file_OK = TRUE;
-							// If error storing temporarily, unlink
-							if ( is_wp_error( $tmp ) ) {
-								//@unlink( $file_array['tmp_name'] );
-								$file_array['tmp_name'] = '';
-								$file_OK = FALSE;
-							}
-
-							// do the validation and storage stuff
-							$image_title = !empty( $image_current->title ) ? $image_current->title : '';
-							require_once( ABSPATH . 'wp-admin/includes/image.php' ); // needed for wp_read_image_metadata used by media_handle_sideload during cron
-							$image_upload_id = media_handle_sideload( $file_array, $post_id, $image_title );
-							// If error storing permanently, unlink
-							if ( is_wp_error( $image_upload_id ) ) {
-								@unlink( $file_array['tmp_name'] );
-								$file_OK = FALSE;
-							}
-
-							//set the primary image
-							if ( in_array( 'primary', $image->rels ) && $file_OK ) {
-								$current_thumbnail_id = get_post_thumbnail_id( $post_id );
-								if ( !empty( $current_thumbnail_id ) && $current_thumbnail_id != $image_upload_id ) {
-									delete_post_thumbnail( $post_id );
-								}
-								set_post_thumbnail( $post_id, $image_upload_id );
-								//get any image metadata and attach it to the image post
-								$image_producer = !empty( $image_current->producer ) ? $image_current->producer : '';
-								$image_provider = !empty( $image_current->provider ) ? $image_current->provider : '';
-								$image_caption = !empty( $image_current->caption ) ? $image_current->caption : '';
-								if ( NPR_IMAGE_CREDIT_META_KEY === NPR_IMAGE_AGENCY_META_KEY ) {
-									$image_credits = [ $image_producer, $image_provider ];
-									$image_metas = [
-										NPR_IMAGE_CREDIT_META_KEY => implode( ' | ', $image_credits ),
-										NPR_IMAGE_CAPTION_META_KEY => $image_caption
-									];
-								} else {
-									$image_metas = [
-										NPR_IMAGE_CREDIT_META_KEY => $image_producer,
-										NPR_IMAGE_AGENCY_META_KEY => $image_provider,
-										NPR_IMAGE_CAPTION_META_KEY => $image_caption
-									];
-								}
-								foreach ( $image_metas as $k => $v ) {
-									update_post_meta( $image_upload_id, $k, $v );
-								}
-							}
-						}
-					}
-
-					$args = [
-						'post_title'	=> $story->title,
-						'post_content'	=> $story->body,
-						'post_excerpt'	=> $story->teaser,
-						'post_type'		=> $pull_post_type,
-						'ID'			=> $post_id,
-						'post_date'		=> $post_date
-					];
-
-					//set author
-					if ( ! empty( $by_line ) ) {
-						$userQuery = new WP_User_Query([
-							'search' => trim( $by_line ),
-							'search_columns' => [ 'nickname' ]
-						]);
-
-						$user_results = $userQuery->get_results();
-						if ( count( $user_results ) == 1 && isset( $user_results[0]->data->ID ) ) {
-							$args['post_author'] = $user_results[0]->data->ID;
-						}
-					}
-
-					//now set the status
-					if ( !$existing ) {
-						if ( $publish ) {
-							$args['post_status'] = 'publish';
 						} else {
-							$args['post_status'] = 'draft';
+							if ( !empty( $byl_current->name ) ) {
+								$by_lines[] = [
+									'name' => trim( $byl_current->name )
+								];
+							}
 						}
-					} else {
-						//if the post existed, save its status
-						$args['post_status'] = $existing_status;
 					}
-
-					/**
-					 * Filters the $args passed to wp_insert_post() used to update
-					 *
-					 * Allow a site to modify the $args passed to wp_insert_post() prior to post being updated.
-					 *
-					 * @since 1.7
-					 *
-					 * @param array $args Parameters passed to wp_insert_post()
-					 * @param int $post_id Post ID or NULL if no post ID.
-					 * @param stdClass $story Story object created during import
-					 */
-
-					// keep WP from stripping content from NPR posts
-					kses_remove_filters();
-
-					$args = apply_filters( 'npr_pre_update_post', $args, $post_id, $story, $qnum );
-					$post_id = wp_insert_post( $args );
-
-					// re-enable content stripping
-					kses_init_filters();
 				}
+				if ( !empty( $by_lines ) && count( $by_lines ) > 1 ) {
+					$all_bylines = [];
+					foreach ( $by_lines as $bl ) {
+						if ( ! empty( $bl['link'] ) ) {
+							$all_bylines[] = '<a href="' . $bl['link'] . '">' . $bl['name'] . '</a>';
+						} else {
+							$all_bylines[] = $bl['name'];
+						}
+					}
+					$multi_by_line = implode( '|', $all_bylines );
+				}
+				$webPage = '';
+				if ( !empty( $story->webPages ) ) {
+					foreach ( $story->webPages as $web ) {
+						if ( in_array( 'canonical', $web->rels ) ) {
+							$webPage = $web->href;
+						}
+					}
+				}
+				$profiles = $this->extract_profiles( $story->profiles );
+
+				// set the meta RETRIEVED so when we publish the post, we don't try ingesting it
+				$metas = [
+					NPR_STORY_ID_META_KEY		  => $story->id,
+					NPR_HTML_LINK_META_KEY		  => $webPage,
+					NPR_STORY_CONTENT_META_KEY	  => $story->body,
+					NPR_BYLINE_META_KEY			  => ( !empty( $by_lines[0]['name'] ) ? $by_lines[0]['name'] : '' ),
+					NPR_BYLINE_LINK_META_KEY	  => ( !empty( $by_lines[0]['link'] ) ? $by_lines[0]['link'] : '' ),
+					NPR_MULTI_BYLINE_META_KEY	  => $multi_by_line,
+					NPR_RETRIEVED_STORY_META_KEY  => 1,
+					NPR_PUB_DATE_META_KEY		  => $story->publishDateTime,
+					NPR_STORY_DATE_META_KEY	      => $story->publishDateTime,
+					NPR_LAST_MODIFIED_DATE_KEY	  => $story->editorialLastModifiedDateTime,
+					NPR_STORY_HAS_VIDEO_META_KEY  => $npr_has_video
+				];
+				if ( $npr_layout['has_video_streaming'] ) {
+					$metas[NPR_HAS_VIDEO_STREAMING_META_KEY] = $npr_layout['has_video_streaming'];
+				}
+				if ( $npr_layout['has_slideshow'] ) {
+					$metas[NPR_HAS_SLIDESHOW_META_KEY] = $npr_layout['has_slideshow'];
+				}
+				// get audio
+				if ( in_array( 'has-audio', $profiles ) && !empty( $story->audio ) ) {
+					$mp3_array = [];
+					foreach ( $story->audio as $audio ) {
+						$audio_id = $this->extract_asset_id( $audio->href );
+						if ( in_array( 'primary', $audio->rels ) && !in_array( 'premium', $audio->rels ) ) {
+							$audio_current = $story->assets->{ $audio_id };
+							if ( $audio_current->isAvailable && $audio_current->isDownloadable ) {
+								foreach ( $audio_current->enclosures as $enclose ) {
+									if ( $enclose->type == 'audio/mpeg' ) {
+										$mp3_array[] = $enclose->href;
+									}
+								}
+							}
+						}
+					}
+					$metas[NPR_AUDIO_META_KEY] = implode( ',', $mp3_array );
+				}
+				if ( $existing ) {
+					$created = false;
+					$args['ID'] = $existing->ID;
+				} else {
+					$created = true;
+				}
+				// keep WP from stripping content from NPR posts
+				kses_remove_filters();
+
+				/**
+				 * Filters the post meta before series of update_post_meta() calls
+				 *
+				 * Allow a site to modify the post meta values prior to
+				 * passing each element via update_post_meta().
+				 *
+				 * @since 1.7
+				 *
+				 * @param array $metas Array of key/value pairs to be updated
+				 * @param int $post_id Post ID or NULL if no post ID.
+				 * @param stdClass $story Story object created during import
+				 * @param bool $created true if not pre-existing, false otherwise
+				 */
+				$metas = apply_filters( 'npr_pre_update_post_metas', $metas, $post_id, $story, $created, $qnum );
+
+				/**
+				 * Filters the $args passed to wp_insert_post()
+				 *
+				 * Allow a site to modify the $args passed to wp_insert_post() prior to post being inserted.
+				 *
+				 * @since 1.7
+				 *
+				 * @param array $args Parameters passed to wp_insert_post()
+				 * @param int $post_id Post ID or NULL if no post ID.
+				 * @param stdClass $story Story object created during import
+				 * @param bool $created true if not pre-existing, false otherwise
+				 */
+
+				$args = apply_filters( 'npr_pre_insert_post', $args, $post_id, $story, $created, $qnum );
+				$args['meta_input'] = $metas;
+
+				$post_id = wp_insert_post( $args );
+				if ( is_wp_error ( $post_id ) && WP_DEBUG ) {
+					npr_cds_error_log( 'Cron '. $qnum . ': CDS ID ' . $story->id . ' database insertion failed' );
+				}
+				wp_set_post_terms( $post_id, $wp_category_ids, 'category', true );
+
+				// re-enable the built-in content stripping
+				kses_init_filters();
+
+				// now that we have an id, we can add images
+				// this is the way WP seems to do it, but we couldn't call media_sideload_image or media_ because that returned only the URL
+				// for the attachment, and we want to be able to set the primary image, so we had to use this method to get the attachment ID.
+				if ( in_array( 'has-images', $profiles ) && !empty( $story->images ) ) {
+
+					// are there any images saved for this post, probably on update, but no sense looking of the post didn't already exist
+					if ( $existing ) {
+						$image_args = [
+							'order'=> 'ASC',
+							'post_mime_type' => 'image',
+							'post_parent' => $post_id,
+							'post_status' => null,
+							'post_type' => 'attachment',
+							'post_date'	=> $post_date
+						];
+						$attached_images = get_children( $image_args );
+					}
+					foreach ( $story->images as $image ) {
+						if ( empty( $image->rels ) || !in_array( 'primary', $image->rels ) ) {
+							continue;
+						}
+						$image_url = '';
+						$image_id = $this->extract_asset_id( $image->href );
+						$image_current = $story->assets->{ $image_id };
+						if ( !empty( $image_current->enclosures ) ) {
+							foreach ( $image_current->enclosures as $enclosure ) {
+								if ( in_array( 'primary', $enclosure->rels ) ) {
+									$image_url = $enclosure->href;
+								}
+							}
+						}
+						if ( $image_url == '' ) {
+							foreach ( $image_current->enclosures as $enclosure ) {
+								if ( in_array( 'enlargement', $enclosure->rels ) ) {
+									$image_url = $enclosure->href;
+								}
+							}
+						}
+						if ( WP_DEBUG ) {
+							npr_cds_error_log( 'Got image from: ' . $image_url );
+						}
+
+						$imagep_url_parse = parse_url( $image_url );
+						$imagep_url_parts = pathinfo( $imagep_url_parse['path'] );
+						if ( !empty( $attached_images ) ) {
+							foreach( $attached_images as $att_image ) {
+								// see if the filename is very similar
+								$attach_url = wp_get_original_image_url( $att_image->ID );
+								$attach_url_parse = parse_url( $attach_url );
+								$attach_url_parts = pathinfo( $attach_url_parse['path'] );
+
+								// so if the already attached image name is part of the name of the file
+								// coming in, ignore the new/temp file, it's probably the same
+								if ( strtolower( $attach_url_parts['filename'] ) === strtolower( $imagep_url_parts['filename'] ) ) {
+									continue 2;
+								}
+							}
+						}
+
+						// Download file to temp location
+						$tmp = download_url( $image_url );
+
+						// Set variables for storage
+						$file_array['name'] = $imagep_url_parts['basename'];
+						$file_array['tmp_name'] = $tmp;
+
+						$file_OK = TRUE;
+						// If error storing temporarily, unlink
+						if ( is_wp_error( $tmp ) ) {
+							//@unlink( $file_array['tmp_name'] );
+							$file_array['tmp_name'] = '';
+							$file_OK = FALSE;
+						}
+
+						// do the validation and storage stuff
+						$image_title = !empty( $image_current->title ) ? $image_current->title : '';
+						require_once( ABSPATH . 'wp-admin/includes/image.php' ); // needed for wp_read_image_metadata used by media_handle_sideload during cron
+						$image_upload_id = media_handle_sideload( $file_array, $post_id, $image_title );
+						// If error storing permanently, unlink
+						if ( is_wp_error( $image_upload_id ) ) {
+							@unlink( $file_array['tmp_name'] );
+							$file_OK = FALSE;
+						}
+
+						//set the primary image
+						if ( in_array( 'primary', $image->rels ) && $file_OK ) {
+							$current_thumbnail_id = get_post_thumbnail_id( $post_id );
+							if ( !empty( $current_thumbnail_id ) && $current_thumbnail_id != $image_upload_id ) {
+								delete_post_thumbnail( $post_id );
+							}
+							set_post_thumbnail( $post_id, $image_upload_id );
+							//get any image metadata and attach it to the image post
+							$image_producer = !empty( $image_current->producer ) ? $image_current->producer : '';
+							$image_provider = !empty( $image_current->provider ) ? $image_current->provider : '';
+							$image_caption = !empty( $image_current->caption ) ? $image_current->caption : '';
+							if ( NPR_IMAGE_CREDIT_META_KEY === NPR_IMAGE_AGENCY_META_KEY ) {
+								$image_credits = [ $image_producer, $image_provider ];
+								$image_metas = [
+									NPR_IMAGE_CREDIT_META_KEY => implode( ' | ', $image_credits ),
+									NPR_IMAGE_CAPTION_META_KEY => $image_caption
+								];
+							} else {
+								$image_metas = [
+									NPR_IMAGE_CREDIT_META_KEY => $image_producer,
+									NPR_IMAGE_AGENCY_META_KEY => $image_provider,
+									NPR_IMAGE_CAPTION_META_KEY => $image_caption
+								];
+							}
+							foreach ( $image_metas as $k => $v ) {
+								update_post_meta( $image_upload_id, $k, $v );
+							}
+						}
+					}
+				}
+
+				$args = [
+					'post_title'	=> $story->title,
+					'post_content'	=> $story->body,
+					'post_excerpt'	=> $story->teaser,
+					'post_type'		=> $pull_post_type,
+					'ID'			=> $post_id,
+					'post_date'		=> $post_date
+				];
+
+				//set author
+				if ( ! empty( $by_lines ) ) {
+					$userQuery = new WP_User_Query([
+						'search' => $by_lines[0]['name'],
+						'search_columns' => [ 'nickname' ]
+					]);
+
+					$user_results = $userQuery->get_results();
+					if ( count( $user_results ) == 1 && isset( $user_results[0]->data->ID ) ) {
+						$args['post_author'] = $user_results[0]->data->ID;
+					}
+				}
+
+				//now set the status
+				if ( !$existing ) {
+					if ( $publish ) {
+						$args['post_status'] = 'publish';
+					} else {
+						$args['post_status'] = 'draft';
+					}
+				} else {
+					//if the post existed, save its status
+					$args['post_status'] = $existing_status;
+				}
+
+				/**
+				 * Filters the $args passed to wp_insert_post() used to update
+				 *
+				 * Allow a site to modify the $args passed to wp_insert_post() prior to post being updated.
+				 *
+				 * @since 1.7
+				 *
+				 * @param array $args Parameters passed to wp_insert_post()
+				 * @param int $post_id Post ID or NULL if no post ID.
+				 * @param stdClass $story Story object created during import
+				 */
+
+				// keep WP from stripping content from NPR posts
+				kses_remove_filters();
+
+				$args = apply_filters( 'npr_pre_update_post', $args, $post_id, $story, $qnum );
+				$post_id = wp_insert_post( $args );
+
+				// re-enable content stripping
+				kses_init_filters();
 
 				// set categories for story
 				$category_ids = $npr_tags = [];
@@ -641,8 +637,8 @@ class NPR_CDS_WP {
 								$coauthor_terms[] = key( $search_author );
 							}
 						}
+						wp_set_post_terms( $post_id, $coauthor_terms, $coauthors_plus->coauthor_taxonomy );
 					}
-					wp_set_post_terms( $post_id, $coauthor_terms, $coauthors_plus->coauthor_taxonomy );
 				}
 				if ( WP_DEBUG ) {
 					if ( $existing ) {
@@ -675,12 +671,12 @@ class NPR_CDS_WP {
 		if ( !empty( $org_id ) && !empty( $prefix ) ) {
 			$cds_id = $prefix . '-' . $post_ID;
 			$options = $this->get_token_options();
-			$options = apply_filters( 'npr_pre_article_push', $options, $cds_id );
 			$url = get_option( 'npr_cds_push_url' ) . '/' . self::NPR_CDS_VERSION . '/documents/' . $cds_id;
 			npr_cds_error_log( 'Sending json = ' . $json );
 
 			$options['body'] = $json;
 			$options['method'] = 'PUT';
+			$options = apply_filters( 'npr_pre_article_push', $options, $cds_id );
 			$result = wp_remote_request( $url, $options );
 			if ( !is_wp_error( $result ) ) {
 				if ( $result['response']['code'] == self::NPR_CDS_STATUS_OK ) {
@@ -726,10 +722,10 @@ class NPR_CDS_WP {
 	 */
 	function send_delete( $api_id ): void {
 		$options = $this->get_token_options();
-		$options = apply_filters( 'npr_pre_article_delete', $options );
 		$url = get_option( 'npr_cds_push_url' ) . '/' . self::NPR_CDS_VERSION . '/documents/' . $api_id;
 
 		$options['method'] = 'DELETE';
+		$options = apply_filters( 'npr_pre_article_delete', $options );
 		$result = wp_remote_request( $url, $options );
 		$body = wp_remote_retrieve_body( $result );
 		if ( $result['response']['code'] == self::NPR_CDS_DELETE_OK && empty( $body ) ) {
@@ -1114,7 +1110,7 @@ class NPR_CDS_WP {
 						$audio_id      = $this->extract_asset_id( $audio->href );
 						$audio_current = $story->assets->{$audio_id};
 						if ( $audio_current->isAvailable ) {
-							if ( $audio_current->isEmbeddable ) {
+							if ( $audio_current->isEmbeddable && !empty( $audio_current->embeddedPlayerLink->href ) ) {
 								$audio_file = '<p><iframe class="npr-embed-audio" style="width: 100%; height: 235px;" src="' . $audio_current->embeddedPlayerLink->href . '"></iframe></p>';
 							} elseif ( $audio_current->isDownloadable ) {
 								foreach ( $audio_current->enclosures as $enclose ) {

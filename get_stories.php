@@ -97,8 +97,6 @@ class NPR_CDS {
 	 * @throws Exception
 	 */
 	public function load_page_hook(): void {
-		
-
 		$required_capability = apply_filters( 'npr_cds_get_stories_capability', 'edit_posts' );
 
 		// if the current user shouldn't be doing this, fail
@@ -195,9 +193,9 @@ class NPR_CDS {
 		if ( !is_admin() ) {
 			return;
 		}
-
+		$post_type_option = get_option( 'npr_cds_pull_post_type', 'post' );
 		// Allow customization of the post type used for the loading screen
-		$post_type  = apply_filters( 'npr_cds_get_stories_post_type_page', 'posts_page' );
+		$post_type = $post_type_option . 's_page';
 
 		add_action( 'admin_menu', [ $this, 'admin_menu' ] );
 		add_action( 'load-' . $post_type . '_get-npr-stories', [ $this, 'load_page_hook' ] );
@@ -207,15 +205,15 @@ class NPR_CDS {
 	 * Register the admin menu for "Get NPR Stories"
 	 */
 	public function admin_menu(): void {
+		$post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 		$required_capability = apply_filters( 'npr_cds_get_stories_capability', 'edit_posts' );
-		$post_type           = apply_filters( 'npr_cds_get_stories_post_type', 'post' );
 
 		if ( ! post_type_exists( $post_type ) ) {
 			$post_type = 'post';
 		}
 
 		add_submenu_page(
-			'edit.php?post_type=' . $post_type,
+			'edit.php' . ( $post_type !== 'post' ? '?post_type=' . $post_type : '' ),
 			'Get NPR Stories',
 			'Get NPR Stories',
 			$required_capability,

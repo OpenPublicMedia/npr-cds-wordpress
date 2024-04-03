@@ -17,3 +17,4 @@ The WordPress plugin was originally developed as an Open Source plugin by NPR an
 - [Pushing Content to the NPR CDS](pushing.md)
 - [Pushing Content to the NPR One app](npr-one.md)
 - [Custom Field Mapping](field-mapping.md)
+- [Plugin Filters](filters.md)
