@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NPR Content Distribution Service
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 1.0.7
+ * Version: 1.0.8
  * Author: Open Public Media
  * License: GPLv2
  * Text Domain: npr-content-distribution-service
@@ -300,7 +300,9 @@ function npr_cds_add_meta_boxes(): void {
 				'npr_cds_document_meta',
 				'NPR CDS',
 				'npr_cds_publish_meta_box',
-				$push_post_type, 'side'
+				$push_post_type,
+				'side',
+				'core'
 			);
 			add_action( 'admin_enqueue_scripts', 'npr_cds_publish_meta_box_assets' );
 		} else {
@@ -309,7 +311,9 @@ function npr_cds_add_meta_boxes(): void {
 				'npr_cds_document_meta',
 				'NPR CDS',
 				'npr_cds_publish_meta_box_prompt',
-				$push_post_type, 'side'
+				$push_post_type,
+				'side',
+				'core'
 			);
 		}
 	}

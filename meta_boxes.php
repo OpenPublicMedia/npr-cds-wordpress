@@ -19,7 +19,8 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 	wp_enqueue_style( 'npr_cds_publish_meta_box_stylesheet' );
 	wp_enqueue_script( 'npr_cds_publish_meta_box_script' );
 	wp_nonce_field( 'npr_cds-' . $post->ID, 'npr_cds_send_nonce' );
-	$npr_id = get_post_meta( $post->ID, 'npr_story_id', true ); ?>
+	$npr_id = get_post_meta( $post->ID, 'npr_story_id', true );
+	$push_default = get_option( 'npr_cds_push_default', '1' ); ?>
 	<div id="npr-cds-publish-actions">
 <?php
 	if ( !empty( $npr_id ) ) {
@@ -30,7 +31,13 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 			// send to the npr api
 			// The meta name here is '_send_to_nprone' for backwards compatibility with plugin versions 1.6 and prior
 			$nprapi = get_post_meta( $post->ID, '_send_to_nprone', true ); // 0 or 1
-			if ( '0' !== $nprapi && '1' !== $nprapi ) { $nprapi = '1'; } // defaults to checked; unset on new posts
+			if ( empty( $npr_id ) && $push_default === '0' ) {
+				$nprapi = '0';
+			} else {
+				if ( '0' !== $nprapi && '1' !== $nprapi ) {
+					$nprapi = $push_default;
+				}
+			}// defaults to checked; unset on new posts
 
 			// this list item contains all other list items, because their enabled/disabled depends on this checkbox
 			echo '<li>';

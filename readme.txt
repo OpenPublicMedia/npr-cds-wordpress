@@ -70,6 +70,10 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V1.0.8 =
+* NPR CDS metabox now appears higher in the sidebar by default
+* Added setting for whether or not you want the "Send to NPR CDS" checkbox checked by default
+
 = V1.0.7 =
 * Bug fixes related to bylines: plugin now saves bylines under the proper metadata key, no longer ignore non-reference bylines, and doesn't write empty bylines when the Co-Authors Plus plugin is present (h/t Andrew Reynolds at WAMU)
 * 'Get NPR Stories' menu option now aligns to whichever `pull_post_type` is selected in settings (h/t Kaym Yusuf at WAMU)

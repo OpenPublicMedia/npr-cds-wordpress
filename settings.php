@@ -189,6 +189,9 @@ function npr_cds_settings_init(): void {
 	add_settings_field( 'npr_cds_push_post_type', 'NPR Push Post Type', 'npr_cds_push_post_type_callback', 'npr_cds', 'npr_cds_settings' );
 	register_setting( 'npr_cds', 'npr_cds_push_post_type' );
 
+	add_settings_field( 'npr_cds_push_default', 'NPR Push to CDS Default', 'npr_cds_push_default_callback', 'npr_cds', 'npr_cds_settings' );
+	register_setting( 'npr_cds', 'npr_cds_push_default' );
+
 	add_settings_field( 'npr_cds_image_width', 'Max Image Width', 'npr_cds_image_width_callback', 'npr_cds', 'npr_cds_settings' );
 	register_setting( 'npr_cds', 'npr_cds_image_width' );
 
@@ -357,6 +360,14 @@ function npr_cds_push_post_type_callback(): void {
 	$post_types = get_post_types();
 	npr_cds_show_post_types_select( 'npr_cds_push_post_type', $post_types );
 	echo npr_cds_esc_html( '<p><em>If you change the Push Post Type setting remember to update the mappings for CDS Fields at <a href="' . admin_url( 'options-general.php?page=npr_cds#npr-fields' ) . '">NPR CDS Field Mapping</a> tab.</em></p>' );
+}
+
+function npr_cds_push_default_callback(): void {
+	$push_default = get_option( 'npr_cds_push_default', '1' );
+	$check_box_string = '<select id="npr_cds_push_default" name="npr_cds_push_default"><option value="1"' . ( $push_default == '1' ? ' selected' : '' ) . '>Checked</option>' .
+	'<option value="0"' . ( $push_default == '0' ? ' selected' : '' ) . '>Not Checked</option>' .
+	'</select>';
+	echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>When creating a new post in your NPR Push Post Type, do you want the "Push to NPR CDS" box to be checked by default or not?</em></p>' );
 }
 
 function npr_cds_image_format_callback(): void {
