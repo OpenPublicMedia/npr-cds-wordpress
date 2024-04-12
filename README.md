@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.0.8.1
+* Fixing labels on NPR Story custom post type
+
 ### V1.0.8
 * NPR CDS metabox now appears higher in the sidebar by default
 * Added setting for whether or not you want the "Send to NPR CDS" checkbox checked by default

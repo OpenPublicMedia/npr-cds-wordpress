@@ -2,7 +2,7 @@
 /**
  * Plugin Name: NPR Content Distribution Service
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 1.0.8
+ * Version: 1.0.8.1
  * Author: Open Public Media
  * License: GPLv2
  * Text Domain: npr-content-distribution-service
@@ -259,11 +259,15 @@ function npr_cds_create_post_type(): void {
 			'name' => __( 'NPR Stories', 'npr-content-distribution-service' ),
 			'singular_name' => __( 'NPR Story', 'npr-content-distribution-service' ),
 			'menu_name' => __( 'NPR Stories', 'npr-content-distribution-service' ),
+			'add_new' => __( 'Add New NPR Story' ),
+			'add_new_item' => __( 'Add New NPR Story' ),
 			'edit_item' => __( 'Edit NPR Story', 'npr-content-distribution-service' ),
 			'view_item' => __( 'View NPR Story', 'npr-content-distribution-service' ),
 			'search_items' => __( 'Search NPR Stories', 'npr-content-distribution-service' ),
 			'not_found' => __( 'NPR Story Not Found', 'npr-content-distribution-service' ),
-			'not_found_in_trash' => __( 'NPR Story not found in trash', 'npr-content-distribution-service' )
+			'not_found_in_trash' => __( 'NPR Story not found in trash', 'npr-content-distribution-service' ),
+			'all_items' => __( 'All NPR Stories' ),
+			'archives' => __( 'NPR Story Archives' ),
 		],
 		'description' => __('Stories pulled from NPR or member stations via the NPR CDS', 'npr-content-distribution-service' ),
 		'public' => true,
