@@ -476,7 +476,7 @@ function npr_cds_query_callback( $i ): void {
 		          '<option value="Publish"' . ( $query['publish'] == 'Publish' ? ' selected' : '' ) . '>Publish</option>' .
 		          '<option value="Draft"' . ( $query['publish'] == 'Draft' ? ' selected' : '' ) . '>Draft</option>' .
 		          '</select></div>' .
-		          '<h4>Save as post type? (Leave blank for default)</h4>' .
+		          '<h4>Save as post type?</h4>' .
 		          npr_cds_show_post_types_select( 'npr_cds_query_' . $i . '[pull_type]', $post_types, true );
 		if ( $optionType == 'post' ) {
 			$args = [
@@ -568,7 +568,9 @@ function npr_cds_mapping_media_agency_callback(): void {
  */
 function npr_cds_show_post_types_select( string $field_name, array $keys, bool $return = false ): string {
 	$selected = $output = '';
+	$first_label = 'Select';
 	if ( str_contains( $field_name, 'npr_cds_query_' ) ) {
+		$first_label = 'Default';
 		preg_match( '/(npr_cds_query_[0-9]+)\[(.+)\]/', $field_name, $match );
 		if ( !empty( $match ) ) {
 			$option = get_option( $match[1] );
@@ -582,7 +584,7 @@ function npr_cds_show_post_types_select( string $field_name, array $keys, bool $
 
 	$output .= npr_cds_esc_html( '<div><select id="' . $field_name . '" name="' . $field_name . '">' );
 
-	$output .= '<option value=""> &mdash; Select &mdash; </option>';
+	$output .= '<option value=""> &mdash; ' . $first_label . ' &mdash; </option>';
 	foreach ( $keys as $key ) {
 		$option_string = "\n<option  ";
 		if ( $key == $selected ) {
