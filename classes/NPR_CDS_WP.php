@@ -168,6 +168,9 @@ class NPR_CDS_WP {
 	function update_posts_from_stories( bool $publish = TRUE, int $qnum = 0 ): int {
 		$pull_post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 		$cds_query = get_option( 'npr_cds_query_' . $qnum );
+		if ( !empty( $cds_query['pull_type'] ) ) {
+			$pull_post_type = $cds_query['pull_type'];
+		}
 
 		if ( !empty( $this->stories ) ) {
 			$single_story = TRUE;
@@ -176,13 +179,13 @@ class NPR_CDS_WP {
 			}
 			foreach ( $this->stories as $story ) {
 				$post_id = null;
-				$exists = new WP_Query( apply_filters( 'npr_story_exists_args', [
+				$exists = new WP_Query([
 					'meta_key' => NPR_STORY_ID_META_KEY,
 					'meta_value' => $story->id,
 					'post_type' => $pull_post_type,
 					'post_status' => 'any',
 					'no_found_rows' => true
-				], $publish, $qnum, $story ) );
+				]);
 
 				$cats = [];
 				$post_mod_date = $post_pub_date = 0;

@@ -18,147 +18,104 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @see npr_cds_publish_meta_box_prompt
  */
 function npr_cds_add_options_page(): void {
-	add_options_page( 'NPR CDS', 'NPR CDS', 'manage_options', 'npr_cds', 'npr_cds_options_page' );
+	add_options_page( 'NPR CDS', 'NPR CDS', 'manage_options', 'npr_cds', 'npr_cds_options_general' );
+	add_options_page( 'NPR CDS Get Multi Settings', 'NPR CDS Get Multi Settings', 'manage_options', 'npr_cds_options_multi', 'npr_cds_options_multi' );
+	add_options_page( 'NPR CDS Push Mapping', 'NPR CDS Push Mapping', 'manage_options', 'npr_cds_options_push_mapping', 'npr_cds_options_push_mapping' );
 }
 add_action( 'admin_menu', 'npr_cds_add_options_page' );
 
-function npr_cds_options_page(): void {
-	?>
-		<style>
-			h1 {
-				line-height: 1.25;
+function npr_cds_options_general(): void { ?>
+	<style>
+		h1 {
+			line-height: 1.25;
+		}
+		.form-table td input[type="text"] {
+			display: inline-block;
+			max-width: 100%;
+			width: 66%;
+		}
+		@media screen and (max-width: 500px) {
+			.form-table td input[type="text"] {
+				width: 100%;
 			}
-			.npr-settings-group {
-				display: none;
-				padding: 1rem;
-				border-bottom: 0.125em solid #808080;
-				border-left: 0.125em solid #808080;
-				border-right: 0.125em solid #808080;
-				margin-right: 0.5rem;
-			}
-			.npr-settings-group.active {
-				display: block;
-			}
-			.npr-settings-group .form-table td input[type="text"] {
-				display: inline-block;
-				max-width: 100%;
-				width: 66%;
-			}
-			.npr-selector {
-				display: grid;
-				grid-template-columns: 1fr 1fr 1fr;
-				align-content: center;
-				justify-content: center;
-				margin-right: 0.5rem;
-			}
-			.npr-selector div {
-				background-color: #ffffff;
-				border-top: 0.125em solid #808080;
-				border-bottom: 0.125em solid #808080;
-				border-left: 0.125em solid #808080;
-				border-right: 0.125em solid #808080;
-				transition: opacity 0.2s;
-				text-align: center;
-				font-size: 1.25em;
-				padding: 0.5rem;
-			}
-			.npr-selector div:hover {
-				opacity: 0.75;
-				cursor: pointer;
-			}
-			.npr-selector div.active {
-				color: #135e96;
-				border-bottom: 0.125em solid transparent;
-				border-top: 0.125em solid #135e96;
-				background-color: #f0f0f1;
-			}
+		}
+	</style>
+	<h1>NPR Content Distribution Service Settings</h1>
+	<form action="options.php" method="post">
+	<?php
+		settings_fields( 'npr_cds' );
+		do_settings_sections( 'npr_cds' );
+		submit_button(); ?>
+	</form><?php
+}
+function npr_cds_options_multi(): void { ?>
+	<style>
+		h1 {
+			line-height: 1.25;
+		}
+		.form-table td input[type="text"] {
+			display: inline-block;
+			max-width: 100%;
+			width: 66%;
+		}
+		.npr-cds-query h4 {
+			margin: 0;
+			text-align: right;
+		}
+		.npr-cds-query {
+			display: grid;
+			grid-template-columns: 10rem auto;
+			gap: 1rem;
+			align-items: center;
+			padding-bottom: 1rem;
+			border-bottom: 1px solid #808080;
+			margin-bottom: 1rem;
+		}
+		@media screen and (max-width: 500px) {
 			.npr-cds-query h4 {
-				margin: 0;
-				text-align: right;
+				text-align: left;
 			}
 			.npr-cds-query {
-				display: grid;
-				grid-template-columns: 10rem auto;
-				gap: 1rem;
-				align-items: center;
-				padding-bottom: 1rem;
-				border-bottom: 1px solid #808080;
-				margin-bottom: 1rem;
+				grid-template-columns: 1fr;
 			}
-			@media screen and (max-width: 500px) {
-				.npr-cds-query h4 {
-					text-align: left;
-				}
-				.npr-cds-query {
-					grid-template-columns: 1fr;
-				}
-				.npr-settings-group .form-table td input[type="text"] {
-					width: 100%;
-				}
+			.form-table td input[type="text"] {
+				width: 100%;
 			}
-		</style>
-		<h1>NPR Content Distribution Service Settings</h1>
-		<div class="npr-selector">
-			<div data-tab="npr-general">General Settings</div>
-			<div data-tab="npr-multi">Get Multi Settings</div>
-			<div data-tab="npr-fields">Push Field Mapping</div>
-		</div>
-		<div class="npr-settings-group" data-tab="npr-general-tab">
-			<form action="options.php" method="post">
-				<?php
-					settings_fields( 'npr_cds' );
-					do_settings_sections( 'npr_cds' );
-					submit_button(); ?>
-			</form>
-		</div>
-		<div class="npr-settings-group" data-tab="npr-multi-tab">
-			<form action="options.php" method="post">
-				<?php
-					settings_fields( 'npr_cds_get_multi_settings' );
-					do_settings_sections( 'npr_cds_get_multi_settings' );
-					submit_button();
-				?>
-			</form>
-		</div>
-		<div class="npr-settings-group" data-tab="npr-fields-tab">
-			<form action="options.php" method="post">
-				<?php
-					settings_fields( 'npr_cds_push_mapping' );
-					do_settings_sections( 'npr_cds_push_mapping' );
-					submit_button();
-				?>
-			</form>
-		</div>
-		<script>
-			const nprSections = document.querySelectorAll('.npr-selector > div');
-			const nprGroups = document.querySelectorAll('.npr-settings-group');
-			const hashMark = window.location.hash;
-			if ( hashMark === '#npr-general' || hashMark === '#npr-multi' || hashMark === '#npr-fields' ) {
-				let tabId = hashMark.replace('#', '');
-				document.querySelector('[data-tab="'+tabId+'-tab"]').classList.add('active');
-				document.querySelector('[data-tab="'+tabId+'"]').classList.add('active');
-			} else {
-				document.querySelector('[data-tab="npr-general-tab"]').classList.add('active');
-				document.querySelector('[data-tab="npr-general"]').classList.add('active');
-				window.location.assign('#npr-general');
+		}
+	</style>
+	<h1>NPR Content Distribution Service Settings</h1>
+	<form action="options.php" method="post">
+		<?php
+			settings_fields( 'npr_cds_get_multi_settings' );
+			do_settings_sections( 'npr_cds_get_multi_settings' );
+			submit_button();
+		?>
+	</form><?php
+}
+function npr_cds_options_push_mapping(): void { ?>
+	<style>
+		h1 {
+			line-height: 1.25;
+		}
+		.form-table td input[type="text"] {
+			display: inline-block;
+			max-width: 100%;
+			width: 66%;
+		}
+		@media screen and (max-width: 500px) {
+			.form-table td input[type="text"] {
+				width: 100%;
 			}
-			Array.from(nprSections).forEach((ns) => {
-				ns.addEventListener('click', (evt) => {
-					console.log(evt.target);
-					let tab = evt.target.getAttribute('data-tab');
-					Array.from(nprSections).forEach((nse) => {
-						nse.classList.remove('active');
-					});
-					evt.target.classList.add('active');
-					Array.from(nprGroups).forEach((ng) => {
-						ng.classList.remove('active');
-					});
-					document.querySelector('[data-tab="'+tab+'-tab"]').classList.add('active');
-					window.location.assign('#'+tab);
-				});
-			});
-		</script>
-	<?php
+		}
+	</style>
+	<h1>NPR Content Distribution Service Settings</h1>
+	<form action="options.php" method="post">
+		<?php
+			settings_fields( 'npr_cds_push_mapping' );
+			do_settings_sections( 'npr_cds_push_mapping' );
+			submit_button();
+		?>
+	</form><?php
 }
 
 function npr_cds_settings_init(): void {
@@ -183,7 +140,7 @@ function npr_cds_settings_init(): void {
 	add_settings_field( 'npr_cds_query_use_featured', 'Theme uses Featured Image', 'npr_cds_query_use_featured_callback', 'npr_cds', 'npr_cds_settings' );
 	register_setting( 'npr_cds', 'npr_cds_query_use_featured', [ 'sanitize_callback' => 'npr_cds_validation_callback_checkbox' ] );
 
-	add_settings_field( 'npr_cds_pull_post_type', 'NPR Pull Post Type', 'npr_cds_pull_post_type_callback', 'npr_cds', 'npr_cds_settings' );
+	add_settings_field( 'npr_cds_pull_post_type', 'NPR Default Pull Post Type', 'npr_cds_pull_post_type_callback', 'npr_cds', 'npr_cds_settings' );
 	register_setting( 'npr_cds', 'npr_cds_pull_post_type' );
 
 	add_settings_field( 'npr_cds_push_post_type', 'NPR Push Post Type', 'npr_cds_push_post_type_callback', 'npr_cds', 'npr_cds_settings' );
@@ -394,8 +351,12 @@ function npr_cds_num_multi_callback(): void {
 
 function npr_cds_query_callback( $i ): void {
 	if ( is_integer( $i ) ) {
-		$optionType = get_option( 'npr_cds_pull_post_type', 'post' );
 		$query = get_option( 'npr_cds_query_' . $i );
+		$optionType = get_option( 'npr_cds_pull_post_type', 'post' );
+		if ( !empty( $query['pull_type'] ) ) {
+			$optionType = $query['pull_type'];
+		}
+		$post_types = get_post_types();
 
 		$output = '<div class="npr-cds-query"><h4>Filters</h4><div><p><input type="text" value="' . $query['filters'] . '" name="npr_cds_query_' . $i . '[filters]" placeholder="profileIds=renderable&collectionIds=1002" /></p>' .
 			'<p><em>A list of available filtering options can be found <a href="https://npr.github.io/content-distribution-service/querying/filtering.html">in the CDS documentation</a></em></p></div>' .
@@ -405,7 +366,9 @@ function npr_cds_query_callback( $i ): void {
 				'<div><select id="npr_cds_query_' . $i . '[publish]" name="npr_cds_query_' . $i . '[publish]">' .
 					'<option value="Publish"' . ( $query['publish'] == 'Publish' ? ' selected' : '' ) . '>Publish</option>' .
 					'<option value="Draft"' . ( $query['publish'] == 'Draft' ? ' selected' : '' ) . '>Draft</option>' .
-				'</select></div>';
+				'</select></div>' .
+			'<h4>Save as post type? (Leave blank for default)</h4>' .
+			npr_cds_show_post_types_select( 'npr_cds_query_' . $i . '[pull_type]', $post_types, true );
 		if ( $optionType == 'post' ) {
 			$args = [
 				'show_option_none'	=> __( 'Select category', 'npr-content-distribution-service' ),
@@ -494,21 +457,36 @@ function npr_cds_mapping_media_agency_callback(): void {
  * @param string $field_name
  * @param array $keys - an array like (1=>'Value1', 2=>'Value2', 3=>'Value3');
  */
-function npr_cds_show_post_types_select( string $field_name, array $keys ): void {
-	$selected = get_option( $field_name );
+function npr_cds_show_post_types_select( string $field_name, array $keys, bool $return = false ): string {
+	$selected = $output = '';
+	if ( str_contains( $field_name, 'npr_cds_query_' ) ) {
+		preg_match( '/(npr_cds_query_[0-9]+)\[(.+)\]/', $field_name, $match );
+		if ( !empty( $match ) ) {
+			$option = get_option( $match[1] );
+			if ( !empty( $option[ $match[2] ] ) ) {
+				$selected = $option[ $match[2] ];
+			}
+		}
+	} else {
+		$selected = get_option( $field_name );
+	}
 
-	echo npr_cds_esc_html( '<div><select id="' . $field_name . '" name="' . $field_name . '">' );
+	$output .= npr_cds_esc_html( '<div><select id="' . $field_name . '" name="' . $field_name . '">' );
 
-	echo '<option value=""> &mdash; Select &mdash; </option>';
+	$output .= '<option value=""> &mdash; Select &mdash; </option>';
 	foreach ( $keys as $key ) {
 		$option_string = "\n<option  ";
 		if ( $key == $selected ) {
 			$option_string .= " selected ";
 		}
 		$option_string .=   "value='" . esc_attr( $key ) . "'>" . esc_html( $key ) . " </option>";
-		echo npr_cds_esc_html( $option_string );
+		$output .= npr_cds_esc_html( $option_string );
 	}
-	echo "</select> </div>";
+	$output .= "</select> </div>";
+	if ( !$return ) {
+		echo $output;
+	}
+	return $output;
 }
 
 /**
@@ -608,22 +586,27 @@ function npr_cds_validation_callback_org_id( $value ): string {
  * @param string $field_name
  * @param array $keys
  */
-function npr_cds_show_keys_select( string $field_name, array $keys ): void {
-
+function npr_cds_show_keys_select( string $field_name, array $keys, bool $return = false ): string {
+	$output = '';
 	$selected = get_option( $field_name );
 
-	echo "<div><select id=" . esc_attr( $field_name ) . " name=" . esc_attr( $field_name ) . ">";
 
-	echo '<option value="#NONE#"> &mdash; default &mdash; </option>';
+	$output .= "<div><select id=" . esc_attr( $field_name ) . " name=" . esc_attr( $field_name ) . ">";
+
+	$output .= '<option value="#NONE#"> &mdash; default &mdash; </option>';
 	foreach ( $keys as $key ) {
 		$option_string = "\n<option  ";
 		if ($key == $selected) {
 			$option_string .= " selected ";
 		}
 		$option_string .=   "value='" . esc_attr( $key ) . "'>" . esc_html( $key ) . " </option>";
-		echo npr_cds_esc_html( $option_string );
+		$output .= npr_cds_esc_html( $option_string );
 	}
-	echo "</select> </div>";
+	$output .= "</select> </div>";
+	if ( !$return ) {
+		echo $output;
+	}
+	return $output;
 }
 
 function npr_cds_get_push_post_type() {

@@ -74,6 +74,10 @@ NPR Stories having been retrieved
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.1
+* Breaking the settings screens into 3 separate pages
+* Adding the ability to select the pull post type for each query (leave blank to use the default)
+
 ### V1.0.8.1
 * Fixing labels on NPR Story custom post type
 
