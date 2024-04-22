@@ -1,10 +1,15 @@
 <?php
 /**
  * Plugin Name: NPR Content Distribution Service
+ * Plugin URI: https://github.com/OpenPublicMedia/npr-cds-wordpress
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
  * Version: 1.1
+ * Requires at least: 4.0
+ * Requires PHP: 8.0
  * Author: Open Public Media
+ * Author URI: https://github.com/OpenPublicMedia/
  * License: GPLv2
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: npr-content-distribution-service
 */
 /*
