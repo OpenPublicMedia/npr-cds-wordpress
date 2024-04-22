@@ -1,13 +1,17 @@
 === NPR Content Distribution Service ===
 Contributors: jwcounts, tamw-wnet, bdivver
-Donate link: https://www.npr.org/series/750002/support-public-radio
+Original developers: NPRDS, INN Labs
+Donate link: https://www.npr.org/support
 Tags: npr, news, public radio, api
-Requires at least: 3.8.14
-Tested up to: 6.4.2
-Stable tag: 1.0.5
+Requires at least: 4.0
+Tested up to: 6.5.2
+Requires PHP: 8.0
+Version: 1.1
+Stable tag: 1.1
+Author: Open Public Media
+Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Text Domain: nprapi
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers.
 
