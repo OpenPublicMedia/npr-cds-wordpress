@@ -13,7 +13,7 @@
  * Text Domain: npr-content-distribution-service
 */
 /*
-	Copyright 2022 Open Public Media
+	Copyright 2024 Open Public Media
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License, version 2, as
