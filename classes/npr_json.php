@@ -53,11 +53,14 @@ function npr_cds_to_json( $post ): bool|string {
 	 * Custom content
 	 */
 	$custom_content_meta = get_option( 'npr_cds_mapping_body' );
+	if ( !empty( $custom_content_meta ) && $custom_content_meta === '#NONE' ) {
+		$custom_content_meta = 'npr_story_content';
+		update_option( 'npr_cds_mapping_body', $custom_content_meta );
+	}
 	if (
-		$use_custom
-		&& !empty( $custom_content_meta )
-		&& $custom_content_meta != '#NONE#'
-		&& in_array( $custom_content_meta, $post_metas )
+		$use_custom &&
+		!empty( $custom_content_meta ) &&
+		in_array( $custom_content_meta, $post_metas )
 	) {
 		$content = get_post_meta( $post->ID, $custom_content_meta, true );
 		$post_for_teaser = $post;
@@ -104,7 +107,7 @@ function npr_cds_to_json( $post ): bool|string {
 	if (
 		$use_custom
 		&& !empty( $custom_title_meta )
-		&& $custom_title_meta != '#NONE#'
+		&& $custom_title_meta !== '#NONE#'
 		&& in_array( $custom_content_meta, $post_metas )
 	) {
 		$custom_title = get_post_meta( $post->ID, $custom_title_meta, true );
@@ -125,7 +128,7 @@ function npr_cds_to_json( $post ): bool|string {
 	if (
 		$use_custom
 		&& !empty( $custom_byline_meta )
-		&& $custom_byline_meta != '#NONE#'
+		&& $custom_byline_meta !== '#NONE#'
 		&& in_array( $custom_content_meta, $post_metas )
 	) {
 		$bylines[] = get_post_meta( $post->ID, $custom_byline_meta, true );
@@ -250,7 +253,7 @@ function npr_cds_to_json( $post ): bool|string {
 		if (
 			$use_custom &&
 			!empty( $custom_media_credit ) &&
-			$custom_media_credit != '#NONE#' &&
+			$custom_media_credit !== '#NONE#' &&
 			in_array( $custom_media_credit, $image_metas )
 		) {
 			$custom_credit = get_post_meta( $image->ID, $custom_media_credit, true );
@@ -259,7 +262,7 @@ function npr_cds_to_json( $post ): bool|string {
 		if (
 			$use_custom &&
 			!empty( $custom_media_agency ) &&
-			$custom_media_agency != '#NONE#' &&
+			$custom_media_agency !== '#NONE#' &&
 			in_array( $custom_media_agency, $image_metas )
 		) {
 			$custom_agency = get_post_meta( $image->ID, $custom_media_agency, true);

@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.5.2
 - Requires PHP: 8.0
-- Version: 1.1
-- Stable tag: 1.1
+- Version: 1.1.1
+- Stable tag: 1.1.1
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -78,6 +78,9 @@ NPR Stories having been retrieved
 ## Changelog
 
 <!-- copy from readme.txt to here -->
+### V1.1.1
+* Fixed a bug that was causing article metadata to be saved using an invalid key when ingesting articles
+
 ### V1.1
 * Breaking the settings screens into 3 separate pages
 * Adding the ability to select the pull post type for each query (leave blank to use the default)

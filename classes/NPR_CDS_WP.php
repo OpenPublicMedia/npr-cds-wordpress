@@ -195,18 +195,23 @@ class NPR_CDS_WP {
 				if ( $exists->have_posts() ) {
 					$existing = $exists->post;
 					$post_id = $existing->ID;
+					$existing_skip = true;
 					$existing_status = $exists->posts[0]->post_status;
-					$post_mod_date_meta = get_post_meta( $existing->ID, NPR_LAST_MODIFIED_DATE_KEY );
+					$existing_meta = get_post_meta( $existing->ID );
+					if ( array_key_exists( '#NONE#', $existing_meta ) ) {
+						delete_post_meta( $existing->ID, '#NONE#' );
+					}
+					$post_mod_date_meta = $existing_meta[ NPR_LAST_MODIFIED_DATE_KEY ];
 					// to store the category ids of the existing post
 					if ( !empty( $post_mod_date_meta[0] ) ) {
 						$post_mod_date = strtotime( $post_mod_date_meta[0] );
 					}
-					$post_pub_date_meta = get_post_meta( $existing->ID, NPR_PUB_DATE_META_KEY );
+					$post_pub_date_meta = $existing_meta[ NPR_PUB_DATE_META_KEY ];
 					if ( !empty( $post_pub_date_meta[0] ) ) {
 						$post_pub_date = strtotime( $post_pub_date_meta[0] );
 					}
 
-					if ( $post_mod_date === strtotime( $story->editorialLastModifiedDateTime ) || $post_pub_date === strtotime( $story->publishDateTime ) ) {
+					if ( ( $post_mod_date === strtotime( $story->editorialLastModifiedDateTime ) || $post_pub_date === strtotime( $story->publishDateTime ) ) && !array_key_exists( '#NONE#', $existing_meta ) ) {
 						continue;
 					}
 					// get ids of existing categories for post
@@ -311,18 +316,39 @@ class NPR_CDS_WP {
 					}
 				}
 				$profiles = $this->extract_profiles( $story->profiles );
+				$npr_story_content_meta_key = NPR_STORY_CONTENT_META_KEY;
+				$npr_story_title_meta_key = NPR_STORY_TITLE_META_KEY;
+				$npr_byline_meta_key = NPR_BYLINE_META_KEY;
+				$npr_image_credit_meta_key = NPR_IMAGE_CREDIT_META_KEY;
+				$npr_image_agency_meta_key = NPR_IMAGE_AGENCY_META_KEY;
+				if ( $npr_story_content_meta_key === '#NONE#' ) {
+					$npr_story_content_meta_key = 'npr_story_content';
+				}
+				if ( $npr_story_title_meta_key === '#NONE#' ) {
+					$npr_story_title_meta_key = 'npr_story_title';
+				}
+				if ( $npr_byline_meta_key === '#NONE#' ) {
+					$npr_byline_meta_key = 'npr_byline';
+				}
+				if ( $npr_image_credit_meta_key === '#NONE#' ) {
+					$npr_image_credit_meta_key = 'npr_image_credit';
+				}
+				if ( $npr_image_agency_meta_key === '#NONE#' ) {
+					$npr_image_agency_meta_key = 'npr_image_agency';
+				}
 
 				// set the meta RETRIEVED so when we publish the post, we don't try ingesting it
 				$metas = [
 					NPR_STORY_ID_META_KEY		  => $story->id,
 					NPR_HTML_LINK_META_KEY		  => $webPage,
-					NPR_STORY_CONTENT_META_KEY	  => $story->body,
-					NPR_BYLINE_META_KEY			  => ( !empty( $by_lines[0]['name'] ) ? $by_lines[0]['name'] : '' ),
+					$npr_story_content_meta_key	  => $story->body,
+					$npr_story_title_meta_key	  => $story->title,
+					$npr_byline_meta_key		  => ( !empty( $by_lines[0]['name'] ) ? $by_lines[0]['name'] : '' ),
 					NPR_BYLINE_LINK_META_KEY	  => ( !empty( $by_lines[0]['link'] ) ? $by_lines[0]['link'] : '' ),
 					NPR_MULTI_BYLINE_META_KEY	  => $multi_by_line,
 					NPR_RETRIEVED_STORY_META_KEY  => 1,
 					NPR_PUB_DATE_META_KEY		  => $story->publishDateTime,
-					NPR_STORY_DATE_META_KEY	      => $story->publishDateTime,
+					NPR_STORY_DATE_META_KEY		  => $story->publishDateTime,
 					NPR_LAST_MODIFIED_DATE_KEY	  => $story->editorialLastModifiedDateTime,
 					NPR_STORY_HAS_VIDEO_META_KEY  => $npr_has_video
 				];
@@ -494,16 +520,16 @@ class NPR_CDS_WP {
 							$image_producer = !empty( $image_current->producer ) ? $image_current->producer : '';
 							$image_provider = !empty( $image_current->provider ) ? $image_current->provider : '';
 							$image_caption = !empty( $image_current->caption ) ? $image_current->caption : '';
-							if ( NPR_IMAGE_CREDIT_META_KEY === NPR_IMAGE_AGENCY_META_KEY ) {
+							if ( $npr_image_credit_meta_key === $npr_image_agency_meta_key ) {
 								$image_credits = [ $image_producer, $image_provider ];
 								$image_metas = [
-									NPR_IMAGE_CREDIT_META_KEY => implode( ' | ', $image_credits ),
+									$npr_image_credit_meta_key => implode( ' | ', $image_credits ),
 									NPR_IMAGE_CAPTION_META_KEY => $image_caption
 								];
 							} else {
 								$image_metas = [
-									NPR_IMAGE_CREDIT_META_KEY => $image_producer,
-									NPR_IMAGE_AGENCY_META_KEY => $image_provider,
+									$npr_image_credit_meta_key => $image_producer,
+									$npr_image_agency_meta_key => $image_provider,
 									NPR_IMAGE_CAPTION_META_KEY => $image_caption
 								];
 							}
@@ -1068,19 +1094,19 @@ class NPR_CDS_WP {
 								if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
 									$returnary['has_video_streaming'] = true;
 									$video_asset = '<video id="'. $asset_current->id .'" controls></video>' .
-									'<script>' .
-										'let video = document.getElementById("' . $asset_current->id . '");' .
-										'if (Hls.isSupported()) {' .
-											'let hls = new Hls();' .
-											'hls.attachMedia(video);' .
-											'hls.on(Hls.Events.MEDIA_ATTACHED, () => {' .
-												'hls.loadSource("' . $asset_current->enclosures[0]->href .'");' .
-												'hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {'.
-													'console.log("manifest loaded, found " + data.levels.length + " quality level");' .
-												'});' .
-											'});' .
-										'}' .
-									'</script>';
+									               '<script>' .
+									               'let video = document.getElementById("' . $asset_current->id . '");' .
+									               'if (Hls.isSupported()) {' .
+									               'let hls = new Hls();' .
+									               'hls.attachMedia(video);' .
+									               'hls.on(Hls.Events.MEDIA_ATTACHED, () => {' .
+									               'hls.loadSource("' . $asset_current->enclosures[0]->href .'");' .
+									               'hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {'.
+									               'console.log("manifest loaded, found " + data.levels.length + " quality level");' .
+									               '});' .
+									               '});' .
+									               '}' .
+									               '</script>';
 								}
 							}
 							$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
@@ -1100,8 +1126,8 @@ class NPR_CDS_WP {
 				$correct_id = $this->extract_asset_id( $correction->href );
 				$correct_current = $story->assets->{ $correct_id };
 				$correction_text .= '<li><strong><em>' .
-					wp_date( get_option( 'date_format' ), strtotime( $correct_current->dateTime ) ) .
-					'</em></strong><br />' . strip_tags( $correct_current->text ) . '</li>';
+				                    wp_date( get_option( 'date_format' ), strtotime( $correct_current->dateTime ) ) .
+				                    '</em></strong><br />' . strip_tags( $correct_current->text ) . '</li>';
 			}
 			$body_with_layout .= '<figure class="wp-block-embed npr-correction"><div class="wp-block-embed__wrapper"><h3>Corrections:</h3><ul>' . $correction_text . '</ul></div></figure>';
 		}

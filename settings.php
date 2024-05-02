@@ -701,8 +701,7 @@ function npr_cds_show_keys_select( string $field_name, array $keys, bool $return
 	$output = '';
 	$selected = get_option( $field_name );
 
-
-	$output .= "<div><select id=" . esc_attr( $field_name ) . " name=" . esc_attr( $field_name ) . ">";
+	$output .= '<div><select id="' . esc_attr( $field_name ) . '" name="' . esc_attr( $field_name ) . '">';
 
 	$output .= '<option value="#NONE#"> &mdash; default &mdash; </option>';
 	foreach ( $keys as $key ) {
