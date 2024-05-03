@@ -31,8 +31,8 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 		if ( $post->post_type !== $push_post_type || $post->post_status !== 'publish' ) {
 			return;
 		}
-		$send_to_cds = get_post_meta( $post->ID, '_send_to_nprone' );
-		if ( $send_to_cds == 0 ) {
+		$send_to_cds = get_post_meta( $post->ID, '_send_to_nprone', true );
+		if ( $send_to_cds !== '1' ) {
 			return;
 		}
 	}
