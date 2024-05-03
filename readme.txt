@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.5.2
 Requires PHP: 8.0
-Version: 1.1.2
-Stable tag: 1.1.2
+Version: 1.1.3
+Stable tag: 1.1.3
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V1.1.3 =
+* Increased the timeout for cURL requests when pushing stories
+
 = V1.1.2 =
 * Fixed a bug where unticking the 'Send to NPR CDS' checkbox in the editor would result in the article being pushed anyway
 

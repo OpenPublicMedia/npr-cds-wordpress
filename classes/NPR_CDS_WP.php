@@ -705,6 +705,7 @@ class NPR_CDS_WP {
 
 			$options['body'] = $json;
 			$options['method'] = 'PUT';
+			$options['timeout'] = 30;
 			$options = apply_filters( 'npr_pre_article_push', $options, $cds_id );
 			$result = wp_remote_request( $url, $options );
 			if ( !is_wp_error( $result ) ) {
