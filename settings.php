@@ -250,6 +250,12 @@ function npr_cds_settings_init(): void {
 	add_settings_field( 'npr_cds_push_default', 'NPR Push to CDS Default', 'npr_cds_push_default_callback', 'npr_cds', 'npr_cds_theme_settings' );
 	register_setting( 'npr_cds', 'npr_cds_push_default' );
 
+	add_settings_field( 'npr_cds_import_tags', 'Import Tags from CDS?', 'npr_cds_import_tags_callback', 'npr_cds', 'npr_cds_theme_settings' );
+	register_setting( 'npr_cds', 'npr_cds_import_tags' );
+
+	add_settings_field( 'npr_cds_display_attribution', 'Append Article Attribution?', 'npr_cds_display_attribution_callback', 'npr_cds', 'npr_cds_theme_settings' );
+	register_setting( 'npr_cds', 'npr_cds_display_attribution' );
+
 	// CDS: Image Settings
 	add_settings_section( 'npr_cds_image_settings', 'Image Settings', 'npr_cds_settings_callback', 'npr_cds' );
 
@@ -273,7 +279,7 @@ function npr_cds_settings_init(): void {
 	$num = get_option( 'npr_cds_num', 1 );
 	for ( $i = 0; $i < $num; $i++ ) {
 		add_settings_field( 'npr_cds_query_' . $i, 'Query ' . $i, 'npr_cds_query_callback', 'npr_cds_get_multi_settings', 'npr_cds_query_details', $i );
-		register_setting( 'npr_cds_get_multi_settings', 'npr_cds_query_' . $i, [ 'type' => 'array', 'default' => [ 'filters' => '', 'sorting' => '', 'publish' => '', 'category' => '', 'tags' => '' ] ] );
+		register_setting( 'npr_cds_get_multi_settings', 'npr_cds_query_' . $i, [ 'type' => 'array', 'default' => [ 'filters' => '', 'sorting' => '', 'publish' => '', 'category' => '', 'tags' => '', 'import_tags' => '1' ] ] );
 	}
 
 	// CDS: Cron Settings
@@ -430,10 +436,26 @@ function npr_cds_push_post_type_callback(): void {
 
 function npr_cds_push_default_callback(): void {
 	$push_default = get_option( 'npr_cds_push_default', '1' );
-	$check_box_string = '<select id="npr_cds_push_default" name="npr_cds_push_default"><option value="1"' . ( $push_default == '1' ? ' selected' : '' ) . '>Checked</option>' .
-	                    '<option value="0"' . ( $push_default == '0' ? ' selected' : '' ) . '>Not Checked</option>' .
+	$check_box_string = '<select id="npr_cds_push_default" name="npr_cds_push_default"><option value="1"' . ( $push_default === '1' ? ' selected' : '' ) . '>Checked</option>' .
+	                    '<option value="0"' . ( $push_default === '0' ? ' selected' : '' ) . '>Not Checked</option>' .
 	                    '</select>';
 	echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>When creating a new post in your NPR Push Post Type, do you want the "Push to NPR CDS" box to be checked by default or not?</em></p>' );
+}
+
+function npr_cds_import_tags_callback(): void {
+	$import_tags_default = get_option( 'npr_cds_import_tags', '1' );
+	$check_box_string = '<select id="npr_cds_import_tags" name="npr_cds_import_tags"><option value="1"' . ( $import_tags_default === '1' ? ' selected' : '' ) . '>Import</option>' .
+		'<option value="0"' . ( $import_tags_default === '0' ? ' selected' : '' ) . '>Do Not Import</option>' .
+		'</select>';
+	echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>When importing an article from the NPR CDS, do you want to import all of the article\'s tags into WordPress?</em></p>' );
+}
+
+function npr_cds_display_attribution_callback(): void {
+	$attribution_default = get_option( 'npr_cds_display_attribution', '0' );
+	$check_box_string = '<select id="npr_cds_display_attribution" name="npr_cds_display_attribution"><option value="0"' . ( $attribution_default === '0' ? ' selected' : '' ) . '>Do Not Append</option>' .
+		'<option value="1"' . ( $attribution_default === '1' ? ' selected' : '' ) . '>Append</option>' .
+		'</select>';
+	echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>Do you want to append an attribution message to the bottom of imported articles? (e.g. "Copyright &copy; 2024 NPR")</em></p>' );
 }
 
 function npr_cds_image_format_callback(): void {
@@ -465,6 +487,9 @@ function npr_cds_query_callback( $i ): void {
 		if ( !empty( $query['pull_type'] ) ) {
 			$optionType = $query['pull_type'];
 		}
+		if ( empty( $query['import_tags'] ) ) {
+			$query['import_tags'] = '1';
+		}
 		$post_types = get_post_types();
 
 		$output = '<div class="npr-cds-query"><h4>Filters</h4><div><p><input type="text" value="' . $query['filters'] . '" name="npr_cds_query_' . $i . '[filters]" placeholder="profileIds=renderable&collectionIds=1002" /></p>' .
@@ -494,7 +519,11 @@ function npr_cds_query_callback( $i ): void {
 			$output .= '<h4>Add Category</h4><div>' . $select . '</div>';
 		}
 		$output .= '<h4>Add Tags</h4><div><p><input type="text" value="' . $query['tags'] . '" name="npr_cds_query_' . $i . '[tags]" placeholder="pepperoni,pineapple,mozzarella" /></p>' .
-		           '<p><em>Add tag(s) to each story pulled from NPR (comma separated).</em></p>';
+		           '<p><em>Add tag(s) to each story pulled from NPR (comma separated).</em></p></div>';
+		$output .= '<h4>Import CDS Tags?</h4><div><p><select id="npr_cds_query_' . $i . '[import_tags]" name="npr_cds_query_' . $i . '[import_tags]">'.
+			'<option value="1"' . ( $query['import_tags'] === '1' ? ' selected' : '' ) . '>Import</option>' .
+			'<option value="0"' . ( $query['import_tags'] === '0' ? ' selected' : '' ) . '>Do Not Import</option>' .
+			'</select></p></div>';
 		echo npr_cds_esc_html( $output );
 	}
 }

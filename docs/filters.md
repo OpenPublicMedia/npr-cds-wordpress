@@ -7,15 +7,6 @@ Aside from the settings presented inside the WordPress dashboard, there are also
 * **Arguments**
   * `$capability (string)`: default is `edit_posts`
 * **Return**: `$capability`
- 
-## `npr_story_exists_args`
-* **Function**: Allows a site to modify the query parameters the plugin will use when checking to see if a CDS article already exists in the database. Useful in cases where you might be using different post types or publishing statuses for specific recurring queries
-* **Arguments**
-  * `$query (array)`: array of arguments for WP_Query 
-  * `$publish (boolean)`: the default publishing status for the current query
-  * `$qnum (int)`: the number of the current query
-  * `$story (stdClass)`: story object created during import
-* **Return**: `$query`
 
 ## `npr_pre_update_post_metas`
 * **Function**: Allows a site to modify the post meta values prior to inserting the CDS story into the database

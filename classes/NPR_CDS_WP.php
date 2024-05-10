@@ -167,9 +167,13 @@ class NPR_CDS_WP {
 	 */
 	function update_posts_from_stories( bool $publish = TRUE, int $qnum = 0 ): int {
 		$pull_post_type = get_option( 'npr_cds_pull_post_type', 'post' );
+		$import_tags = get_option( 'npr_cds_import_tags', '1' );
 		$cds_query = get_option( 'npr_cds_query_' . $qnum );
 		if ( !empty( $cds_query['pull_type'] ) ) {
 			$pull_post_type = $cds_query['pull_type'];
+		}
+		if ( !empty( $cds_query['import_tags'] ) ) {
+			$import_tags = $cds_query['import_tags'];
 		}
 
 		if ( !empty( $this->stories ) ) {
@@ -604,7 +608,7 @@ class NPR_CDS_WP {
 						$npr_tags[] = trim( $tx );
 					}
 				}
-				if ( !empty( $story->collections ) ) {
+				if ( !empty( $story->collections ) && $import_tags === '1' ) {
 					foreach ( $story->collections as $collect ) {
 						if ( in_array( 'topic', $collect->rels ) || in_array( 'category', $collect->rels ) ) {
 
@@ -859,7 +863,7 @@ class NPR_CDS_WP {
 		$credits = [];
 		foreach ( [ 'producer', 'provider', 'copyright' ] as $item ) {
 			if ( !empty( $asset->{ $item } ) ) {
-				$credits[] = $asset->{ $item };
+				$credits[] = trim( $asset->{ $item } );
 			}
 		}
 		if ( !empty( $credits ) ) {
@@ -1021,10 +1025,11 @@ class NPR_CDS_WP {
 							$figclass .= ' alignright';
 							$fightml .= " width=200";
 						}
+						$cites = $this->parse_credits( $asset_current );
 						$thiscaption = ( !empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
 						$fightml .= ( !empty( $fightml ) && !empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
 						$fightml .= ( !empty( $fightml ) ? '>' : '' );
-						$thiscaption .= ( !empty( $cites ) ? " <cite>" . $this->parse_credits( $asset_current ) . "</cite>" : '' );
+						$thiscaption .= ( !empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
 						$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>"  : '' );
 						$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
 						$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
@@ -1119,7 +1124,21 @@ class NPR_CDS_WP {
 				}
 
 			}
-
+			$display_attribution = get_option( 'npr_cds_display_attribution', '0' );
+			if ( $display_attribution === '1' && !empty( $story->brandings ) ) {
+				$attribution = [];
+				foreach ( $story->brandings as $brand ) {
+					$attr = wp_remote_get( $brand->href );
+					if ( !is_wp_error( $attr ) ) {
+						$attr_json = json_decode( $attr['body'], false );
+						$attribution[] = $attr_json->brand->displayName;
+					}
+				}
+				$publish_year = date( 'Y', strtotime( $story->publishDateTime ) );
+				if ( !empty( $attribution ) ) {
+					$body_with_layout .= '<p><em>Copyright &copy; ' . $publish_year . ' ' . implode( ', ', $attribution ) . '</em></p>';
+				}
+			}
 		}
 		if ( !empty( $story->corrections ) ) {
 			$correction_text = '';

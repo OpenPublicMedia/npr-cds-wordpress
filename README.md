@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.5.2
 - Requires PHP: 8.0
-- Version: 1.1.3
-- Stable tag: 1.1.3
+- Version: 1.2
+- Stable tag: 1.2
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -76,8 +76,13 @@ NPR Stories having been retrieved
 
 
 ## Changelog
-
 <!-- copy from readme.txt to here -->
+### V1.2
+* Fixed a bug that was preventing media credits from being appended to image captions
+* Added a setting to append an attribution line at the end of imported articles (default 'no')
+* Added a setting to import an article's tags from the CDS (default 'yes')
+* Removed a filter from the documentation since it had already been removed from the code
+
 ### V1.1.3
 * Increased the timeout for cURL requests when pushing stories 
 
