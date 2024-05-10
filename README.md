@@ -82,6 +82,9 @@ NPR Stories having been retrieved
 * Added a setting to append an attribution line at the end of imported articles (default 'no')
 * Added a setting to import an article's tags from the CDS (default 'yes')
 * Removed a filter from the documentation since it had already been removed from the code
+* Consolidating get_stories_ui.php into the NPR_CDS class in get_stories.php
+* Fixing a bug that was preventing NPR_CDS::load_page_hook() from firing on custom post types
+* Removing old TODOs
 
 ### V1.1.3
 * Increased the timeout for cURL requests when pushing stories 
