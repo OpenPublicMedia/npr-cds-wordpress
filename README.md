@@ -85,6 +85,7 @@ NPR Stories having been retrieved
 * Consolidating get_stories_ui.php into the NPR_CDS class in get_stories.php
 * Fixing a bug that was preventing NPR_CDS::load_page_hook() from firing on custom post types
 * Removing old TODOs
+* Added check to avoid downloading or inserting images that cannot be distributed via the CDS
 
 ### V1.1.3
 * Increased the timeout for cURL requests when pushing stories 

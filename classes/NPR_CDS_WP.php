@@ -453,6 +453,9 @@ class NPR_CDS_WP {
 						$image_url = '';
 						$image_id = $this->extract_asset_id( $image->href );
 						$image_current = $story->assets->{ $image_id };
+						if ( !empty( $image_current->isRestrictedToAuthorizedOrgServiceIds ) ) {
+							continue;
+						}
 						if ( !empty( $image_current->enclosures ) ) {
 							foreach ( $image_current->enclosures as $enclosure ) {
 								if ( in_array( 'primary', $enclosure->rels ) ) {
@@ -1003,56 +1006,62 @@ class NPR_CDS_WP {
 						}
 						break;
 					case 'image' :
-						$thisimg_rels = [];
-						foreach ( $story->images as $images ) {
-							if ( $images->href == '#/assets/' . $asset_id && !empty( $images->rels ) ) {
-								$thisimg_rels = $images->rels;
+						if ( empty( $asset_current->isRestrictedToAuthorizedOrgServiceIds ) ) {
+							$thisimg_rels = [];
+							foreach ( $story->images as $images ) {
+								if ( $images->href == '#/assets/' . $asset_id && ! empty( $images->rels ) ) {
+									$thisimg_rels = $images->rels;
+								}
 							}
-						}
-						if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
-							break;
-						}
-						$thisimg = $asset_current->enclosures[0];
-						foreach ( $asset_current->enclosures as $img_enclose ) {
-							if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
-								$thisimg = $img_enclose;
+							if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
+								break;
 							}
+							$thisimg = $asset_current->enclosures[0];
+							foreach ( $asset_current->enclosures as $img_enclose ) {
+								if ( ! empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
+									$thisimg = $img_enclose;
+								}
+							}
+							$figclass = "wp-block-image size-large";
+							$image_href = $this->get_image_url( $thisimg );
+							$fightml = '<img src="' . $image_href . '"';
+							if ( in_array( 'image-vertical', $thisimg->rels ) ) {
+								$figclass .= ' alignright';
+								$fightml .= " width=200";
+							}
+							$cites = $this->parse_credits( $asset_current );
+							$thiscaption = ( ! empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
+							$fightml .= ( ! empty( $fightml ) && ! empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
+							$fightml .= ( ! empty( $fightml ) ? '>' : '' );
+							$thiscaption .= ( ! empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
+							$figcaption = ( ! empty( $fightml ) && ! empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
+							$fightml .= ( ! empty( $fightml ) && ! empty( $figcaption ) ? $figcaption : '' );
+							$body_with_layout .= ( ! empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
 						}
-						$figclass = "wp-block-image size-large";
-						$image_href = $this->get_image_url( $thisimg );
-						$fightml = '<img src="' . $image_href . '"';
-						if ( in_array( 'image-vertical', $thisimg->rels ) ) {
-							$figclass .= ' alignright';
-							$fightml .= " width=200";
-						}
-						$cites = $this->parse_credits( $asset_current );
-						$thiscaption = ( !empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
-						$fightml .= ( !empty( $fightml ) && !empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
-						$fightml .= ( !empty( $fightml ) ? '>' : '' );
-						$thiscaption .= ( !empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
-						$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>"  : '' );
-						$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
-						$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
 						break;
 					case 'image-gallery' :
-						$fightml = '<figure class="wp-block-image"><div class="splide"><div class="splide__track"><ul class="splide__list">';
-						$returnary['has_slideshow'] = TRUE;
+						$fightml = '';
 						foreach ( $asset_current->layout as $ig_layout ) {
 							$ig_asset_id = $this->extract_asset_id( $ig_layout->href );
 							$ig_asset_current = $story->assets->{ $ig_asset_id };
-							$thisimg = $ig_asset_current->enclosures[0];
-							foreach ( $ig_asset_current->enclosures as $ig_img_enclose ) {
-								if ( !empty( $ig_img_enclose->rels ) && in_array( 'primary', $ig_img_enclose->rels ) ) {
-									$thisimg = $ig_img_enclose;
+							if ( empty( $ig_asset_current ) ) {
+								$thisimg = $ig_asset_current->enclosures[0];
+								foreach ( $ig_asset_current->enclosures as $ig_img_enclose ) {
+									if ( ! empty( $ig_img_enclose->rels ) && in_array( 'primary', $ig_img_enclose->rels ) ) {
+										$thisimg = $ig_img_enclose;
+									}
 								}
-							}
-							$image_href = $this->get_image_url( $thisimg );
-							$full_credits = $this->parse_credits( $ig_asset_current );
+								$image_href = $this->get_image_url( $thisimg );
+								$full_credits = $this->parse_credits( $ig_asset_current );
 
-							$link_text = str_replace( '"', "'", $ig_asset_current->title . $full_credits );
-							$fightml .= '<li class="splide__slide"><a href="' . esc_url( $thisimg->href ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_href ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . npr_cds_esc_html( $link_text ) . '</div></li>';
+								$link_text = str_replace( '"', "'", $ig_asset_current->title . $full_credits );
+								$fightml .= '<li class="splide__slide"><a href="' . esc_url( $thisimg->href ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_href ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . npr_cds_esc_html( $link_text ) . '</div></li>';
+							}
 						}
-						$fightml .= '</div></div></ul></figure>';
+						if ( !empty( $fightml ) ) {
+							$returnary['has_slideshow'] = TRUE;
+							$fightml = '<figure class="wp-block-image"><div class="splide"><div class="splide__track"><ul class="splide__list">' . $fightml . '</div></div></ul></figure>';
+						}
 						$body_with_layout .= $fightml;
 						break;
 					case str_contains( $asset_profile, 'player-video' ) :
