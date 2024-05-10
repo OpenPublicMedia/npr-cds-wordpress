@@ -186,8 +186,7 @@ function npr_cds_bulk_action_push_action(): void {
 				$post_ids = array_map( 'intval', $_REQUEST['post'] );
 			}
 
-			//only export 20 at a time.
-			// TODO: can we indicate on the screen what's been exported already?  that'd be tough.
+			//only export 20 at a time
 			$exported = 0;
 			foreach( $post_ids as $post_id ) {
 				$api_id = get_post_meta( $post_id, NPR_STORY_ID_META_KEY, TRUE );
@@ -342,7 +341,6 @@ add_action( 'save_post', 'npr_cds_save_datetime', 15 );
  * @see note on DATE_ATOM and DATE_ISO8601 https://secure.php.net/manual/en/class.datetime.php#datetime.constants.types
  * @uses npr_cds_get_datetimezone
  * @since 1.7
- * @todo rewrite this to use fewer queries, so it's using the WP_Post internally instead of the post ID
  */
 function npr_cds_get_post_expiry_datetime( int|WP_Post $post ): DateTime {
 	$post = ( $post instanceof WP_Post ) ? $post->ID : $post ;
