@@ -924,10 +924,13 @@ class NPR_CDS_WP {
 				$asset_id = $this->extract_asset_id( $layout->href );
 				$asset_current = $story->assets->{ $asset_id };
 				$asset_profile = $this->extract_asset_profile( $asset_current );
+
+				$returnary_current = [ 'body' => '' ];
+
 				switch ( $asset_profile ) {
 					case 'text' :
 						if ( !empty( $asset_current->text ) ) {
-							$body_with_layout .= $this->add_paragraph_tag( $asset_current->text ) . "\n";
+							$returnary_current['body'] .= $this->add_paragraph_tag( $asset_current->text ) . "\n";
 						}
 						break;
 					case 'promo-card' :
@@ -941,50 +944,50 @@ class NPR_CDS_WP {
 									}
 								}
 							}
-							$body_with_layout .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . ( ! empty( $asset_current->eyebrowText ) ? '<h3>' . $asset_current->eyebrowText . '</h3>' : '' ) .
+							$returnary_current['body'] .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . ( ! empty( $asset_current->eyebrowText ) ? '<h3>' . $asset_current->eyebrowText . '</h3>' : '' ) .
 							                     '<p><a href="' . $promo_card_url . '">' . $asset_current->linkText . '</a></p></div></figure>';
 						}
 						break;
 					case 'html-block' :
 						if ( !empty( $asset_current->html ) ) {
-							$body_with_layout .= $asset_current->html;
+							$returnary_current['body'] .= $asset_current->html;
 						}
-						$returnary['has_external'] = TRUE;
+						$returnary_current['has_external'] = TRUE;
 						if ( strpos( $asset_current->html, 'jwplayer.com' ) ) {
-							$returnary['has_video'] = TRUE;
+							$returnary_current['has_video'] = TRUE;
 						}
 						break;
 					case 'audio' :
 						if ( $asset_current->isAvailable ) {
 							if ( $asset_current->isEmbeddable ) {
-								$body_with_layout .= '<p><iframe class="npr-embed-audio" style="width: 100%; height: 239px;" src="' . $asset_current->embeddedPlayerLink->href . '"></iframe></p>';
+								$returnary_current['body'] .= '<p><iframe class="npr-embed-audio" style="width: 100%; height: 239px;" src="' . $asset_current->embeddedPlayerLink->href . '"></iframe></p>';
 							} elseif ( $asset_current->isDownloadable ) {
 								foreach ( $asset_current->enclosures as $enclose ) {
 									if ( $enclose->type == 'audio/mpeg' && !in_array( 'premium', $enclose->rels ) ) {
-										$body_with_layout .= '[audio mp3="' . $enclose->href . '"][/audio]';
+										$returnary_current['body'] .= '[audio mp3="' . $enclose->href . '"][/audio]';
 									}
 								}
 							}
 						}
 						break;
 					case 'pull-quote' :
-						$body_with_layout .= '<blockquote class="npr-pull-quote"><h2>' . $asset_current->quote . '</h2>';
+						$returnary_current['body'] .= '<blockquote class="npr-pull-quote"><h2>' . $asset_current->quote . '</h2>';
 						if ( !empty( $asset_current->attributionParty ) ) {
-							$body_with_layout .= '<p>' . $asset_current->attributionParty;
+							$returnary_current['body'] .= '<p>' . $asset_current->attributionParty;
 							if ( !empty( $asset_current->attributionContext ) ) {
-								$body_with_layout .= ', ' . $asset_current->attributionContext;
+								$returnary_current['body'] .= ', ' . $asset_current->attributionContext;
 							}
-							$body_with_layout .= '</p>';
+							$returnary_current['body'] .= '</p>';
 						}
-						$body_with_layout .= '</blockquote>';
+						$returnary_current['body'] .= '</blockquote>';
 						break;
 					case 'youtube-video' :
 						$asset_title = 'YouTube video player';
 						if ( !empty( $asset_current->headline ) ) {
 							$asset_title = $asset_current->headline;
 						}
-						$returnary['has_video'] = TRUE;
-						$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper"><iframe width="560" height="315" src="https://www.youtube.com/embed/' . $asset_current->videoId . '" title="' . $asset_title . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></figure>';
+						$returnary_current['has_video'] = TRUE;
+						$returnary_current['body'] .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper"><iframe width="560" height="315" src="https://www.youtube.com/embed/' . $asset_current->videoId . '" title="' . $asset_title . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></figure>';
 						break;
 					case 'internal-link' :
 						$link_url = '';
@@ -997,12 +1000,12 @@ class NPR_CDS_WP {
 							}
 						}
 						if ( !empty( $link_url ) ) {
-							$body_with_layout .= '<p><a href="' . $link_url . '">' . $asset_current->linkText . '</a></p>';
+							$returnary_current['body'] .= '<p><a href="' . $link_url . '">' . $asset_current->linkText . '</a></p>';
 						}
 						break;
 					case 'external-link' :
 						if ( !empty( $asset_current->externalLink->href ) ) {
-							$body_with_layout .= '<p><a href="' . $asset_current->externalLink->href . '">' . $asset_current->linkText . '</a></p>';
+							$returnary_current['body'] .= '<p><a href="' . $asset_current->externalLink->href . '">' . $asset_current->linkText . '</a></p>';
 						}
 						break;
 					case 'image' :
@@ -1036,7 +1039,7 @@ class NPR_CDS_WP {
 							$thiscaption .= ( ! empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
 							$figcaption = ( ! empty( $fightml ) && ! empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
 							$fightml .= ( ! empty( $fightml ) && ! empty( $figcaption ) ? $figcaption : '' );
-							$body_with_layout .= ( ! empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
+							$returnary_current['body'] .= ( ! empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
 						}
 						break;
 					case 'image-gallery' :
@@ -1059,10 +1062,10 @@ class NPR_CDS_WP {
 							}
 						}
 						if ( !empty( $fightml ) ) {
-							$returnary['has_slideshow'] = TRUE;
+							$returnary_current['has_slideshow'] = TRUE;
 							$fightml = '<figure class="wp-block-image"><div class="splide"><div class="splide__track"><ul class="splide__list">' . $fightml . '</div></div></ul></figure>';
 						}
-						$body_with_layout .= $fightml;
+						$returnary_current['body'] .= $fightml;
 						break;
 					case str_contains( $asset_profile, 'player-video' ) :
 						if ( $asset_current->isRestrictedToAuthorizedOrgServiceIds !== true ) {
@@ -1081,7 +1084,7 @@ class NPR_CDS_WP {
 							if ( !empty( $asset_caption ) ) {
 								$full_caption = '<figcaption>' . implode( ' ', $asset_caption ) . '</figcaption>';
 							}
-							$returnary['has_video'] = true;
+							$returnary_current['has_video'] = true;
 							$video_asset = '';
 							if ( $asset_profile == 'player-video' ) {
 								$poster = '';
@@ -1107,7 +1110,7 @@ class NPR_CDS_WP {
 								$video_asset = '[video mp4="' . $video_url . '"' . $poster . '][/video]';
 							} elseif ( $asset_profile == 'stream-player-video' ) {
 								if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
-									$returnary['has_video_streaming'] = true;
+									$returnary_current['has_video_streaming'] = true;
 									$video_asset = '<video id="'. $asset_current->id .'" controls></video>' .
 									               '<script>' .
 									               'let video = document.getElementById("' . $asset_current->id . '");' .
@@ -1124,12 +1127,34 @@ class NPR_CDS_WP {
 									               '</script>';
 								}
 							}
-							$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
+							$returnary_current['body'] .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
 						}
 						break;
 					default :
 						// Do nothing???
 						break;
+				}
+
+				/**
+				 * Filters the rendered assets before they are added to the post body
+				 *
+				 * Allow a site to modify the rendered body content and any associated flags for each asset before they are added to the post
+				 *
+				 * @param array $returnary_current The elements being added to the post. Contains the current asset's representation as a string in the 'body' element, with any other optional boolean flags that have been set.
+				 * @param string $asset_profile The CDS profile of the current asset
+				 * @param stdClass $asset_current The current asset from the CDS being added to the post
+				 * @param stdClass $story Story object created during import
+				 */
+				$returnary_current = apply_filters( 'npr_cds_add_asset_to_body', $returnary_current, $asset_profile, $asset_current, $story );
+
+				// add the current asset's body to the full post's body
+				$body_with_layout .= $returnary_current['body'];
+
+				// merge boolean flags from the current asset with the main returnary
+				foreach( $returnary as $flag_key => $flag_value ) {
+					if( array_key_exists( $flag_key, $returnary_current) && $returnary_current[$flag_key] === true ) {
+						$returnary[$flag_key] = true;
+					}
 				}
 
 			}

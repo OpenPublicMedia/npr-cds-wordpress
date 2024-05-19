@@ -73,3 +73,12 @@ Aside from the settings presented inside the WordPress dashboard, there are also
 * **Arguments**
   * `$content (string)`: the article content
 * **Return**: `$content`
+
+## `npr_cds_add_asset_to_body`
+* **Function**: Allow a site to modify the rendered content of an asset (e.g., the markup for its WP block) before it is added to post content
+* **Arguments**
+  * `$returnary_current (array)`: The array of elements to be added to the post. At a minimum contains a 'body' with the rendered asset content as a string. Will also have boolean elements for content type flags (if any for the asset), such as 'has_image', 'has_video', etc.
+  * `$asset_profile (string)`: The CDS name for the current asset type
+  * `$asset_current (stdClass)`: The current asset object being rendered for the post from the API 
+  * `$story` Story object created during import
+* **Return**: `$returnary_current`
