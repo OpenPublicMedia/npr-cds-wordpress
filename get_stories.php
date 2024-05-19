@@ -25,6 +25,10 @@ class NPR_CDS {
 		add_action( 'load-edit.php', [ $this, 'bulk_action_update_action' ] );
 		add_action( 'manage_posts_custom_column', [ $this, 'update_column_content' ], 10, 2 );
 		add_action( 'load-' . $post_type . '_get-npr-stories', [ $this, 'load_page_hook' ] );
+		
+		if( get_option( 'npr_cds_skip_promo_cards', false ) ) {
+			add_filter( 'npr_cds_add_asset_to_body', [ $this, 'filter_out_promo_blocks' ], 4, 10 );
+		}
 	}
 
 	/**
@@ -327,6 +331,16 @@ class NPR_CDS {
 		}
 	}
 
+	/**
+	 * Filter out any promo block assets
+	 */
+	function filter_out_promo_blocks ($returnary_current, $asset_profile, $asset_current, $story) {
+		if( $asset_profile == 'promo-card') {
+			return [ 'body' => '' ];
+		}
+	
+		return $returnary_current;
+	}
 }
 
 new NPR_CDS;
