@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.5.2
 Requires PHP: 8.0
-Version: 1.2.1
-Stable tag: 1.2.1
+Version: 1.2.2
+Stable tag: 1.2.2
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V1.2.2 =
+* Fixed a bug in how the plugin was handling `$image->hrefTemplates`
+
 = V1.2.1 =
 * Reworked the `load_page_hook()` function in `get_stories.php` to account for NPR's updated ID structure now that they have also moved to Grove
 

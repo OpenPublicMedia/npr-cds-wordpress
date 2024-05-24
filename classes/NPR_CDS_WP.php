@@ -882,18 +882,7 @@ class NPR_CDS_WP {
 		$format = get_option( 'npr_cds_image_format', 'webp' );
 		$quality = get_option( 'npr_cds_image_quality', 75 );
 		$width = get_option( 'npr_cds_image_width', 1200 );
-		$parse = parse_url( $image->hrefTemplate );
-		parse_str( $parse['query'], $output );
-		foreach ( $output as $k => $v ) {
-			if ( $v == '{width}' ) {
-				$output[ $k ] = $width;
-			} elseif ( $v == '{format}' ) {
-				$output[ $k ] = $format;
-			} elseif ( $v == '{quality}' ) {
-				$output[ $k ] = $quality;
-			}
-		}
-		return $parse['scheme'] . '://' . $parse['host'] . $parse['path'] . '?' . http_build_query( $output );
+		return str_replace( [ '{width}', '{format}', '{quality}' ], [ $width, $format, $quality ], $image->hrefTemplate );
 	}
 
 	function extract_asset_profile ( $asset ): bool|string {
