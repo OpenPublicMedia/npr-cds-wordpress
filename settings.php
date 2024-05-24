@@ -256,6 +256,10 @@ function npr_cds_settings_init(): void {
 	add_settings_field( 'npr_cds_display_attribution', 'Append Article Attribution?', 'npr_cds_display_attribution_callback', 'npr_cds', 'npr_cds_theme_settings' );
 	register_setting( 'npr_cds', 'npr_cds_display_attribution' );
 
+	add_settings_field( 'npr_cds_skip_promo_cards', 'Skip NPR promos', 'npr_cds_skip_promo_cards_callback', 'npr_cds', 'npr_cds_theme_settings' );
+	register_setting( 'npr_cds', 'npr_cds_skip_promo_cards', [ 'sanitize_callback' => 'npr_cds_validation_callback_checkbox' ] );
+
+
 	// CDS: Image Settings
 	add_settings_section( 'npr_cds_image_settings', 'Image Settings', 'npr_cds_settings_callback', 'npr_cds' );
 
@@ -456,6 +460,14 @@ function npr_cds_display_attribution_callback(): void {
 		'<option value="1"' . ( $attribution_default === '1' ? ' selected' : '' ) . '>Append</option>' .
 		'</select>';
 	echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>Do you want to append an attribution message to the bottom of imported articles? (e.g. "Copyright &copy; 2024 NPR")</em></p>' );
+}
+
+function npr_cds_skip_promo_cards_callback(): void {
+	$skip_promos = get_option( 'npr_cds_skip_promo_cards' );
+	$check_box_string = '<input id="npr_cds_skip_promo_cards" name="npr_cds_skip_promo_cards" type="checkbox" value="true"' .
+	                    ( $skip_promos ? ' checked="checked"' : '' ) . ' />';
+
+	echo npr_cds_esc_html( '<p>' . $check_box_string . " Filter out any NPR promo cards embedded in posts.</p>" );
 }
 
 function npr_cds_image_format_callback(): void {
