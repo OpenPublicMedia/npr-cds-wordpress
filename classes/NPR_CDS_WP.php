@@ -920,6 +920,10 @@ class NPR_CDS_WP {
 						}
 						break;
 					case 'promo-card' :
+						if( get_option( 'npr_cds_skip_promo_cards', false ) ) {
+							continue;
+						}
+						
 						if ( !empty( $asset_current->documentLink ) ) {
 							$promo_card     = $this->get_document( $asset_current->documentLink->href );
 							$promo_card_url = '';
