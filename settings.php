@@ -464,8 +464,7 @@ function npr_cds_display_attribution_callback(): void {
 
 function npr_cds_skip_promo_cards_callback(): void {
 	$skip_promos = get_option( 'npr_cds_skip_promo_cards' );
-	$check_box_string = '<input id="npr_cds_skip_promo_cards" name="npr_cds_skip_promo_cards" type="checkbox" value="true"' .
-	                    ( $skip_promos ? ' checked="checked"' : '' ) . ' />';
+	$check_box_string = '<input id="npr_cds_skip_promo_cards" name="npr_cds_skip_promo_cards" type="checkbox" value="true"' . ( $skip_promos ? ' checked="checked"' : '' ) . ' />';
 
 	echo npr_cds_esc_html( '<p>' . $check_box_string . " Filter out any NPR promo cards embedded in posts.</p>" );
 }

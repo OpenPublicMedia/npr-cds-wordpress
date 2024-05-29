@@ -921,9 +921,9 @@ class NPR_CDS_WP {
 						break;
 					case 'promo-card' :
 						if( get_option( 'npr_cds_skip_promo_cards', false ) ) {
-							continue;
+							break;
 						}
-						
+
 						if ( !empty( $asset_current->documentLink ) ) {
 							$promo_card     = $this->get_document( $asset_current->documentLink->href );
 							$promo_card_url = '';
@@ -934,8 +934,20 @@ class NPR_CDS_WP {
 									}
 								}
 							}
-							$body_with_layout .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . ( ! empty( $asset_current->eyebrowText ) ? '<h3>' . $asset_current->eyebrowText . '</h3>' : '' ) .
-							                     '<p><a href="' . $promo_card_url . '">' . $asset_current->linkText . '</a></p></div></figure>';
+							$card_title = '';
+							$card_teaser = 'Link';
+							if ( !empty( $asset_current->eyebrowText ) ) {
+								$card_title = '<h3>' . $asset_current->eyebrowText . '</h3>';
+							} elseif ( !empty( $asset_current->title ) ) {
+								$card_title = '<h3>' . $asset_current->title . '</h3>';
+							}
+							if ( !empty( $asset_current->teaser ) ) {
+								$card_teaser = $asset_current->teaser;
+							} elseif ( !empty( $asset_current->title ) ) {
+								$card_teaser = $asset_current->title;
+							}
+							$body_with_layout .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . $card_title .
+							                     '<p><a href="' . $promo_card_url . '">' . $card_teaser . '</a></p></div></figure>';
 						}
 						break;
 					case 'html-block' :
