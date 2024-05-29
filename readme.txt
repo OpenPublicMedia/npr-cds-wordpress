@@ -74,6 +74,10 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V1.2.3 =
+* Adding a setting to skip ingesting promo cards from NPR (h/t @davidmpurdy)
+* Updated formatting support for promo cards
+
 = V1.2.2 =
 * Fixed a bug in how the plugin was handling `$image->hrefTemplates`
 
