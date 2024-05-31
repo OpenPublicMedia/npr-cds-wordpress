@@ -286,7 +286,7 @@ class NPR_CDS {
 			$retrieved = get_post_meta( $post_ID, NPR_RETRIEVED_STORY_META_KEY, true );
 			if ( $retrieved ) {
 				$api_id = get_post_meta( $post_ID, NPR_STORY_ID_META_KEY, TRUE );
-				echo npr_cds_esc_html( '<a href="' . admin_url( 'edit.php?page=get-npr-stories&story_id=' .$api_id ) . '"> Update </a>' );
+				echo npr_cds_esc_html( '<a href="' . admin_url( 'edit.php?post_type=' . $this->get_pull_post_type() . '&page=get-npr-stories&story_id=' .$api_id ) . '"> Update </a>' );
 			}
 		}
 	}
