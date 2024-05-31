@@ -129,10 +129,9 @@ function npr_cds_options_multi(): void { ?>
 		}
 	</style>
 	<h1>NPR CDS: Get Multi Settings</h1>
+	<p><?php echo __( 'Create an NPR CDS query. Enter your queries into one of the rows below to have stories on that query automatically publish to your site. Please note, you do not need to include your CDS token in the query.', 'npr-content-distribution-service' ); ?></p>
 	<form action="options.php" method="post">
 	<?php settings_fields( 'npr_cds_get_multi_settings' ); ?>
-	<!--			do_settings_sections( 'npr_cds_get_multi_settings' );-->
-
 	<div id="poststuff">
 		<div id="post-body" class="metabox-holder columns-2">
 			<div id="post-body-content">
@@ -329,56 +328,6 @@ function npr_cds_push_settings_callback(): void { ?>
 		type.</p> <?php
 }
 
-function npr_cds_get_multi_settings_callback(): void {
-	$run_multi = get_option( 'npr_cds_query_run_multi' );
-
-	$num = get_option( 'npr_cds_num', 5 );
-	$enable = false;
-	for ( $i = 0; $i < $num; $i++ ) {
-		$option = get_option( 'npr_cds_query_' . $i );
-		if ( !empty( $option['filters'] ) || !empty( $options['sorting'] ) ) {
-			$enable = true;
-		}
-	}
-	if ( $run_multi && $enable ) {
-		update_option( 'npr_cds_query_run_multi', false );
-		NPR_CDS::cron_pull();
-	}
-
-	//change the cron timer
-	if ( wp_next_scheduled( 'npr_cds_hourly_cron' ) ) {
-		wp_clear_scheduled_hook( 'npr_cds_hourly_cron' );
-	}
-	if ( $enable ) {
-		npr_cds_error_log( 'NPR CDS plugin: updating the npr_cds_hourly_cron event timer' );
-		wp_schedule_event( time(), 'ds_interval', 'npr_cds_hourly_cron' );
-	}
-	?>
-	<p>Create an NPR CDS query. Enter your queries into one of the rows below to have stories on that query automatically publish to your site. Please note, you do not need to include your CDS token in the query.</p><?php
-}
-
-/**
- * Add cron intervals
- */
-function npr_cds_add_cron_interval( $schedules ): array {
-	$ds_interval = get_option( 'npr_cds_query_multi_cron_interval' );
-	//if for some reason we don't get a number in the option, use 60 minutes as the default.
-	if ( !is_numeric( $ds_interval ) || $ds_interval < 1 ) {
-		$ds_interval = 60;
-		update_option( 'npr_cds_query_multi_cron_interval', $ds_interval * 60 );
-	}
-	$new_interval = $ds_interval * 60;
-	$schedules['ds_interval'] = [
-		'interval' => $new_interval,
-		'display' => sprintf(
-			__( 'DS Cron, run Once every %s minutes', 'npr-content-distribution-service' ),
-			esc_html( $ds_interval )
-		)
-	];
-	return $schedules;
-}
-add_filter( 'cron_schedules', 'npr_cds_add_cron_interval' );
-
 /**
  * NPR General Settings Group Callbacks
  */
@@ -487,8 +436,25 @@ function npr_cds_image_width_callback(): void {
  * NPR Get Multi Settings Group Callbacks
  */
 function npr_cds_num_multi_callback(): void {
-	$option = get_option( 'npr_cds_num' );
-	echo npr_cds_esc_html( '<p><input type="number" value="' . $option . '" min="0" max="' . NPR_MAX_QUERIES . '" name="npr_cds_num" /></p><p><em>Increase the number of queries by changing the number in the field above, to a maximum of 10.</em></p>' );
+	$run_multi = get_option( 'npr_cds_query_run_multi' );
+
+	$num = get_option( 'npr_cds_num', 5 );
+	$enable = false;
+	for ( $i = 0; $i < $num; $i++ ) {
+		$option = get_option( 'npr_cds_query_' . $i );
+		if ( !empty( $option['filters'] ) || !empty( $options['sorting'] ) ) {
+			$enable = true;
+		}
+	}
+	if ( $run_multi && $enable ) {
+		update_option( 'npr_cds_query_run_multi', false );
+		NPR_CDS::cron_pull();
+	}
+
+	if ( $enable && !wp_next_scheduled( 'npr_cds_hourly_cron') ) {
+		wp_schedule_event( time(), 'npr_cds_interval', 'npr_cds_hourly_cron' );
+	}
+	echo npr_cds_esc_html( '<p><input type="number" value="' . $num . '" min="0" max="' . NPR_MAX_QUERIES . '" name="npr_cds_num" /></p><p><em>Increase the number of queries by changing the number in the field above, to a maximum of 10.</em></p>' );
 }
 
 function npr_cds_query_callback( $i ): void {
@@ -559,6 +525,10 @@ function npr_cds_query_run_multi_callback(): void {
 
 function npr_cds_query_multi_cron_interval_callback(): void {
 	$option = get_option( 'npr_cds_query_multi_cron_interval' );
+	if ( !wp_next_scheduled( 'npr_cds_hourly_cron' ) ) {
+		npr_cds_error_log( 'turning on cron event for NPR CDS plugin' );
+		wp_schedule_event( time(), 'npr_cds_interval', 'npr_cds_hourly_cron' );
+	}
 	echo npr_cds_esc_html( '<p><input type="number" value="' . $option . '" name="npr_cds_query_multi_cron_interval" id="npr_cds_query_multi_cron_interval" /></p><p><em>How often, in minutes, should the Get Multi function run?  (default = 60)</em></p>' );
 }
 

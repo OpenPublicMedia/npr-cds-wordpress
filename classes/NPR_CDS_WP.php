@@ -366,10 +366,10 @@ class NPR_CDS_WP {
 				if ( in_array( 'has-audio', $profiles ) && !empty( $story->audio ) ) {
 					$mp3_array = [];
 					foreach ( $story->audio as $audio ) {
-            if ( empty( $audio->rels ) ) {
-              // malformed
-              continue;
-            }
+						if ( empty( $audio->rels ) ) {
+							// malformed
+							continue;
+						}
 						$audio_id = $this->extract_asset_id( $audio->href );
 						if ( in_array( 'primary', $audio->rels ) && !in_array( 'premium', $audio->rels ) ) {
 							$audio_current = $story->assets->{ $audio_id };
@@ -1172,18 +1172,20 @@ class NPR_CDS_WP {
 		if ( !empty( $story->audio ) ) {
 			$audio_file = '';
 			foreach ( $story->audio as $audio ) {
-				if ( !empty( $audio->rels ) ) {
-					if ( in_array( 'primary', $audio->rels ) && ! in_array( 'premium', $audio->rels ) ) {
-						$audio_id      = $this->extract_asset_id( $audio->href );
-						$audio_current = $story->assets->{$audio_id};
-						if ( $audio_current->isAvailable ) {
-							if ( $audio_current->isEmbeddable && !empty( $audio_current->embeddedPlayerLink->href ) ) {
-								$audio_file = '<p><iframe class="npr-embed-audio" style="width: 100%; height: 235px;" src="' . $audio_current->embeddedPlayerLink->href . '"></iframe></p>';
-							} elseif ( $audio_current->isDownloadable ) {
-								foreach ( $audio_current->enclosures as $enclose ) {
-									if ( ! empty( $enclose->rels ) && $enclose->type == 'audio/mpeg' && ! in_array( 'premium', $enclose->rels ) ) {
-										$audio_file = '[audio mp3="' . $enclose->href . '"][/audio]';
-									}
+				if ( empty( $audio->rels ) ) {
+					// malformed
+					continue;
+				}
+				if ( in_array( 'primary', $audio->rels ) && ! in_array( 'premium', $audio->rels ) ) {
+					$audio_id      = $this->extract_asset_id( $audio->href );
+					$audio_current = $story->assets->{$audio_id};
+					if ( $audio_current->isAvailable ) {
+						if ( $audio_current->isEmbeddable && !empty( $audio_current->embeddedPlayerLink->href ) ) {
+							$audio_file = '<p><iframe class="npr-embed-audio" style="width: 100%; height: 235px;" src="' . $audio_current->embeddedPlayerLink->href . '"></iframe></p>';
+						} elseif ( $audio_current->isDownloadable ) {
+							foreach ( $audio_current->enclosures as $enclose ) {
+								if ( ! empty( $enclose->rels ) && $enclose->type == 'audio/mpeg' && ! in_array( 'premium', $enclose->rels ) ) {
+									$audio_file = '[audio mp3="' . $enclose->href . '"][/audio]';
 								}
 							}
 						}

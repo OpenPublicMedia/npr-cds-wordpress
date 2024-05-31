@@ -84,12 +84,34 @@ function npr_cds_activation(): void {
 	}
 }
 
+/**
+ * Add cron intervals
+ */
+function npr_cds_add_cron_interval( $schedules ): array {
+	$ds_interval = get_option( 'npr_cds_query_multi_cron_interval' );
+	//if for some reason we don't get a number in the option, use 60 minutes as the default.
+	if ( !is_numeric( $ds_interval ) || $ds_interval < 1 ) {
+		$ds_interval = 60;
+		update_option( 'npr_cds_query_multi_cron_interval', $ds_interval );
+	}
+	$new_interval = $ds_interval * 60;
+	$schedules['npr_cds_interval'] = [
+		'interval' => $new_interval,
+		'display' => sprintf(
+			__( 'NPR CDS Cron, run Once every %s minutes', 'npr-content-distribution-service' ),
+			esc_html( $ds_interval )
+		)
+	];
+	return $schedules;
+}
+add_filter( 'cron_schedules', 'npr_cds_add_cron_interval', 10, 2 );
+
 function npr_cds_activate(): void {
 	$cron_interval = get_option( 'dp_npr_query_multi_cron_interval', 60 );
 	update_option( 'npr_cds_query_multi_cron_interval', $cron_interval );
 	if ( !wp_next_scheduled( 'npr_cds_hourly_cron' ) ) {
 		npr_cds_error_log( 'turning on cron event for NPR CDS plugin' );
-		wp_schedule_event( time(), 'hourly', 'npr_cds_hourly_cron' );
+		wp_schedule_event( time(), 'npr_cds_interval', 'npr_cds_hourly_cron' );
 	}
 
 	// Check for number of cron queries from old plugin, migrate to new
