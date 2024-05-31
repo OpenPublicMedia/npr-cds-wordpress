@@ -366,6 +366,10 @@ class NPR_CDS_WP {
 				if ( in_array( 'has-audio', $profiles ) && !empty( $story->audio ) ) {
 					$mp3_array = [];
 					foreach ( $story->audio as $audio ) {
+            if ( empty( $audio->rels ) ) {
+              // malformed
+              continue;
+            }
 						$audio_id = $this->extract_asset_id( $audio->href );
 						if ( in_array( 'primary', $audio->rels ) && !in_array( 'premium', $audio->rels ) ) {
 							$audio_current = $story->assets->{ $audio_id };
