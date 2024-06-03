@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.5.2
 Requires PHP: 8.0
-Version: 1.2.3
-Stable tag: 1.2.3
+Version: 1.2.4
+Stable tag: 1.2.4
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,13 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V1.2.4 =
+* Fixed a bug that broke the Update link in the admin dashboards
+* Fixed a potentially fatal error caused by malformed audio embeds in imported articles
+* Fixed a bug where the cron schedules were not being set or updated after an initial error
+* Fixed a potentially fatal error caused by importing articles with nonexistent teasers
+* Thanks to @tamw-wnet for the assist on all above
+
 = V1.2.3 =
 * Adding a setting to skip ingesting promo cards from NPR (h/t @davidmpurdy)
 * Updated formatting support for promo cards
