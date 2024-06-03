@@ -240,12 +240,16 @@ class NPR_CDS_WP {
 				// set the story as draft, so we don't try ingesting it
 				$args = [
 					'post_title'	=> $story->title,
-					'post_excerpt'	=> $story->teaser,
 					'post_content'	=> $story->body,
 					'post_status'	=> 'draft',
 					'post_type'		=> $pull_post_type,
 					'post_date'		=> $post_date
 				];
+
+        if ( isset( $story->teaser ) && !is_null( $story->teaser ) ) {
+          $args['post_excerpt'] = $story->teaser;
+        }
+
 				$wp_category_ids = [];
 				$wp_category_id = "";
 				if ( $existing === null ) {
@@ -554,11 +558,14 @@ class NPR_CDS_WP {
 				$args = [
 					'post_title'	=> $story->title,
 					'post_content'	=> $story->body,
-					'post_excerpt'	=> $story->teaser,
 					'post_type'		=> $pull_post_type,
 					'ID'			=> $post_id,
 					'post_date'		=> $post_date
 				];
+
+        if ( isset( $story->teaser ) && !is_null( $story->teaser ) ) {
+          $args['post_excerpt'] = $story->teaser;
+        }
 
 				//set author
 				if ( ! empty( $by_lines ) ) {
