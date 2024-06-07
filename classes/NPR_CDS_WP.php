@@ -455,7 +455,7 @@ class NPR_CDS_WP {
 						if ( empty( $image->rels ) || !in_array( 'primary', $image->rels ) ) {
 							continue;
 						}
-						$image_url = '';
+						$image_url = [];
 						$image_id = $this->extract_asset_id( $image->href );
 						$image_current = $story->assets->{ $image_id };
 						if ( !empty( $image_current->isRestrictedToAuthorizedOrgServiceIds ) ) {
@@ -464,43 +464,40 @@ class NPR_CDS_WP {
 						if ( !empty( $image_current->enclosures ) ) {
 							foreach ( $image_current->enclosures as $enclosure ) {
 								if ( in_array( 'primary', $enclosure->rels ) ) {
-									$image_url = $enclosure->href;
+									$image_url = $this->get_image_url( $enclosure, true );
 								}
 							}
 						}
-						if ( $image_url == '' ) {
+						if ( empty( $image_url ) ) {
 							foreach ( $image_current->enclosures as $enclosure ) {
 								if ( in_array( 'enlargement', $enclosure->rels ) ) {
-									$image_url = $enclosure->href;
+									$image_url = $this->get_image_url( $enclosure, true );
 								}
 							}
 						}
 						if ( WP_DEBUG ) {
-							npr_cds_error_log( 'Got image from: ' . $image_url );
+							npr_cds_error_log( 'Got image from: ' . $image_url['url'] );
 						}
 
-						$imagep_url_parse = parse_url( $image_url );
-						$imagep_url_parts = pathinfo( $imagep_url_parse['path'] );
 						if ( !empty( $attached_images ) ) {
 							foreach( $attached_images as $att_image ) {
 								// see if the filename is very similar
 								$attach_url = wp_get_original_image_url( $att_image->ID );
-								$attach_url_parse = parse_url( $attach_url );
-								$attach_url_parts = pathinfo( $attach_url_parse['path'] );
+								$attach_filename = pathinfo( parse_url( $attach_url, PHP_URL_PATH ), PATHINFO_FILENAME );
 
 								// so if the already attached image name is part of the name of the file
 								// coming in, ignore the new/temp file, it's probably the same
-								if ( strtolower( $attach_url_parts['filename'] ) === strtolower( $imagep_url_parts['filename'] ) ) {
+								if ( strtolower( $attach_filename ) === strtolower( $image_url['filename'] ) ) {
 									continue 2;
 								}
 							}
 						}
 
 						// Download file to temp location
-						$tmp = download_url( $image_url );
+						$tmp = download_url( $image_url['url'] );
 
 						// Set variables for storage
-						$file_array['name'] = $imagep_url_parts['basename'];
+						$file_array['name'] = $image_url['filename'];
 						$file_array['tmp_name'] = $tmp;
 
 						$file_OK = TRUE;
@@ -524,7 +521,7 @@ class NPR_CDS_WP {
 						//set the primary image
 						if ( in_array( 'primary', $image->rels ) && $file_OK ) {
 							$current_thumbnail_id = get_post_thumbnail_id( $post_id );
-							if ( !empty( $current_thumbnail_id ) && $current_thumbnail_id != $image_upload_id ) {
+							if ( !empty( $current_thumbnail_id ) && $current_thumbnail_id !== $image_upload_id ) {
 								delete_post_thumbnail( $post_id );
 							}
 							set_post_thumbnail( $post_id, $image_upload_id );
@@ -880,14 +877,33 @@ class NPR_CDS_WP {
 		return '';
 	}
 
-	function get_image_url ( $image ) {
+	function get_image_url ( $image, $download = false ): array {
+		$parse = parse_url( $image->href );
+		if ( !empty( $parse['query'] ) ) {
+			parse_str( $parse['query'], $output );
+			if ( !empty( $output['url'] ) ) {
+				$parse = parse_url( urldecode( $output['url'] ) );
+			}
+		}
+		$path = pathinfo( $parse['path'] );
+		$out = [
+			'url' => $image->href,
+			'filename' => $path['filename'] . '.' . $path['extension']
+		];
 		if ( empty( $image->hrefTemplate ) ) {
-			return $image->href;
+			return $out;
 		}
 		$format = get_option( 'npr_cds_image_format', 'webp' );
 		$quality = get_option( 'npr_cds_image_quality', 75 );
 		$width = get_option( 'npr_cds_image_width', 1200 );
-		return str_replace( [ '{width}', '{format}', '{quality}' ], [ $width, $format, $quality ], $image->hrefTemplate );
+		if ( $download ) {
+			$width = $image->width;
+		}
+		$out['url'] = str_replace( [ '{width}', '{format}', '{quality}' ], [ $width, $format, $quality ], $image->hrefTemplate );
+		if ( $format !== $path['extension'] ) {
+			$out['filename'] = $path['filename'] . '.' . $format;
+		}
+		return $out;
 	}
 
 	function extract_asset_profile ( $asset ): bool|string {
@@ -912,10 +928,22 @@ class NPR_CDS_WP {
 		$body_with_layout = "";
 		$use_npr_featured = !empty( get_option( 'npr_cds_query_use_featured' ) );
 		$profiles = $this->extract_profiles( $story->profiles );
+		$primary_image_id = '';
+		$primary_image_in_layout = $include_featured_image = false;
+		if ( in_array( 'has-images', $profiles ) ) {
+			foreach ( $story->images as $images ) {
+				if ( !empty( $images->rels ) && in_array( 'primary', $images->rels ) ) {
+					$primary_image_id = $this->extract_asset_id( $images->href );
+				}
+			}
+		}
 
 		if ( in_array( 'buildout', $profiles ) && !empty( $story->layout ) ) {
 			foreach ( $story->layout as $layout ) {
 				$asset_id = $this->extract_asset_id( $layout->href );
+				if ( $asset_id === $primary_image_id ) {
+					$primary_image_in_layout = true;
+				}
 				$asset_current = $story->assets->{ $asset_id };
 				$asset_profile = $this->extract_asset_profile( $asset_current );
 				switch ( $asset_profile ) {
@@ -1028,25 +1056,25 @@ class NPR_CDS_WP {
 							}
 							$thisimg = $asset_current->enclosures[0];
 							foreach ( $asset_current->enclosures as $img_enclose ) {
-								if ( ! empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
+								if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
 									$thisimg = $img_enclose;
 								}
 							}
 							$figclass = "wp-block-image size-large";
 							$image_href = $this->get_image_url( $thisimg );
-							$fightml = '<img src="' . $image_href . '"';
+							$fightml = '<img src="' . $image_href['url'] . '"';
 							if ( in_array( 'image-vertical', $thisimg->rels ) ) {
 								$figclass .= ' alignright';
 								$fightml .= " width=200";
 							}
 							$cites = $this->parse_credits( $asset_current );
-							$thiscaption = ( ! empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
-							$fightml .= ( ! empty( $fightml ) && ! empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
-							$fightml .= ( ! empty( $fightml ) ? '>' : '' );
-							$thiscaption .= ( ! empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
-							$figcaption = ( ! empty( $fightml ) && ! empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
-							$fightml .= ( ! empty( $fightml ) && ! empty( $figcaption ) ? $figcaption : '' );
-							$body_with_layout .= ( ! empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
+							$thiscaption = ( !empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
+							$fightml .= ( !empty( $fightml ) && ! empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
+							$fightml .= ( !empty( $fightml ) ? '>' : '' );
+							$thiscaption .= ( !empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
+							$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
+							$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
+							$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
 						}
 						break;
 					case 'image-gallery' :
@@ -1065,7 +1093,7 @@ class NPR_CDS_WP {
 								$full_credits = $this->parse_credits( $ig_asset_current );
 
 								$link_text = str_replace( '"', "'", $ig_asset_current->title . $full_credits );
-								$fightml .= '<li class="splide__slide"><a href="' . esc_url( $thisimg->href ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_href ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . npr_cds_esc_html( $link_text ) . '</div></li>';
+								$fightml .= '<li class="splide__slide"><a href="' . esc_url( $thisimg->href ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_href['url'] ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . npr_cds_esc_html( $link_text ) . '</div></li>';
 							}
 						}
 						if ( !empty( $fightml ) ) {
@@ -1102,7 +1130,8 @@ class NPR_CDS_WP {
 											$v_image_id = $this->extract_asset_id( $v_image->href );
 											$v_image_asset = $story->assets->{$v_image_id};
 											foreach ( $v_image_asset->enclosures as $vma ) {
-												$poster = ' poster="' . $this->get_image_url( $vma ) . '"';
+												$poster_image = $this->get_image_url( $vma );
+												$poster = ' poster="' . $poster_image['url'] . '"';
 											}
 										}
 									}
@@ -1195,6 +1224,32 @@ class NPR_CDS_WP {
 			}
 			if ( !empty( $audio_file ) ) {
 				$body_with_layout = $audio_file . "\n" . $body_with_layout;
+			}
+		}
+		if ( $use_npr_featured !== true && !empty( $primary_image_id ) && !$primary_image_in_layout ) {
+			$featured_image = $story->assets->{ $primary_image_id };
+			if ( empty( $featured_image->isRestrictedToAuthorizedOrgServiceIds ) ) {
+				$thisimg = $featured_image->enclosures[0];
+				foreach ( $featured_image->enclosures as $img_enclose ) {
+					if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
+						$thisimg = $img_enclose;
+					}
+				}
+				$figclass = "wp-block-image size-large";
+				$image_href = $this->get_image_url( $thisimg );
+				$fightml = '<img src="' . $image_href['url'] . '"';
+				if ( in_array( 'image-vertical', $thisimg->rels ) ) {
+					$figclass .= ' alignright';
+					$fightml .= " width=200";
+				}
+				$cites = $this->parse_credits( $featured_image );
+				$thiscaption = ( !empty( $featured_image->caption ) ? trim( $featured_image->caption ) : '' );
+				$fightml .= ( !empty( $fightml ) && ! empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
+				$fightml .= ( !empty( $fightml ) ? '>' : '' );
+				$thiscaption .= ( !empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
+				$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
+				$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
+				$body_with_layout = ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' ) . $body_with_layout;
 			}
 		}
 		$returnary['body'] = npr_cds_esc_html( $body_with_layout );

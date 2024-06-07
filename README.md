@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.5.2
 - Requires PHP: 8.0
-- Version: 1.2.4
-- Stable tag: 1.2.4
+- Version: 1.2.5
+- Stable tag: 1.2.5
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -77,6 +77,13 @@ NPR Stories having been retrieved
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V1.2.5
+* Updated the `NPR_CDS_WP->get_image_url()` function to handle image URLs from NPR's new CDN
+* Fixed an issue where featured images were not downloading properly on imported NPR articles because a proper filename was not being provided
+* When generating the article layout, if not using feature images, imported articles will have the primary image at the top of the layout (if one exists)
+  * NPR frequently inserts the primary image as the first asset in the layout, while Grove stations typically don't. I don't know if this is intended or not, but this is an attempt to normalize the output across the board
+* Thanks to [Iris Vandenham at Flower Web Design](https://www.flower-webdesign.com) for bringing these issues to our attention
+
 ### V1.2.4
 * Fixed a bug that broke the Update link in the admin dashboards
 * Fixed a potentially fatal error caused by malformed audio embeds in imported articles
