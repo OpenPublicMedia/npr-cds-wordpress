@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.5.2
 - Requires PHP: 8.0
-- Version: 1.2.5
-- Stable tag: 1.2.5
+- Version: 1.2.6
+- Stable tag: 1.2.6
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -77,6 +77,10 @@ NPR Stories having been retrieved
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V1.2.6
+* `profileIds` can now be sent to `NPR_CDS_WP` as a comma-separated string (OR), or as multiple entries (AND)
+* Fixed a bug in `NPR_CDS_WP` where `$this->request->params` was not being properly populated
+
 ### V1.2.5
 * Updated the `NPR_CDS_WP->get_image_url()` function to handle image URLs from NPR's new CDN
 * Fixed an issue where featured images were not downloading properly on imported NPR articles because a proper filename was not being provided

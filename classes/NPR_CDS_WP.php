@@ -48,7 +48,13 @@ class NPR_CDS_WP {
 		$queries = [];
 		foreach ( $this->request->params as $k => $v ) {
 			if ( $k !== 'id' ) {
-				$queries[] = "$k=$v";
+				if ( $k === 'profileIds' && is_array( $v ) ) {
+					foreach ( $v as $vv ) {
+						$queries[] = "$k=$vv";
+					}
+				} else {
+					$queries[] = "$k=$v";
+				}
 			}
 		}
 		$request_url = $this->request->base . '/' . self::NPR_CDS_VERSION . '/' . $this->request->path;
@@ -88,10 +94,18 @@ class NPR_CDS_WP {
 		$parsed_url = parse_url( $url );
 		if ( !empty( $parsed_url['query'] ) ) {
 			$params = explode( '&', $parsed_url['query'] );
+			$profileIds = [];
 			if ( !empty( $params ) ) {
 				foreach ( $params as $p ){
 					$attrs = explode( '=', $p );
-					$this->request->param[ $attrs[0] ] = $attrs[1];
+					if ( $attrs[0] === 'profileIds' ) {
+						$profileIds[] = $attrs[1];
+					} else {
+						$this->request->params[ $attrs[0] ] = $attrs[1];
+					}
+				}
+				if ( !empty( $profileIds ) ) {
+					$this->request->params['profileIds'] = $profileIds;
 				}
 			}
 		}
