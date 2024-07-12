@@ -816,11 +816,17 @@ class NPR_CDS_WP {
 		}
 		if ( !empty( $object->resources ) ) {
 			foreach ( $object->resources as $story ) {
-				$this->stories[] = $story;
+				if ( empty( $story->isRestrictedToAuthorizedOrgServiceIds ) ) {
+					$this->stories[] = $story;
+				} else {
+					$this->notice[] = $story->id;
+				}
 			}
 		}
 		if ( !empty( $object->message ) ) {
 			$this->message = $object->message;
+		} elseif ( !empty( $this->notice ) ) {
+			$this->message = "The following CDS IDs are not licensed for syndication, and cannot be downloaded: " . implode( ', ', $this->notice );
 		}
 	}
 
@@ -960,6 +966,9 @@ class NPR_CDS_WP {
 				}
 				$asset_current = $story->assets->{ $asset_id };
 				$asset_profile = $this->extract_asset_profile( $asset_current );
+				if ( !empty( $asset_current->isRestrictedToAuthorizedOrgServiceIds ) ) {
+					continue;
+				}
 				switch ( $asset_profile ) {
 					case 'text' :
 						if ( !empty( $asset_current->text ) ) {
@@ -1058,38 +1067,36 @@ class NPR_CDS_WP {
 						}
 						break;
 					case 'image' :
-						if ( empty( $asset_current->isRestrictedToAuthorizedOrgServiceIds ) ) {
-							$thisimg_rels = [];
-							foreach ( $story->images as $images ) {
-								if ( $images->href == '#/assets/' . $asset_id && ! empty( $images->rels ) ) {
-									$thisimg_rels = $images->rels;
-								}
+						$thisimg_rels = [];
+						foreach ( $story->images as $images ) {
+							if ( $images->href == '#/assets/' . $asset_id && ! empty( $images->rels ) ) {
+								$thisimg_rels = $images->rels;
 							}
-							if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
-								break;
-							}
-							$thisimg = $asset_current->enclosures[0];
-							foreach ( $asset_current->enclosures as $img_enclose ) {
-								if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
-									$thisimg = $img_enclose;
-								}
-							}
-							$figclass = "wp-block-image size-large";
-							$image_href = $this->get_image_url( $thisimg );
-							$fightml = '<img src="' . $image_href['url'] . '"';
-							if ( in_array( 'image-vertical', $thisimg->rels ) ) {
-								$figclass .= ' alignright';
-								$fightml .= " width=200";
-							}
-							$cites = $this->parse_credits( $asset_current );
-							$thiscaption = ( !empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
-							$fightml .= ( !empty( $fightml ) && ! empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
-							$fightml .= ( !empty( $fightml ) ? '>' : '' );
-							$thiscaption .= ( !empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
-							$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
-							$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
-							$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
 						}
+						if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
+							break;
+						}
+						$thisimg = $asset_current->enclosures[0];
+						foreach ( $asset_current->enclosures as $img_enclose ) {
+							if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
+								$thisimg = $img_enclose;
+							}
+						}
+						$figclass = "wp-block-image size-large";
+						$image_href = $this->get_image_url( $thisimg );
+						$fightml = '<img src="' . $image_href['url'] . '"';
+						if ( in_array( 'image-vertical', $thisimg->rels ) ) {
+							$figclass .= ' alignright';
+							$fightml .= " width=200";
+						}
+						$cites = $this->parse_credits( $asset_current );
+						$thiscaption = ( !empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
+						$fightml .= ( !empty( $fightml ) && ! empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
+						$fightml .= ( !empty( $fightml ) ? '>' : '' );
+						$thiscaption .= ( !empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
+						$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
+						$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
+						$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
 						break;
 					case 'image-gallery' :
 						$fightml = '';
@@ -1117,68 +1124,66 @@ class NPR_CDS_WP {
 						$body_with_layout .= $fightml;
 						break;
 					case str_contains( $asset_profile, 'player-video' ) :
-						if ( $asset_current->isRestrictedToAuthorizedOrgServiceIds !== true ) {
-							$asset_caption = [];
-							$full_caption = '';
-							if ( !empty( $asset_current->title ) ) {
-								$asset_caption[] = $asset_current->title;
-							}
-							if ( !empty( $asset_current->caption ) ) {
-								$asset_caption[] = $asset_current->caption;
-							}
-							$credits = $this->parse_credits( $asset_current );
-							if ( !empty( $credits ) ) {
-								$asset_caption[] = '(' . $credits . ')';
-							}
-							if ( !empty( $asset_caption ) ) {
-								$full_caption = '<figcaption>' . implode( ' ', $asset_caption ) . '</figcaption>';
-							}
-							$returnary['has_video'] = true;
-							$video_asset = '';
-							if ( $asset_profile == 'player-video' ) {
-								$poster = '';
-								$video_url = $asset_current->enclosures[0]->href;
-								if ( !empty( $asset_current->images ) ) {
-									foreach ( $asset_current->images as $v_image ) {
-										if ( in_array( 'thumbnail', $v_image->rels ) ) {
-											$v_image_id = $this->extract_asset_id( $v_image->href );
-											$v_image_asset = $story->assets->{$v_image_id};
-											foreach ( $v_image_asset->enclosures as $vma ) {
-												$poster_image = $this->get_image_url( $vma );
-												$poster = ' poster="' . $poster_image['url'] . '"';
-											}
+						$asset_caption = [];
+						$full_caption = '';
+						if ( !empty( $asset_current->title ) ) {
+							$asset_caption[] = $asset_current->title;
+						}
+						if ( !empty( $asset_current->caption ) ) {
+							$asset_caption[] = $asset_current->caption;
+						}
+						$credits = $this->parse_credits( $asset_current );
+						if ( !empty( $credits ) ) {
+							$asset_caption[] = '(' . $credits . ')';
+						}
+						if ( !empty( $asset_caption ) ) {
+							$full_caption = '<figcaption>' . implode( ' ', $asset_caption ) . '</figcaption>';
+						}
+						$returnary['has_video'] = true;
+						$video_asset = '';
+						if ( $asset_profile == 'player-video' ) {
+							$poster = '';
+							$video_url = $asset_current->enclosures[0]->href;
+							if ( !empty( $asset_current->images ) ) {
+								foreach ( $asset_current->images as $v_image ) {
+									if ( in_array( 'thumbnail', $v_image->rels ) ) {
+										$v_image_id = $this->extract_asset_id( $v_image->href );
+										$v_image_asset = $story->assets->{$v_image_id};
+										foreach ( $v_image_asset->enclosures as $vma ) {
+											$poster_image = $this->get_image_url( $vma );
+											$poster = ' poster="' . $poster_image['url'] . '"';
 										}
 									}
 								}
-								foreach ( $asset_current->enclosures as $v_enclose ) {
-									if ( in_array( 'mp4-hd', $v_enclose->rels ) ) {
-										$video_url = $v_enclose->href;
-									} elseif ( in_array( 'mp4-high', $v_enclose->rels ) ) {
-										$video_url = $v_enclose->href;
-									}
-								}
-								$video_asset = '[video mp4="' . $video_url . '"' . $poster . '][/video]';
-							} elseif ( $asset_profile == 'stream-player-video' ) {
-								if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
-									$returnary['has_video_streaming'] = true;
-									$video_asset = '<video id="'. $asset_current->id .'" controls></video>' .
-									               '<script>' .
-									               'let video = document.getElementById("' . $asset_current->id . '");' .
-									               'if (Hls.isSupported()) {' .
-									               'let hls = new Hls();' .
-									               'hls.attachMedia(video);' .
-									               'hls.on(Hls.Events.MEDIA_ATTACHED, () => {' .
-									               'hls.loadSource("' . $asset_current->enclosures[0]->href .'");' .
-									               'hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {'.
-									               'console.log("manifest loaded, found " + data.levels.length + " quality level");' .
-									               '});' .
-									               '});' .
-									               '}' .
-									               '</script>';
+							}
+							foreach ( $asset_current->enclosures as $v_enclose ) {
+								if ( in_array( 'mp4-hd', $v_enclose->rels ) ) {
+									$video_url = $v_enclose->href;
+								} elseif ( in_array( 'mp4-high', $v_enclose->rels ) ) {
+									$video_url = $v_enclose->href;
 								}
 							}
-							$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
+							$video_asset = '[video mp4="' . $video_url . '"' . $poster . '][/video]';
+						} elseif ( $asset_profile == 'stream-player-video' ) {
+							if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
+								$returnary['has_video_streaming'] = true;
+								$video_asset = '<video id="'. $asset_current->id .'" controls></video>' .
+								               '<script>' .
+								               'let video = document.getElementById("' . $asset_current->id . '");' .
+								               'if (Hls.isSupported()) {' .
+								               'let hls = new Hls();' .
+								               'hls.attachMedia(video);' .
+								               'hls.on(Hls.Events.MEDIA_ATTACHED, () => {' .
+								               'hls.loadSource("' . $asset_current->enclosures[0]->href .'");' .
+								               'hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {'.
+								               'console.log("manifest loaded, found " + data.levels.length + " quality level");' .
+								               '});' .
+								               '});' .
+								               '}' .
+								               '</script>';
+							}
 						}
+						$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
 						break;
 					default :
 						// Do nothing???

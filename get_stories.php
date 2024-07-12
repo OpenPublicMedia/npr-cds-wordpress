@@ -111,17 +111,13 @@ class NPR_CDS {
 				$api->query_by_url( $url );
 				$api->parse();
 				try {
-					if ( empty( $api->message ) ) {
-						// check the publish flag and send that along.
-						$pub_flag = FALSE;
-						if ( $query['publish'] == 'Publish' ) {
-							$pub_flag = TRUE;
-						}
-						$story = $api->update_posts_from_stories( $pub_flag, $i );
-					} else {
-						if ( empty( $story ) ) {
-							error_log( 'NPR CDS: not going to save story. Query ' . implode( '&', $query_array ) . ' returned an error ' . $api->message . ' error' ); // debug use
-						}
+					$pub_flag = FALSE;
+					if ( $query['publish'] == 'Publish' ) {
+						$pub_flag = TRUE;
+					}
+					$api->update_posts_from_stories( $pub_flag, $i );
+					if ( !empty( $api->message ) ) {
+						error_log( 'NPR CDS: not going to save story. Query ' . implode( '&', $query_array ) . ' returned an error ' . $api->message . ' error' ); // debug use
 					}
 				} catch( Exception $e ) {
 					error_log( 'NPR CDS: error in ' .  __FUNCTION__ . ' like this :'. $e ); // debug use
@@ -228,8 +224,8 @@ class NPR_CDS {
 				}
 			} else {
 				if ( empty( $story ) ) {
-					npr_cds_show_message( 'Error retrieving story for id = ' . $story_id . '<br> CDS Message =' . $api->message, TRUE );
-					error_log( 'Not going to save the return from query for story_id=' . $story_id .', we got an error=' . $api->message . ' from the NPR CDS' ); // debug use
+					npr_cds_show_message( 'Error retrieving story for id = ' . $story_id . '<br> CDS Message = ' . $api->message, TRUE );
+					error_log( 'Not going to save the return from query for story_id = ' . $story_id .', we got an error = ' . $api->message . ' from the NPR CDS' ); // debug use
 				}
 			}
 		}

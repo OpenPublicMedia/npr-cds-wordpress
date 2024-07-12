@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.5.2
 Requires PHP: 8.0
-Version: 1.2.6
-Stable tag: 1.2.6
+Version: 1.2.7
+Stable tag: 1.2.7
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V1.2.7 =
+* `NPR_CDS_WP` has been updated to block/ignore stories and assets that have been marked as restricted in the CDS (meaning they are not eligible for syndication)
+
 = V1.2.6 =
 * `profileIds` can now be sent to `NPR_CDS_WP` as a comma-separated string (OR), or as multiple entries (AND)
 * Fixed a bug in `NPR_CDS_WP` where `$this->request->params` was not being properly populated
