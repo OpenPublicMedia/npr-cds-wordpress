@@ -5,10 +5,10 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Contributors: jwcounts, tamw-wnet, bdivver
 - Original developers: NPRDS, INN Labs
 - Requires at least: 4.0
-- Tested up to: 6.5.2
+- Tested up to: 6.6
 - Requires PHP: 8.0
-- Version: 1.2.7
-- Stable tag: 1.2.7
+- Version: 1.2.8
+- Stable tag: 1.2.8
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
