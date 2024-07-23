@@ -749,14 +749,14 @@ class NPR_CDS_WP {
 						$response_json = json_decode( $body );
 						$error_text .= '  API Error Message = ' . $response_json->message;
 					}
-					error_log( 'Error returned from NPR Story API with status code other than 200 OK: ' . $error_text ); // debug use
+					error_log( 'Error returned from NPR CDS with status code other than 200 OK: ' . $error_text ); // debug use
 				}
 			} else {
-				$error_text = 'WP_Error returned when sending story with post_ID ' . $post_ID . ' for url ' . $url . ' to NPR Story API:' . $result->get_error_message();
+				$error_text = 'WP_Error returned when sending story with post_ID ' . $post_ID . ' for url ' . $url . ' to NPR CDS:' . $result->get_error_message();
 				error_log( $error_text ); // debug use
 			}
 		} else {
-			$error_text = 'OrgID was not set when tried to push post_ID ' . $post_ID . ' to the NPR Story API.';
+			$error_text = 'OrgID was not set when tried to push post_ID ' . $post_ID . ' to the NPR CDS.';
 			error_log( $error_text ); // debug use
 		}
 

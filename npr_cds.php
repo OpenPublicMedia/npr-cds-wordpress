@@ -3,7 +3,7 @@
  * Plugin Name: NPR Content Distribution Service
  * Plugin URI: https://github.com/OpenPublicMedia/npr-cds-wordpress
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 1.2.7
+ * Version: 1.2.8
  * Requires at least: 4.0
  * Requires PHP: 8.0
  * Author: Open Public Media
@@ -116,7 +116,7 @@ function npr_cds_activate(): void {
 
 	// Check for number of cron queries from old plugin, migrate to new
 	$num_old = get_option( 'ds_npr_num' );
-	$num = get_option( 'npr_cds_num', 1 );
+	$num = get_option( 'npr_cds_num', 5 );
 
 	if ( !empty( $num_old ) ) {
 		$num = $num_old;
@@ -130,7 +130,7 @@ function npr_cds_activate(): void {
 			$profile = get_option( 'ds_npr_query_profileTypeID_' . $i );
 			$filters = [];
 			$sorting = [];
-			$profileIds = [ 'story', 'renderable', 'publishable' ];
+			$profileIds = [ 'story', 'renderable', 'publishable', 'buildout' ];
 			$parse = parse_url( urldecode( $query_old ), PHP_URL_QUERY );
 			if ( !empty( $parse ) ) {
 				parse_str( $parse, $output );
@@ -147,9 +147,9 @@ function npr_cds_activate(): void {
 					}
 					if ( !empty( $output['sort'] ) ) {
 						if ( $output['sort'] == 'dateAsc' ) {
-							$sorting['sort'] = 'publistDateTime:asc';
+							$sorting['sort'] = 'publishDateTime:asc';
 						} elseif ( $output['sort'] == 'dateDesc' ) {
-							$sorting['sort'] = 'publistDateTime:desc';
+							$sorting['sort'] = 'publishDateTime:desc';
 						} elseif ( $output['sort'] == 'editorial' ) {
 							$sorting['sort'] = 'editorial';
 						}
@@ -171,7 +171,7 @@ function npr_cds_activate(): void {
 					}
 				}
 			}
-			$filters['profileIds'] = implode( ',', $profileIds );
+			$filters['profileIds'] = implode( '&profileIds=', $profileIds );
 
 			$new_query = [
 				'filters' => http_build_query( $filters ),
@@ -182,6 +182,11 @@ function npr_cds_activate(): void {
 			];
 			update_option( 'npr_cds_query_' . $i, $new_query );
 		}
+		delete_option( 'ds_npr_query_' . $i );
+		delete_option( 'ds_npr_query_profileTypeID_' . $i );
+		delete_option( 'ds_npr_query_publish_' . $i );
+		delete_option( 'ds_npr_query_category_' . $i );
+		delete_option( 'ds_npr_query_tags_' . $i );
 	}
 
 	$pull_post = get_option( 'ds_npr_pull_post_type' );
@@ -211,7 +216,7 @@ function npr_cds_activate(): void {
 	$custom_map = get_option( 'ds_npr_push_use_custom_map' );
 	if ( !empty( $custom_map ) ) {
 		update_option( 'npr_cds_push_use_custom_map', $custom_map );
-
+		get_option( 'ds_npr_push_use_custom_map' );
 		$custom_map_title = get_option( 'ds_npr_api_mapping_title' );
 		if ( !empty( $custom_map_title ) ) {
 			update_option( 'npr_cds_mapping_title', $custom_map_title );
@@ -234,12 +239,30 @@ function npr_cds_activate(): void {
 		}
 	}
 
-
 	$def_url = 'https://content.api.npr.org';
 	$pull_url = get_option( 'npr_cds_pull_url' );
 	if ( empty( $pull_url ) ) {
 		update_option( 'npr_cds_pull_url', $def_url );
 	}
+	delete_option( 'dp_npr_query_use_layout' );
+	delete_option( 'ds_npr_story_default_permission' );
+	delete_option( 'ds_npr_api_key' );
+	delete_option( 'ds_npr_pull_post_type' );
+	delete_option( 'dp_npr_query_multi_cron_interval' );
+	delete_option( 'ds_npr_num' );
+	delete_option( 'ds_npr_push_post_type' );
+	delete_option( 'ds_npr_api_org_id' );
+	delete_option( 'dp_npr_query_run_multi' );
+	delete_option( 'dp_npr_query_use_featured' );
+	delete_option( 'ds_npr_api_mapping_title' );
+	delete_option( 'ds_npr_api_mapping_body' );
+	delete_option( 'ds_npr_api_mapping_byline' );
+	delete_option( 'ds_npr_api_mapping_media_credit' );
+	delete_option( 'ds_npr_api_mapping_media_agency' );
+	delete_option( 'ds_npr_api_pull_url' );
+	delete_option( 'ds_npr_api_push_url' );
+	delete_option( 'ds_npr_api_get_multi_settings' );
+	delete_option( 'dp_npr_push_use_custom_map' );
 }
 
 function npr_cds_deactivation(): void {
@@ -261,12 +284,44 @@ function npr_cds_deactivation(): void {
 
 function npr_cds_deactivate(): void {
 	wp_clear_scheduled_hook( 'npr_cds_hourly_cron' );
-	$num = get_option( 'npr_cds_num' );
-	for ( $i = 0; $i < $num; $i++ ) {
-		delete_option( 'npr_cds_query_' . $i );
+	$options = [
+		'npr_cds_query_multi_cron_interval',
+		'npr_cds_pull_post_type',
+		'npr_cds_push_post_type',
+		'npr_cds_org_id',
+		'npr_cds_pull_url',
+		'npr_cds_token',
+		'npr_cds_prefix',
+		'npr_cds_image_width',
+		'npr_cds_image_quality',
+		'npr_cds_image_format',
+		'npr_cds_push_use_custom_map',
+		'npr_cds_mapping_title',
+		'npr_cds_mapping_body',
+		'npr_cds_mapping_byline',
+		'npr_cds_mapping_media_credit',
+		'npr_cds_mapping_media_agency',
+		'npr_cds_num',
+		'npr_cds_push_url',
+		'npr_cds_push_default',
+		'npr_cds_query_0',
+		'npr_cds_import_tags',
+		'npr_cds_display_attribution',
+		'npr_cds_query_use_featured',
+		'npr_cds_import_tags',
+		'npr_cds_skip_promo_cards',
+		'npr_cds_num',
+		'npr_cds_query_run_multi'
+	];
+	$query_num = get_option( 'npr_cds_num' );
+	for ( $i = $query_num; $i <= $query_num; $i++ ) {
+		$options[] = 'npr_cds_query_' . $i;
 	}
-	delete_option( 'npr_cds_num' );
-	delete_option( 'npr_cds_push_url' );
+	$old_options = get_options( $options );
+	update_option( 'npr_cds_old_options', $old_options, false );
+	foreach ( $options as $option ) {
+		delete_option( $option );
+	}
 }
 
 

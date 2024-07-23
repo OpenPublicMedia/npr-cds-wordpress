@@ -8,13 +8,17 @@ In the WordPress Dashboard go to **Settings > NPR CDS > Get Multi Settings**. Th
 
 The NPR CDS accepts 2 types of parameters: `filters` and `sorting`. `Filters` determine what kind of content is pulled from the CDS, and `sorting` determines how that content is presented.
 
-With `filters`, the IDs that the Story API used become `collectionIds`, and `requiredAssets` become `profileIds`. So, for example, a StoryAPI query like this:
+With `filters`, the IDs that the Story API used become `collectionIds`, and `requiredAssets` become `profileIds`. So, for example, a Story API query like this:
 
 `https://api.npr.org/query?id=1014,2&requiredAssets=audio&startDate=2022-04-01&endDate=2022-06-05&dateType=story&output=NPRML&numResults=10`
 
 Would become this:
 * Filters: `collectionIds=1014,2&profileIds=renderable,story,buildout,publishable,has-audio&publishDateTime=2022-04-01T00:00:00...2022-06-06T00:00:00`
 * Sorting: `limit=10&sort=publishDateTime:desc`
+
+**NOTE**: `profileIds` can be used in a query as either an `AND` or an `OR` statement. If you provide a comma-separated list of `profileIds`, that will be regarded as an `OR` statement (e.g. `profileIds=story,buildout,has-audio` queries for articles that contain the `story`, `buildout`, or `has-audio` profiles).
+
+Providing individual `profileIds` for each profile will be regarded as an `AND` statement (e.g. `profileIds=story&profileIds=buildout&profileIds=has-audio` queries for articles that contain all three of those profiles).
 
 Further information on the [NPR CDS Github](https://npr.github.io/content-distribution-service/querying/).
 

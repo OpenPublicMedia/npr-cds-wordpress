@@ -66,9 +66,9 @@ Get NPR Stories link in the dashboard
 
 ![Get NPR Stories link in the dashboard](docs/assets/img/get-npr-stories-dash.png.webp)
 
-Getting an NPR Story by Story ID
+Getting an NPR Story by CDS ID
 
-![Getting NPR Stories by Story ID](docs/assets/img/get-npr-stories-link.png.webp)
+![Getting NPR Stories by CDS ID](docs/assets/img/get-npr-stories-link.png.webp)
 
 NPR Stories having been retrieved
 
@@ -77,6 +77,13 @@ NPR Stories having been retrieved
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V1.2.8
+* Changed the activation function to fully remove all of the old NPR Story API options after migrating them
+* Changed the deactivation function to save all of the previous settings into a site option and delete the individual options
+* Added functions to allow for restoring settings from a previous install or deleting those stored settings
+* Updated a bunch of stray references to the old Story API
+* Documentation updates
+
 ### V1.2.7
 * `NPR_CDS_WP` has been updated to block/ignore stories and assets that have been marked as restricted in the CDS (meaning they are not eligible for syndication)
 

@@ -43,6 +43,7 @@ function npr_cds_options_general(): void { ?>
 	<h1>NPR CDS: General Settings</h1>
 	<form action="options.php" method="post">
 	<?php settings_fields( 'npr_cds' ); ?>
+	<?php echo npr_cds_restore_old(); ?>
 	<div id="poststuff">
 		<div id="post-body" class="metabox-holder columns-2">
 			<div id="post-body-content">
@@ -130,6 +131,7 @@ function npr_cds_options_multi(): void { ?>
 	</style>
 	<h1>NPR CDS: Get Multi Settings</h1>
 	<p><?php echo __( 'Create an NPR CDS query. Enter your queries into one of the rows below to have stories on that query automatically publish to your site. Please note, you do not need to include your CDS token in the query.', 'npr-content-distribution-service' ); ?></p>
+	<?php echo npr_cds_restore_old(); ?>
 	<form action="options.php" method="post">
 	<?php settings_fields( 'npr_cds_get_multi_settings' ); ?>
 	<div id="poststuff">
@@ -189,6 +191,7 @@ function npr_cds_options_push_mapping(): void { ?>
 		}
 	</style>
 	<h1>NPR CDS: Push Mapping</h1>
+	<?php echo npr_cds_restore_old(); ?>
 	<form action="options.php" method="post">
 	<?php settings_fields( 'npr_cds_push_mapping' ); ?>
 	<div id="poststuff">
@@ -621,8 +624,10 @@ function npr_cds_validation_callback_checkbox( $value ): bool {
  * Prefix validation callback. We only want to save the prefix without the hyphen
  */
 function npr_cds_validation_callback_prefix( $value ): string {
-	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
-		return '';
+	if ( empty( $_GET['page'] ) || !str_contains( $_GET['page'], 'npr_cds' ) || empty( $_GET['cds_action'] ) || $_GET['cds_action'] !== 'restore' ) {
+		if ( !isset( $_POST[ '_wpnonce' ] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ '_wpnonce' ] ) ), sanitize_text_field( $_POST[ 'option_page' ] ) . '-options' ) ) {
+			return '';
+		}
 	}
 	$value = strtolower( $value );
 	preg_match( '/([a-z0-9]+)/', $value, $match );
@@ -641,8 +646,10 @@ function npr_cds_validation_callback_prefix( $value ): string {
  * URL validation callbacks for the CDS URLs
  */
 function npr_cds_validation_callback_pull_url( string $value ): string {
-	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
-		return '';
+	if ( empty( $_GET['page'] ) || !str_contains( $_GET['page'], 'npr_cds' ) || empty( $_GET['cds_action'] ) || $_GET['cds_action'] !== 'restore' ) {
+		if ( !isset( $_POST[ '_wpnonce' ] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ '_wpnonce' ] ) ), sanitize_text_field( $_POST[ 'option_page' ] ) . '-options' ) ) {
+			return '';
+		}
 	}
 	if ( $value == 'https://stage-content.api.npr.org' || $value == 'https://content.api.npr.org' ) {
 		return esc_attr( $value );
@@ -660,8 +667,10 @@ function npr_cds_validation_callback_pull_url( string $value ): string {
 	return esc_attr( $value );
 }
 function npr_cds_validation_callback_push_url( string $value ): string {
-	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
-		return '';
+	if ( empty( $_GET['page'] ) || !str_contains( $_GET['page'], 'npr_cds' ) || empty( $_GET['cds_action'] ) || $_GET['cds_action'] !== 'restore' ) {
+		if ( !isset( $_POST[ '_wpnonce' ] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ '_wpnonce' ] ) ), sanitize_text_field( $_POST[ 'option_page' ] ) . '-options' ) ) {
+			return '';
+		}
 	}
 	if ( $value == 'https://stage-content.api.npr.org' || $value == 'https://content.api.npr.org' ) {
 		return esc_attr( $value );
@@ -680,8 +689,10 @@ function npr_cds_validation_callback_push_url( string $value ): string {
 }
 
 function npr_cds_num_validation( int $value ): int {
-	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
-		return 0;
+	if ( empty( $_GET['page'] ) || !str_contains( $_GET['page'], 'npr_cds' ) || empty( $_GET['cds_action'] ) || $_GET['cds_action'] !== 'restore' ) {
+		if ( !isset( $_POST[ '_wpnonce' ] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ '_wpnonce' ] ) ), sanitize_text_field( $_POST[ 'option_page' ] ) . '-options' ) ) {
+			return 0;
+		}
 	}
 	if ( $value < 0 ) {
 		return 0;
@@ -692,8 +703,10 @@ function npr_cds_num_validation( int $value ): int {
 	return $value;
 }
 function npr_cds_validation_callback_org_id( $value ): string {
-	if ( !isset( $_POST['_wpnonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), sanitize_text_field( $_POST['option_page'] ) . '-options' ) ) {
-		return '';
+	if ( empty( $_GET['page'] ) || !str_contains( $_GET['page'], 'npr_cds' ) || empty( $_GET['cds_action'] ) || $_GET['cds_action'] !== 'restore' ) {
+		if ( !isset( $_POST[ '_wpnonce' ] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ '_wpnonce' ] ) ), sanitize_text_field( $_POST[ 'option_page' ] ) . '-options' ) ) {
+			return '';
+		}
 	}
 	if ( preg_match( '/^[0-9]{1,4}$/', $value ) ) {
 		$value = 's' . $value;
@@ -729,6 +742,54 @@ function npr_cds_show_keys_select( string $field_name, array $keys, bool $return
 	return $output;
 }
 
-function npr_cds_get_push_post_type() {
+function npr_cds_get_push_post_type(): string {
 	return get_option( 'npr_cds_push_post_type', 'post' );
 }
+
+function npr_cds_restore_old(): string {
+	$output = '';
+	$old_options = get_option( 'npr_cds_old_options' );
+	$page = 'npr_cds';
+	if ( !empty( $old_options ) ) {
+		if ( ! empty( $_GET['page'] ) ) {
+			$page = $_GET['page'];
+		}
+		$output = '<div class="notice notice-warning"><p style="display: inline-flex; align-items: center; gap: 1rem;">You have previous stored options for this plugin. What would you like to do? <a class="button-secondary" href="' . admin_url( 'options-general.php?page=' . $page . '&cds_action=restore' ) . '">Restore Previous Options</a> <a class="button-secondary" href="' . admin_url( 'options-general.php?page=' . $page . '&cds_action=delete' ) . '">Delete Previous Options</a></p></div>';
+	} elseif ( !empty( $_GET['cds_result'] ) ) {
+		if ( $_GET['cds_result'] === 'restored' ) {
+			$output = '<div class="notice notice-warning"><p>The previous options have been restored.</p></div>';
+		} elseif ( $_GET['cds_result'] === 'deleted' ) {
+			$output = '<div class="notice notice-warning"><p>The previous options have been deleted.</p></div>';
+		}
+	}
+	return $output;
+}
+
+function npr_cds_restore_page_hook(): void {
+	$page = $post_link = '';
+	if ( !empty( $_GET['page'] ) ) {
+		$page = $_GET['page'];
+	}
+	if ( empty( $page ) || !str_contains( $page, 'npr_cds' ) ) {
+		return;
+	}
+	$old_options = get_option( 'npr_cds_old_options' );
+	if ( !empty( $old_options ) ) {
+		if ( !empty( $_GET['cds_action'] ) ) {
+			if ( $_GET['cds_action'] === 'restore' ) {
+				foreach ( $old_options as $key => $value ) {
+					update_option( $key, $value );
+				}
+				delete_option( 'npr_cds_old_options' );
+				$post_link = admin_url( 'options-general.php?page=' . $page . '&cds_result=restored' );
+			} elseif ( $_GET['cds_action'] === 'delete' ) {
+				delete_option( 'npr_cds_old_options' );
+				$post_link = admin_url( 'options-general.php?page=' . $page . '&cds_result=deleted' );
+			}
+			if ( !empty( $post_link ) ) {
+				wp_redirect( $post_link );
+			}
+		}
+	}
+}
+add_action( 'admin_init', 'npr_cds_restore_page_hook' );

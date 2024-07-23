@@ -4,7 +4,7 @@
 
 To pull content from the NPR CDS you'll need a bearer token. Please contact [NPR's Support team](https://studio.npr.org) to acquire a token.
 
-If you are planning to push content to the NPR CDS you'll also need an NPR CDS Org ID. If you are an NPR station or affiliated producer you can find your Org ID at [NPR StationConnect](https://stationconnect.org/).
+If you are planning to push content to the NPR CDS you'll also need an NPR CDS Org ID. If you are an NPR station or affiliated producer you can find your Org ID at [NPR Studio](https://studio.npr.org/).
 
 If you don't have an Org ID or don't intend to push content into the NPR CDS you can still pull content, but be mindful of the [Terms of Use](https://www.npr.org/about-npr/179876898/terms-of-use).
 
@@ -24,6 +24,6 @@ At the bottom, there are options for imported images. The CDS has an optional fi
 
 Once you have all the above entered your settings panel should look something like this:
 
-![NPR Story API plugin settings page with values filled in as described above](assets/img/settings-general.png.webp)
+![NPR CDS plugin settings page with values filled in as described above](assets/img/settings-general.png.webp)
 
 Hit **Save Changes** and you're ready to start using the NPR CDS.
