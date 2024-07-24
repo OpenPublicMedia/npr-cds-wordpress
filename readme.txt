@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V1.2.8.1 =
+* Fixed error logging bug which was causing blank errors on failed uploads
+
 = V1.2.8 =
 * Changed the activation function to fully remove all of the old NPR Story API options after migrating them
 * Changed the deactivation function to save all of the previous settings into a site option and delete the individual options
