@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.6
 Requires PHP: 8.0
-Version: 1.2.8
-Stable tag: 1.2.8
+Version: 1.2.8.1
+Stable tag: 1.2.8.1
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2

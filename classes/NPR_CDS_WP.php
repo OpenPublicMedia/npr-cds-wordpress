@@ -747,7 +747,7 @@ class NPR_CDS_WP {
 
 					if ( $body ) {
 						$response_json = json_decode( $body );
-						$error_text .= '  API Error Message = ' . $response_json->message;
+						$error_text .= '  API Error Message = ' . print_r( $response_json, true );
 					}
 					error_log( 'Error returned from NPR CDS with status code other than 200 OK: ' . $error_text ); // debug use
 				}
