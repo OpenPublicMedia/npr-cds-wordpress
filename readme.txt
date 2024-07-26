@@ -74,6 +74,10 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V1.2.9 =
+* `npr_cds_show_message()` only echoes in admin dashboard
+* Promo cards without valid `webPages` array are ignored
+
 = V1.2.8.1 =
 * Fixed error logging bug which was causing blank errors on failed uploads
 

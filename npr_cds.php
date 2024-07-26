@@ -3,7 +3,7 @@
  * Plugin Name: NPR Content Distribution Service
  * Plugin URI: https://github.com/OpenPublicMedia/npr-cds-wordpress
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 1.2.8.1
+ * Version: 1.2.9
  * Requires at least: 4.0
  * Requires PHP: 8.0
  * Author: Open Public Media
@@ -326,12 +326,14 @@ function npr_cds_deactivate(): void {
 
 
 function npr_cds_show_message( $message, $errormsg = false ): void {
-	if ( $errormsg ) {
-		echo '<div id="message" class="error">';
-	} else {
-		echo '<div id="message" class="updated fade">';
+	if ( is_admin() ) {
+		if ( $errormsg ) {
+			echo '<div id="message" class="error">';
+		} else {
+			echo '<div id="message" class="updated fade">';
+		}
+		echo npr_cds_esc_html( "<p><strong>$message</strong></p></div>" );
 	}
-	echo npr_cds_esc_html( "<p><strong>$message</strong></p></div>" );
 }
 
 add_action( 'init', 'npr_cds_create_post_type' );

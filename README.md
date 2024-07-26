@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.6
 - Requires PHP: 8.0
-- Version: 1.2.8.1
-- Stable tag: 1.2.8.1
+- Version: 1.2.9
+- Stable tag: 1.2.9
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -77,6 +77,10 @@ NPR Stories having been retrieved
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V1.2.9
+* `npr_cds_show_message()` only echoes in admin dashboard
+* Promo cards without valid `webPages` array are ignored
+
 ### V1.2.8.1
 * Fixed error logging bug which was causing blank errors on failed uploads
 
