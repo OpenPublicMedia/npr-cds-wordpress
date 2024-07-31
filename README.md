@@ -77,6 +77,9 @@ NPR Stories having been retrieved
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V1.2.10
+* Fixed a bug where audio files were getting attached to stories without the proper profiles, leading to push errors
+
 ### V1.2.9
 * `npr_cds_show_message()` only echoes in admin dashboard
 * Promo cards without valid `webPages` array are ignored

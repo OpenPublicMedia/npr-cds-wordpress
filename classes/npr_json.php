@@ -338,50 +338,41 @@ function npr_cds_to_json( $post ): bool|string {
 		'post_type' => 'attachment'
 	];
 	$audios = get_children( $args );
-	$audio_files = [];
-
+	$audio_files = $audio_assets = [];
+	$has_audio = false;
 	if ( !empty( $audios ) ) {
-		$story->audio = [];
-		$audio_has = new stdClass;
-		$audio_has->href = '/' . $cds_version . '/profiles/has-audio';
-		$audio_has->rels = [ 'interface' ];
-		$story->profiles[] = $audio_has;
-		$audio_listen = new stdClass;
-		$audio_listen->href = '/' . $cds_version . '/profiles/listenable';
-		$audio_listen->rels = [ 'interface' ];
-		$story->profiles[] = $audio_listen;
-	}
+		foreach ( $audios as $audio ) {
+			$audio_meta = wp_get_attachment_metadata( $audio->ID );
+			$audio_guid = wp_get_attachment_url( $audio->ID );
+			$audio_files[] = $audio->ID;
 
-	foreach ( $audios as $audio ) {
-		$audio_meta = wp_get_attachment_metadata( $audio->ID );
-		$audio_guid = wp_get_attachment_url( $audio->ID );
-		$audio_files[] = $audio->ID;
+			$new_audio = new stdClass;
+			$audio_asset = new stdClass;
+			$audio_asset_id = $prefix . '-' . $audio->ID;
+			$audio_asset->id = $audio_asset_id;
+			$audio_asset->profiles = npr_cds_asset_profile( 'audio' );
+			$audio_asset->title = $audio->post_title;
+			$audio_asset->isAvailable = true;
+			$audio_asset->isDownloadable = true;
+			$audio_asset->isEmbeddable = false;
+			$audio_asset->isStreamable = false;
+			$audio_asset->duration = $audio_meta['length'];
 
-		$new_audio = new stdClass;
-		$audio_asset = new stdClass;
-		$audio_asset_id = $prefix . '-' . $audio->ID;
-		$audio_asset->id = $audio_asset_id;
-		$audio_asset->profiles = npr_cds_asset_profile( 'audio' );
-		$audio_asset->title = $audio->post_title;
-		$audio_asset->isAvailable = true;
-		$audio_asset->isDownloadable = true;
-		$audio_asset->isEmbeddable = false;
-		$audio_asset->isStreamable = false;
-		$audio_asset->duration = $audio_meta['length'];
+			$audio_enc = new stdClass;
+			$audio_enc->href = $audio_guid;
+			$audio_enc->type = $audio->post_mime_type;
 
-		$audio_enc = new stdClass;
-		$audio_enc->href = $audio_guid;
-		$audio_enc->type = $audio->post_mime_type;
+			$audio_asset->enclosures = [ $audio_enc ];
+			$story->assets->{$audio_asset_id} = $audio_asset;
 
-		$audio_asset->enclosures = [ $audio_enc ];
-		$story->assets->{$audio_asset_id} = $audio_asset;
+			$new_audio->href = '#/assets/' . $audio_asset_id;
+			if ( count( $audio_files ) == 1 ) {
+				$new_audio->rels = [ 'headline', 'primary' ];
+			}
 
-		$new_audio->href = '#/assets/' . $audio_asset_id;
-		if ( count( $audio_files ) == 1 ) {
-			$new_audio->rels = [ 'headline', 'primary' ];
+			$audio_assets[] = $new_audio;
+			$has_audio = true;
 		}
-
-		$story->audio[] = $new_audio;
 	}
 
 	/*
@@ -397,7 +388,10 @@ function npr_cds_to_json( $post ): bool|string {
 
 			$audio_guid = trim( $pieces[0] );
 			$attach_id = attachment_url_to_postid( $audio_guid );
-			if ( !in_array( $attach_id, $audio_files ) ) {
+			if ( $attach_id === 0 ) {
+				$attach_id = npr_cds_guid_to_post_id( $audio_guid );
+			}
+			if ( !in_array( $attach_id, $audio_files ) && $attach_id > 0 ) {
 				$audio_files[] = $attach_id;
 
 				$audio_meta = wp_get_attachment_metadata( $attach_id );
@@ -431,16 +425,29 @@ function npr_cds_to_json( $post ): bool|string {
 				$audio_enc->type = $audio_type;
 
 				$audio_asset->enclosures = [ $audio_enc ];
-				$story->assets->{$attach_id} = $audio_asset;
+				$story->assets->{$audio_asset_id} = $audio_asset;
 
 				$new_audio->href = '#/assets/' . $audio_asset_id;
 				if ( count( $audio_files ) == 1 ) {
 					$new_audio->rels = [ 'headline', 'primary' ];
 				}
 
-				$story->audio[] = $new_audio;
+				$audio_assets[] = $new_audio;
+				$has_audio = true;
 			}
 		}
+	}
+
+	if ( $has_audio ) {
+		$story->audio = $audio_assets;
+		$audio_has = new stdClass;
+		$audio_has->href = '/' . $cds_version . '/profiles/has-audio';
+		$audio_has->rels = [ 'interface' ];
+		$story->profiles[] = $audio_has;
+		$audio_listen = new stdClass;
+		$audio_listen->href = '/' . $cds_version . '/profiles/listenable';
+		$audio_listen->rels = [ 'interface' ];
+		$story->profiles[] = $audio_listen;
 	}
 
 	/*
@@ -453,6 +460,16 @@ function npr_cds_to_json( $post ): bool|string {
 function npr_cds_convert_duration_to_seconds( $duration ): int {
 	$pieces = explode( ':', $duration );
 	return (int)$pieces[0] * 60 * 60 + (int)$pieces[1] * 60 + (int)$pieces[2];
+}
+
+function npr_cds_guid_to_post_id( $guid ): int {
+	global $wpdb;
+	$id = 0;
+	$attach_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE guid=%s", $guid ) );
+	if ( $attach_id !== null ) {
+		$id = (int)$attach_id;
+	}
+	return $id;
 }
 
 function npr_cds_base_profiles(): array {
