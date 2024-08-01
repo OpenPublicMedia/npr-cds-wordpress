@@ -239,8 +239,10 @@ class NPR_CDS_WP {
 				}
 
 				$npr_has_video = FALSE;
+				$npr_has_layout = FALSE;
 				$npr_layout = $this->get_body_with_layout( $story );
 				if ( !empty( $npr_layout['body'] ) ) {
+					$npr_has_layout = TRUE;
 					$story->body = $npr_layout['body'];
 					$npr_has_video = $npr_layout['has_video'];
 				}
@@ -369,7 +371,8 @@ class NPR_CDS_WP {
 					NPR_PUB_DATE_META_KEY		  => $story->publishDateTime,
 					NPR_STORY_DATE_META_KEY		  => $story->publishDateTime,
 					NPR_LAST_MODIFIED_DATE_KEY	  => $story->editorialLastModifiedDateTime,
-					NPR_STORY_HAS_VIDEO_META_KEY  => $npr_has_video
+					NPR_STORY_HAS_VIDEO_META_KEY  => $npr_has_video,
+					NPR_STORY_HAS_LAYOUT_META_KEY => $npr_has_layout
 				];
 				if ( $npr_layout['has_video_streaming'] ) {
 					$metas[NPR_HAS_VIDEO_STREAMING_META_KEY] = $npr_layout['has_video_streaming'];
