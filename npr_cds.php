@@ -42,6 +42,7 @@ const NPR_IMAGE_CAPTION_META_KEY = 'npr_image_caption';
 const NPR_STORY_HAS_VIDEO_META_KEY = 'npr_has_video';
 const NPR_HAS_VIDEO_STREAMING_META_KEY = 'npr_has_video_streaming';
 const NPR_HAS_SLIDESHOW_META_KEY = 'npr_has_slideshow';
+const NPR_STORY_HAS_LAYOUT_META_KEY = 'npr_has_layout';
 const NPR_PUSH_STORY_ERROR = 'npr_push_story_error';
 const NPR_MAX_QUERIES = 10;
 const NPR_POST_TYPE = 'npr_story_post';
