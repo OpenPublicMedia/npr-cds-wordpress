@@ -988,7 +988,7 @@ class NPR_CDS_WP {
 							$promo_card_url = '';
 							if ( ! is_wp_error( $promo_card ) && !empty( $promo_card->webPages ) ) {
 								foreach ( $promo_card->webPages as $web ) {
-									if ( in_array( 'canonical', $web->rels ) ) {
+									if ( !empty( $web->rels ) && in_array( 'canonical', $web->rels ) ) {
 										$promo_card_url = $web->href;
 									}
 								}

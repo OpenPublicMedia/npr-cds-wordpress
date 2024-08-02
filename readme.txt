@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.6
 Requires PHP: 8.0
-Version: 1.2.10
-Stable tag: 1.2.10
+Version: 1.2.11
+Stable tag: 1.2.11
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,11 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V.1.2.11 =
+* Setting the `npr_has_layout` flag for imported articles to help with backwards compatibility (h/t @tamw-wnet)
+* Documentation updates for postmeta fields (also h/t @tamw-wnet)
+* Fixed a potential fatal error in `NPR_CDS_WP` when passing promo card rels
+
 = V1.2.10 =
 * Fixed a bug where audio files were getting attached to stories without the proper profiles, leading to push errors
 
