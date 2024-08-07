@@ -76,7 +76,6 @@ NPR Stories having been retrieved
 == Changelog ==
 = V.1.2.11 =
 * Setting the `npr_has_layout` flag for imported articles to help with backwards compatibility (h/t @tamw-wnet)
-* Documentation updates for postmeta fields (also h/t @tamw-wnet)
 * Fixed a potential fatal error in `NPR_CDS_WP` when passing promo card rels
 
 = V1.2.10 =
