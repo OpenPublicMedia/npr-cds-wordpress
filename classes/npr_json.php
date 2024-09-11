@@ -18,18 +18,34 @@ function npr_cds_to_json( $post ): bool|string {
 	$story->id = $cds_id;
 
 	$org_id = get_option( 'npr_cds_org_id' );
-	$npr_org = new stdClass;
-	$npr_org->href = 'https://organization.api.npr.org/v4/services/' . $org_id;
-
+	if ( has_filter( 'npr_cds_push_org_ids_filter' ) ) {
+		$org_id = apply_filters( 'npr_cds_push_org_ids_filter', $org_id );
+	}
+	$org_ids = explode( ',', $org_id );
+	$owners = $brandings = [];
+	foreach( $org_ids as $oi ) {
+		$npr_org = new stdClass;
+		$npr_org->href = 'https://organization.api.npr.org/v4/services/' . $oi;
+		$owners[] = $npr_org;
+		if ( $oi !== 's1' ) {
+			$brandings[] = $npr_org;
+		}
+	}
+	/*
+	 * Clean up the content by applying shortcodes and then stripping any remaining shortcodes.
+	 */
+	if ( has_filter( 'npr_cds_push_owners_filter' ) ) {
+		$owners = apply_filters( 'npr_cds_push_owners_filter', $owners );
+	}
+	$story->owners = $owners;
+	$story->brandings = $brandings;
 	$webPage = new stdClass;
 	$webPage->href = get_permalink( $post );
 	$webPage->rels = [ 'canonical' ];
 
 	$cds_count = 0;
 
-	$story->brandings = [ $npr_org ];
-	$story->owners = [ $npr_org ];
-	$story->authorizedOrgServiceIds = [ $org_id ];
+	$story->authorizedOrgServiceIds = $org_ids;
 	$story->webPages = [ $webPage ];
 	$story->layout = [];
 	$story->assets = new stdClass;

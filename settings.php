@@ -231,7 +231,7 @@ function npr_cds_settings_init(): void {
 	// CDS: Org Settings
 	add_settings_section( 'npr_cds_org_settings', 'Organization Settings', 'npr_cds_org_settings_callback', 'npr_cds' );
 
-	add_settings_field( 'npr_cds_org_id', 'Org ID', 'npr_cds_org_id_callback', 'npr_cds', 'npr_cds_org_settings' );
+	add_settings_field( 'npr_cds_org_id', 'Service ID', 'npr_cds_org_id_callback', 'npr_cds', 'npr_cds_org_settings' );
 	register_setting( 'npr_cds', 'npr_cds_org_id', [ 'sanitize_callback' => 'npr_cds_validation_callback_org_id' ] );
 
 	add_settings_field( 'npr_cds_prefix', 'Document Prefix', 'npr_cds_prefix_callback', 'npr_cds', 'npr_cds_org_settings' );
@@ -363,7 +363,7 @@ function npr_cds_push_url_callback(): void {
 
 function npr_cds_org_id_callback(): void {
 	$option = get_option( 'npr_cds_org_id' );
-	echo npr_cds_esc_html( '<input type="text" value="' . $option . '" name="npr_cds_org_id" />' );
+	echo npr_cds_esc_html( '<p><input type="text" value="' . $option . '" name="npr_cds_org_id" /></p><p><em>Enter the service ID provided by NPR. If your stories will be co-owned with another organization, you can include all of the service IDs as a comma-separated list.</em></p>' );
 }
 
 function npr_cds_prefix_callback(): void {
@@ -401,16 +401,16 @@ function npr_cds_push_default_callback(): void {
 function npr_cds_import_tags_callback(): void {
 	$import_tags_default = get_option( 'npr_cds_import_tags', '1' );
 	$check_box_string = '<select id="npr_cds_import_tags" name="npr_cds_import_tags"><option value="1"' . ( $import_tags_default === '1' ? ' selected' : '' ) . '>Import</option>' .
-		'<option value="0"' . ( $import_tags_default === '0' ? ' selected' : '' ) . '>Do Not Import</option>' .
-		'</select>';
+	                    '<option value="0"' . ( $import_tags_default === '0' ? ' selected' : '' ) . '>Do Not Import</option>' .
+	                    '</select>';
 	echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>When importing an article from the NPR CDS, do you want to import all of the article\'s tags into WordPress?</em></p>' );
 }
 
 function npr_cds_display_attribution_callback(): void {
 	$attribution_default = get_option( 'npr_cds_display_attribution', '0' );
 	$check_box_string = '<select id="npr_cds_display_attribution" name="npr_cds_display_attribution"><option value="0"' . ( $attribution_default === '0' ? ' selected' : '' ) . '>Do Not Append</option>' .
-		'<option value="1"' . ( $attribution_default === '1' ? ' selected' : '' ) . '>Append</option>' .
-		'</select>';
+	                    '<option value="1"' . ( $attribution_default === '1' ? ' selected' : '' ) . '>Append</option>' .
+	                    '</select>';
 	echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>Do you want to append an attribution message to the bottom of imported articles? (e.g. "Copyright &copy; 2024 NPR")</em></p>' );
 }
 
@@ -501,9 +501,9 @@ function npr_cds_query_callback( $i ): void {
 		$output .= '<h4>Add Tags</h4><div><p><input type="text" value="' . $query['tags'] . '" name="npr_cds_query_' . $i . '[tags]" placeholder="pepperoni,pineapple,mozzarella" /></p>' .
 		           '<p><em>Add tag(s) to each story pulled from NPR (comma separated).</em></p></div>';
 		$output .= '<h4>Import CDS Tags?</h4><div><p><select id="npr_cds_query_' . $i . '[import_tags]" name="npr_cds_query_' . $i . '[import_tags]">'.
-			'<option value="1"' . ( $query['import_tags'] === '1' ? ' selected' : '' ) . '>Import</option>' .
-			'<option value="0"' . ( $query['import_tags'] === '0' ? ' selected' : '' ) . '>Do Not Import</option>' .
-			'</select></p></div>';
+		           '<option value="1"' . ( $query['import_tags'] === '1' ? ' selected' : '' ) . '>Import</option>' .
+		           '<option value="0"' . ( $query['import_tags'] === '0' ? ' selected' : '' ) . '>Do Not Import</option>' .
+		           '</select></p></div>';
 		echo npr_cds_esc_html( $output );
 	}
 }
@@ -708,8 +708,13 @@ function npr_cds_validation_callback_org_id( $value ): string {
 			return '';
 		}
 	}
-	if ( preg_match( '/^[0-9]{1,4}$/', $value ) ) {
-		$value = 's' . $value;
+	$value = str_replace( 's', '', $value );
+	if ( preg_match( '/[0-9,]+/', $value ) ) {
+		$value_x = explode( ',', $value );
+		foreach( $value_x as $k => $v ) {
+			$value_x[ $k ] = 's' . $v;
+		}
+		$value = implode( ',', $value_x );
 	}
 	return esc_attr( $value );
 }
