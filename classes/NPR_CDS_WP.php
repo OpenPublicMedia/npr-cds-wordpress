@@ -721,9 +721,9 @@ class NPR_CDS_WP {
 	 */
 	function send_request( string $json, int $post_ID ): void {
 		$error_text = '';
-		$org_id = get_option( 'npr_cds_org_id' );
+		$service_id = get_option( 'npr_cds_org_id' );
 		$prefix = get_option( 'npr_cds_prefix' );
-		if ( !empty( $org_id ) && !empty( $prefix ) ) {
+		if ( !empty( $service_id ) && !empty( $prefix ) ) {
 			$cds_id = $prefix . '-' . $post_ID;
 			$options = $this->get_token_options();
 			$url = get_option( 'npr_cds_push_url' ) . '/' . self::NPR_CDS_VERSION . '/documents/' . $cds_id;

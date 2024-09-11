@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.6
 - Requires PHP: 8.0
-- Version: 1.2.11
-- Stable tag: 1.2.11
+- Version: 1.3
+- Stable tag: 1.3
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -77,6 +77,11 @@ NPR Stories having been retrieved
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.3
+* "Org ID" renamed to "Service ID" in various places to try to better reflect the guidance from NPR
+* Service IDs in `settings.php` can now be a comma-separated list, if all posts will be co-owned
+* Added `npr_cds_push_service_ids_filter` so ownership can be modified on an ad-hoc basis, if needed
+
 ### V.1.2.11
 * Setting the `npr_has_layout` flag for imported articles to help with backwards compatibility (h/t @tamw-wnet)
 * Fixed a potential fatal error in `NPR_CDS_WP` when passing promo card rels
