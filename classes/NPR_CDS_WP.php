@@ -1024,7 +1024,7 @@ class NPR_CDS_WP {
 								$body_with_layout .= '<p><iframe class="npr-embed-audio" style="width: 100%; height: 239px;" src="' . $asset_current->embeddedPlayerLink->href . '"></iframe></p>';
 							} elseif ( $asset_current->isDownloadable ) {
 								foreach ( $asset_current->enclosures as $enclose ) {
-									if ( $enclose->type == 'audio/mpeg' && !in_array( 'premium', $enclose->rels ) ) {
+									if ( $enclose->type == 'audio/mpeg' && empty($enclose->rels) || !in_array( 'premium', $enclose->rels ) ) {
 										$body_with_layout .= '[audio mp3="' . $enclose->href . '"][/audio]';
 									}
 								}
