@@ -19,7 +19,7 @@ function npr_cds_to_json( $post ): bool|string {
 
 	$service_id = get_option( 'npr_cds_service_id' );
 	if ( has_filter( 'npr_cds_push_service_ids_filter' ) ) {
-		$service_id = apply_filters( 'npr_cds_push_service_ids_filter', $service_id );
+		$service_id = apply_filters( 'npr_cds_push_service_ids_filter', $service_id, $post );
 	}
 	$service_ids = explode( ',', $service_id );
 	$owners = $brandings = [];
