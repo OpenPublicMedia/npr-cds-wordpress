@@ -62,6 +62,9 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 
 	// Abort pushing to NPR if the post has no content
 	if ( empty( $content ) ) {
+		if ( $body_field === '#NONE#' ) {
+			$body_field = 'Body content';
+		}
 		update_post_meta( $post_ID, NPR_PUSH_STORY_ERROR, esc_html( $body_field ) . ' is required for a post to be pushed to the NPR CDS.' );
 		return;
 	} else {

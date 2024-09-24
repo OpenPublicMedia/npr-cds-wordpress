@@ -132,12 +132,12 @@ class NPR_CDS_WP {
 		}
 	}
 
-	function extract_asset_id ( $href ): bool|string {
+	function extract_asset_id( $href ): bool|string {
 		$href_xp = explode( '/', $href );
 		return end( $href_xp );
 	}
 
-	function extract_profiles ( $story ): array {
+	function extract_profiles( $story ): array {
 		$output = [];
 		foreach ( $story as $p ) {
 			$p_xp = explode( '/', $p->href );
@@ -146,7 +146,7 @@ class NPR_CDS_WP {
 		return $output;
 	}
 
-	function get_document ( $href ): stdClass|WP_Error {
+	function get_document( $href ): stdClass|WP_Error {
 		$url = NPR_CDS_PULL_URL . $href;
 		$options = $this->get_token_options();
 		$response = wp_remote_get( $url, $options );

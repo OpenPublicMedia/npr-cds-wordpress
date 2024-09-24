@@ -79,6 +79,8 @@ NPR Stories having been retrieved
 * Service IDs in `settings.php` can now be a comma-separated list, if all posts will be co-owned
 * Added `npr_cds_push_service_ids_filter` so ownership can be modified on an ad-hoc basis, if needed
 * Fixed a bug where, under certain conditions, checking audio enclosures for the premium value can trigger an exception (h/t @areynold)
+* Laying groundwork for potential WP-JSON endpoint
+* Minor formatting and bug fixes
 
 = V.1.2.11 =
 * Setting the `npr_has_layout` flag for imported articles to help with backwards compatibility (h/t @tamw-wnet)

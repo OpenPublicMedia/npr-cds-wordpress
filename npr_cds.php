@@ -491,3 +491,96 @@ function npr_cds_add_header_meta(): void {
 	}
 }
 add_action( 'wp_head', 'npr_cds_add_header_meta', 9 );
+
+/* add_action( 'rest_api_init', function() {
+	register_rest_route( 'npr-cds/v1', '/notifications', [
+		'methods'  => 'POST',
+		'callback' => 'npr_cds_notify_webhook',
+		'permission_callback' => function( $request ) {
+			$authorization = $request->get_header( 'Authorization' );
+			$cds_token = "Bearer " . NPR_CDS_WP::get_cds_token();
+			if ( empty( $authorization ) || $authorization !== $cds_token ) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	] );
+} );
+
+function npr_cds_notify_webhook( WP_REST_Request $request ): WP_HTTP_Response|WP_REST_Response|WP_Error {
+	if ( empty( $request ) ) {
+		return new WP_Error( 'rest_api_sad', esc_html__( 'Empty POST request received. You are going to have to be more specific.', 'npr-content-distribution-service' ), [ 'status' => 403 ] );
+	}
+	if ( empty( $request['type'] ) ) {
+		return new WP_Error( 'rest_api_sad', esc_html__( 'NPR CDS: Empty type field. Please try again.', 'npr-content-distribution-service' ), [ 'status' => 403 ] );
+	}
+	$cds = new NPR_CDS_WP();
+	if ( $request['type'] === 'SubscriptionConfirmation' ) {
+		$payload = [
+			'body' => $request,
+			$cds->get_token_options(),
+			'method' => 'POST'
+		];
+		$url = 'https://prod-content-v1.api.nprinfra.org/v1/subscriptions/confirmations';
+		$cds_result = wp_remote_post( $url, $payload );
+		if ( !is_wp_error( $cds_result ) ) {
+			if ( $cds_result['response']['code'] !== 200 ) {
+				npr_cds_error_log( "NPR CDS Notification Subscription Failed: " . json_decode( wp_remote_retrieve_body( $cds_result ) ) );
+				return new WP_Error( 'rest_api_sad', esc_html__( 'CDS Notification Subscription Failed', 'npr-content-distribution-service' ), [ 'status' => 500 ] );
+			} else {
+				return rest_ensure_response( [ 'code' => 'rest_api_success', 'message' => esc_html__( 'CDS Notification Subscription Approved', 'npr-content-distribution-service' ), 'data' => [ 'status' => 200 ] ] );
+			}
+		} else {
+			npr_cds_error_log( "NPR CDS Notification Subscription Failed: " . json_decode( wp_remote_retrieve_body( $cds_result ) ) );
+			return new WP_Error( 'rest_api_sad', esc_html__( 'CDS Notification Subscription Failed', 'npr-content-distribution-service' ), [ 'status' => 500 ] );
+		}
+	} else {
+		if ( empty( $request['documentId'] ) || !preg_match( '/[a-z0-9\-]+/', $request['documentId'] ) ) {
+			return new WP_Error( 'rest_api_sad', esc_html__( 'Invalid document ID format. Please try again.', 'npr-content-distribution-service' ), [ 'status' => 403 ] );
+		}
+		if ( $request['type'] === 'document.created' ) {
+			return rest_ensure_response( [ 'code' => 'rest_api_success', 'message' => esc_html__( 'NPR CDS Document Created', 'npr-content-distribution-service' ), 'data' => [ "documentId" => $request['documentId'], "timestamp" => date('c') ] ] );
+		} elseif ( $request['type'] === 'document.updated' ) {
+			$exists = new WP_Query([
+				'meta_key' => NPR_STORY_ID_META_KEY,
+				'meta_value' => $request['documentId'],
+				'post_type' => 'any',
+				'post_status' => 'any',
+				'no_found_rows' => true
+			]);
+			if ( $exists->have_posts() ) {
+				$params = [ 'id' => $request['documentId'] ];
+				$cds->request( $params );
+				$cds->parse();
+				if ( empty( $cds->message ) ) {
+					try {
+						$cds->update_posts_from_stories();
+					} catch ( Exception $e ) {
+						npr_cds_error_log( 'There was a problem updating ingested CDS stories: ' . print_r( $e, true ) );
+						return new WP_Error( 'rest_api_sad', esc_html__( 'There was a problem updating ingested CDS stories: ' . print_r( $e, true ), 'npr-content-distribution-service' ), [ 'status' => 500 ] );
+					}
+				}
+				return rest_ensure_response( [ 'code' => 'rest_api_success', 'message' => esc_html__( 'NPR CDS Document Updated', 'npr-content-distribution-service' ), 'data' => [ "documentId" => $request['documentId'], "localDocumentId" => $exists->post->ID, "localDocumentPermalink" => get_permalink( $exists->post->ID ), "timestamp" => date('c') ] ] );
+			} else {
+				return new WP_Error( 'rest_api_sad', esc_html__( 'The referenced CDS document does not exist on this server.', 'npr-content-distribution-service' ), [ 'status' => 404 ] );
+			}
+		} elseif ( $request[ 'type' ] === 'document.deleted' ) {
+			$exists = new WP_Query([
+				'meta_key' => NPR_STORY_ID_META_KEY,
+				'meta_value' => $request[ 'documentId' ],
+				'post_type' => 'any',
+				'post_status' => 'any',
+				'no_found_rows' => true
+			]);
+			if ( $exists->have_posts() ) {
+				$existing = $exists->post;
+				wp_delete_post( $existing->ID );
+				return rest_ensure_response( [ 'code' => 'rest_api_success', 'message' => esc_html__( 'NPR CDS Document Deleted', 'npr-content-distribution-service' ), 'data' => [ "documentId" => $request['documentId'], "localWpId" => $exists->post->ID, "timestamp" => date('c') ] ] );
+			} else {
+				return new WP_Error( 'rest_api_sad', esc_html__( 'The requested CDS document does not exist on this server: ' . $request['documentId'], 'npr-content-distribution-service' ), [ 'status' => 404 ] );
+			}
+		}
+	}
+	return new WP_Error( 'rest_api_sad', esc_html__( 'NPR CDS: Unsupported type. Please try again.', 'npr-content-distribution-service' ), [ 'status' => 500 ] );
+} */
