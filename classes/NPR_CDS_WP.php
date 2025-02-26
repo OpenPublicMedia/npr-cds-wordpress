@@ -526,9 +526,11 @@ class NPR_CDS_WP {
 						}
 
 						// do the validation and storage stuff
-						$image_title = !empty( $image_current->title ) ? $image_current->title : '';
+						$image_title = !empty( $image_current->title ) ? $image_current->title : null;
+						$image_alt = !empty( $image_current->altText ) ? $image_current->altText : null;
+						$image_caption = !empty( $image_current->caption ) ? $image_current->caption : null;
 						require_once( ABSPATH . 'wp-admin/includes/image.php' ); // needed for wp_read_image_metadata used by media_handle_sideload during cron
-						$image_upload_id = media_handle_sideload( $file_array, $post_id, $image_title );
+						$image_upload_id = media_handle_sideload( $file_array, $post_id, ( $image_title ?? $image_alt ?? $image_caption ?? '' ) );
 						// If error storing permanently, unlink
 						if ( is_wp_error( $image_upload_id ) ) {
 							@unlink( $file_array['tmp_name'] );
@@ -542,23 +544,24 @@ class NPR_CDS_WP {
 								delete_post_thumbnail( $post_id );
 							}
 							set_post_thumbnail( $post_id, $image_upload_id );
+							wp_update_post( [ 'ID' => $image_upload_id, 'post_excerpt' => ( $image_caption ?? $image_title ?? $image_alt ?? '' ) ] );
 							//get any image metadata and attach it to the image post
 							$image_producer = !empty( $image_current->producer ) ? $image_current->producer : '';
 							$image_provider = !empty( $image_current->provider ) ? $image_current->provider : '';
-							$image_caption = !empty( $image_current->caption ) ? $image_current->caption : '';
 							if ( $npr_image_credit_meta_key === $npr_image_agency_meta_key ) {
 								$image_credits = [ $image_producer, $image_provider ];
 								$image_metas = [
 									$npr_image_credit_meta_key => implode( ' | ', $image_credits ),
-									NPR_IMAGE_CAPTION_META_KEY => $image_caption
+									NPR_IMAGE_CAPTION_META_KEY => ( $image_caption ?? $image_title ?? $image_alt ?? '' )
 								];
 							} else {
 								$image_metas = [
 									$npr_image_credit_meta_key => $image_producer,
 									$npr_image_agency_meta_key => $image_provider,
-									NPR_IMAGE_CAPTION_META_KEY => $image_caption
+									NPR_IMAGE_CAPTION_META_KEY => ( $image_caption ?? $image_title ?? $image_alt ?? '' )
 								];
 							}
+							$image_metas['_wp_attachment_image_alt'] = ( $image_alt ?? $image_caption ?? $image_title ?? '' );
 							foreach ( $image_metas as $k => $v ) {
 								update_post_meta( $image_upload_id, $k, $v );
 							}
@@ -1144,7 +1147,7 @@ class NPR_CDS_WP {
 						}
 						$returnary['has_video'] = true;
 						$video_asset = '';
-						if ( $asset_profile == 'player-video' ) {
+						if ( $asset_profile == 'player-video' && !empty ( $asset_current->enclosures ) ) {
 							$poster = '';
 							$video_url = $asset_current->enclosures[0]->href;
 							if ( !empty( $asset_current->images ) ) {
