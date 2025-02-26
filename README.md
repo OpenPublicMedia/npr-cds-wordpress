@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.6
 - Requires PHP: 8.0
-- Version: 1.3.1
-- Stable tag: 1.3.1
+- Version: 1.3.2
+- Stable tag: 1.3.2
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -77,6 +77,10 @@ NPR Stories having been retrieved
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.3.2
+* Imported images now have titles, captions, and alt text, if available
+* Fixed a bug if video embeds have empty enclosures
+
 ### V.1.3.1
 * Fixed a bug where the service ID was not being set properly on uploaded articles
 
