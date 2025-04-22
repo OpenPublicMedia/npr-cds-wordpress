@@ -4,10 +4,10 @@ Original developers: NPRDS, INN Labs
 Donate link: https://www.npr.org/support
 Tags: npr, news, public radio, api
 Requires at least: 4.0
-Tested up to: 6.6
+Tested up to: 6.7
 Requires PHP: 8.0
-Version: 1.3.2
-Stable tag: 1.3.2
+Version: 1.3.3
+Stable tag: 1.3.3
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,7 +74,12 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
-= V.1.3.2
+= V.1.3.3 =
+* Publish dates and last modified dates for the CDS were both being generated from `$post->post_modified_gmt`, which is incorrect. Also, both dates are being generated from the non-GMT dates, as the `mysql2date()` function takes the localized timezone into account (h/t @jsonmorris for the catch)
+* Fixed a bug that was causing the `Send to NPR One` and `Feature in NPR One` checkboxes to not save correctly
+* Fixed a bug that was causing the `Feature in NPR One` expiration date to not be properly saved, which was causing it to default to publish time + 7 days regardless
+
+= V.1.3.2 =
 * Imported images now have titles, captions, and alt text, if available
 * Fixed a bug if video embeds have empty enclosures
 
