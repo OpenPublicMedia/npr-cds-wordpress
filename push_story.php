@@ -251,8 +251,8 @@ function npr_cds_save_send_to_one( int $post_ID ): bool {
 
 	if ( get_post_type( $post ) !== get_option( 'npr_cds_push_post_type' ) ) return false;
 	$value = (
-		isset( $_POST['send_to_one'] )
-		&& $_POST['send_to_one'] == 1
+		isset( $_POST['_send_to_one'] )
+		&& $_POST['_send_to_one'] == 1
 		&& isset( $_POST['send_to_cds'] )
 		&& $_POST['send_to_cds'] == 1
 	) ? 1 : 0;
@@ -281,12 +281,12 @@ function npr_cds_save_nprone_featured( int $post_ID ): bool {
 
 	if ( get_post_type( $post ) != get_option( 'npr_cds_push_post_type' ) ) return false;
 	$value = (
-		isset( $_POST['nprone_featured'] )
-		&& $_POST['nprone_featured'] == 1
+		isset( $_POST['_nprone_featured'] )
+		&& $_POST['_nprone_featured'] == 1
 		&& isset( $_POST['send_to_cds'] )
 		&& $_POST['send_to_cds'] == 1
-		&& isset( $_POST['send_to_one'] )
-		&& $_POST['send_to_one'] == 1
+		&& isset( $_POST['_send_to_one'] )
+		&& $_POST['_send_to_one'] == 1
 	) ? 1 : 0;
 	update_post_meta( $post_ID, '_nprone_featured', $value );
 	return true;
@@ -315,14 +315,11 @@ function npr_cds_save_datetime( int $post_ID ): bool {
 
 	if ( get_post_type( $post ) != get_option( 'npr_cds_push_post_type' ) ) return false;
 
-	$date = ( isset( $_POST['nprone-expiry-datepicker'] ) ) ? sanitize_text_field( $_POST['nprone-expiry-datepicker'] ) : '';
-	$time = ( isset( $_POST['nprone-expiry-time'] ) ) ? sanitize_text_field( $_POST['nprone-expiry-time'] ) : '00:00';
+	$date = ( isset( $_POST['nprone-expiry-datetime'] ) ) ? sanitize_text_field( $_POST['nprone-expiry-datetime'] ) : '';
 
 	// If the post is not published and values are not set, save an empty post meta
-	if ( !empty( $date ) && !empty( $post->status ) && 'publish' === $post->status ) {
+	if ( !empty( $date ) && !empty( $post->post_status ) && 'publish' === $post->post_status ) {
 		$datetime = date_create( $date, npr_cds_get_datetimezone() );
-		$time = explode( ':', $time );
-		$datetime->setTime( $time[0], $time[1] );
 		$value = date_format( $datetime, DATE_ATOM );
 		update_post_meta( $post_ID, '_nprone_expiry_8601', $value );
 	} else {

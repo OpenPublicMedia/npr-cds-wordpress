@@ -40,30 +40,23 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 			}// defaults to checked; unset on new posts
 
 			// this list item contains all other list items, because their enabled/disabled depends on this checkbox
-			echo '<li>';
 			printf(
-				'<label><input value="1" type="checkbox" name="send_to_cds" id="send_to_cds" %2$s/> %1$s</label>',
+				'<li><label><input value="1" type="checkbox" name="send_to_cds" id="send_to_cds" %2$s/> %1$s</label></li>',
 				esc_html__( 'Send to NPR CDS', 'npr-content-distribution-service' ),
 				checked( $nprapi, '1', false )
 				// @see npr_cds_save_send_to_api for a historical note on this metadata name
 			);
-
-			echo '<ul>';
-
 			// send to nprone
 			printf(
-				'<li><label><input value="1" type="checkbox" name="send_to_one" id="send_to_one" %2$s/> %1$s</label> %3$s </li>',
+				'<li><label><input value="1" type="checkbox" name="_send_to_one" id="_send_to_one" %2$s/> %1$s</label></li>',
 				esc_html__( 'Include for listening in NPR One', 'npr-content-distribution-service' ),
-				checked( get_post_meta( $post->ID, '_send_to_one', true ), '1', false ),
-				// the following is an ul li within the "Send to npr one" li
-				// set the story as featured in NPR One
-				sprintf(
-					'<ul><li><label><input value="1" type="checkbox" name="nprone_featured" id="nprone_featured" %2$s/> %1$s</label></li></ul>',
-					esc_html__( 'Set as featured story in NPR One', 'npr-content-distribution-service' ),
-					checked( get_post_meta( $post->ID, '_nprone_featured', true ), '1', false )
-				)
+				checked( get_post_meta( $post->ID, '_send_to_one', true ), '1', false )
 			);
-			echo '</li>'; // end the "Send to NPR API" list item
+			printf(
+				'<li><label><input value="1" type="checkbox" name="_nprone_featured" id="_nprone_featured" %2$s/> %1$s</label></li>',
+				esc_html__( 'Set as featured story in NPR One', 'npr-content-distribution-service' ),
+				checked( get_post_meta( $post->ID, '_nprone_featured', true ), '1', false )
+			); // end the "Send to NPR API" list item
 		?>
 		</ul>
 	</div>

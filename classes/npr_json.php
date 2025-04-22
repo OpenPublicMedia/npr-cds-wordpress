@@ -46,8 +46,8 @@ function npr_cds_to_json( $post ): bool|string {
 	$story->collections = [];
 	$story->profiles = npr_cds_base_profiles();
 	$story->bylines = [];
-	$story->publishDateTime = mysql2date( 'c', $post->post_modified_gmt );
-	$story->editorialLastModifiedDateTime = mysql2date( 'c', $post->post_modified_gmt );
+	$story->publishDateTime = mysql2date( 'c', $post->post_date );
+	$story->editorialLastModifiedDateTime = mysql2date( 'c', $post->post_modified );
 
 	$use_custom = get_option( 'npr_cds_push_use_custom_map' );
 
