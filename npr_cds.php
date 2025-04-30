@@ -492,6 +492,18 @@ function npr_cds_add_header_meta(): void {
 }
 add_action( 'wp_head', 'npr_cds_add_header_meta', 9 );
 
+/**
+ * Helper function for Yoast users to insert the correct canonical link 
+ * credit @santalone 
+ */
+function npr_cds_filter_yoast_canonical( $canonical ) {
+    if (is_singular() && !empty( get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 ) ) ) {
+        $canonical = get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 );
+    }
+    return $canonical;
+}
+add_filter( 'wpseo_canonical', 'npr_cds_filter_yoast_canonical' );
+
 /* add_action( 'rest_api_init', function() {
 	register_rest_route( 'npr-cds/v1', '/notifications', [
 		'methods'  => 'POST',
