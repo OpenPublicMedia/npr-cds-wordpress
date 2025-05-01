@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Version: 1.3.4
-Stable tag: 1.3.4
+Version: 1.3.5
+Stable tag: 1.3.5
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V.1.3.5 =
+* Switched Yoast plugin detection to work better in multisite setups (h/t @tamw-wnet for the fix)
+
 = V.1.3.4 =
 * The global `import tags` setting was being overridden if a Get Multi query was created at position 0. `NPR_CDS_WP->update_posts_from_stories()` accepts 2 arguments (`publish` and `query number`), but both are optional and default to `true` and `0` respectively. So, if a post is imported outside of
  a Get Multi query, it would pull and apply the settings for `npr_cds_query_0` anyway, leading to undesired behavior. The default query number has been changed to `-1`. (h/t @kic00 for the catch)
