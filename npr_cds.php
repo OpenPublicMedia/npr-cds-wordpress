@@ -446,7 +446,10 @@ function npr_cds_add_header_meta(): void {
 					remove_action( 'wp_head', 'rel_canonical' );
 				}
 				$original_url = get_post_meta( $id, NPR_HTML_LINK_META_KEY, 1 );
-				echo '<link rel="canonical" href="' . esc_url( $original_url ) . '" />' . "\n";
+				if(!class_exists('WPSEO_Options'))
+				{
+					echo '<link rel="canonical" href="' . esc_url( $original_url ) . '" />' . "\n";
+				}
 			} elseif ( function_exists( 'get_coauthors' ) ) {
 				$byline = coauthors( ', ', ', ', '', '', false );
 			} else {
