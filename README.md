@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.7
 - Requires PHP: 8.0
-- Version: 1.3.3
-- Stable tag: 1.3.3
+- Version: 1.3.4
+- Stable tag: 1.3.4
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -77,6 +77,11 @@ NPR Stories having been retrieved
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.3.4
+* The global `import tags` setting was being overridden if a Get Multi query was created at position 0. `NPR_CDS_WP->update_posts_from_stories()` accepts 2 arguments (`publish` and `query number`), but both are optional and default to `true` and `0` respectively. So, if a post is imported outside of
+  a Get Multi query, it would pull and apply the settings for `npr_cds_query_0` anyway, leading to undesired behavior. The default query number has been changed to `-1`. (h/t @kic00 for the catch)
+* Change to how canonical URL meta tags are inserted if the Yoast SEO plugin is present (h/t @tamw-wnet for the catch and fix)
+
 ### V.1.3.3
 * Publish dates and last modified dates for the CDS were both being generated from `$post->post_modified_gmt`, which is incorrect. Also, both dates are being generated from the non-GMT dates, as the `mysql2date()` function takes the localized timezone into account (h/t @jsonmorris for the catch) 
 * Fixed a bug that was causing the `Send to NPR One` and `Feature in NPR One` checkboxes to not save correctly
