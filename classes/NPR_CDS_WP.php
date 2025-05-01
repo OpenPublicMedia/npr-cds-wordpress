@@ -179,7 +179,7 @@ class NPR_CDS_WP {
 	 * @return int $post_id or 0
 	 * @throws Exception
 	 */
-	function update_posts_from_stories( bool $publish = TRUE, int $qnum = 0 ): int {
+	function update_posts_from_stories( bool $publish = TRUE, int $qnum = -1 ): int {
 		$pull_post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 		$import_tags = get_option( 'npr_cds_import_tags', '1' );
 		$cds_query = get_option( 'npr_cds_query_' . $qnum );
