@@ -446,7 +446,7 @@ function npr_cds_add_header_meta(): void {
 					remove_action( 'wp_head', 'rel_canonical' );
 				}
 				$original_url = get_post_meta( $id, NPR_HTML_LINK_META_KEY, 1 );
-				if(!class_exists('WPSEO_Options'))
+				if(!has_filter('wpseo_canonical'))
 				{
 					echo '<link rel="canonical" href="' . esc_url( $original_url ) . '" />' . "\n";
 				}
