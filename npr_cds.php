@@ -446,7 +446,10 @@ function npr_cds_add_header_meta(): void {
 					remove_action( 'wp_head', 'rel_canonical' );
 				}
 				$original_url = get_post_meta( $id, NPR_HTML_LINK_META_KEY, 1 );
-				echo '<link rel="canonical" href="' . esc_url( $original_url ) . '" />' . "\n";
+				if(!class_exists('WPSEO_Options'))
+				{
+					echo '<link rel="canonical" href="' . esc_url( $original_url ) . '" />' . "\n";
+				}
 			} elseif ( function_exists( 'get_coauthors' ) ) {
 				$byline = coauthors( ', ', ', ', '', '', false );
 			} else {
@@ -491,6 +494,18 @@ function npr_cds_add_header_meta(): void {
 	}
 }
 add_action( 'wp_head', 'npr_cds_add_header_meta', 9 );
+
+/**
+ * Helper function for Yoast users to insert the correct canonical link 
+ * credit @santalone 
+ */
+function npr_cds_filter_yoast_canonical( $canonical ) {
+    if (is_singular() && !empty( get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 ) ) ) {
+        $canonical = get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 );
+    }
+    return $canonical;
+}
+add_filter( 'wpseo_canonical', 'npr_cds_filter_yoast_canonical' );
 
 /* add_action( 'rest_api_init', function() {
 	register_rest_route( 'npr-cds/v1', '/notifications', [
