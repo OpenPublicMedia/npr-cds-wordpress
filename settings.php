@@ -486,7 +486,7 @@ function npr_cds_query_callback( $i ): void {
 		if ( $optionType == 'post' ) {
 			$args = [
 				'show_option_none'	=> __( 'Select category', 'npr-content-distribution-service' ),
-				'name'				=> 'npr_query_' . $i . '[category]',
+				'name'				=> 'npr_cds_query_' . $i . '[category]',
 				'hierarchical'		=> true,
 				'show_count'		=> 0,
 				'orderby'			=> 'name',
