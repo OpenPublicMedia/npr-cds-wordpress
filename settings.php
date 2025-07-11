@@ -473,9 +473,9 @@ function npr_cds_query_callback( $i ): void {
 		$post_types = get_post_types();
 
 		$output = '<div class="npr-cds-query"><h4>Filters</h4><div><p><input type="text" value="' . $query['filters'] . '" name="npr_cds_query_' . $i . '[filters]" placeholder="profileIds=renderable&collectionIds=1002" /></p>' .
-		          '<p><em>A list of available filtering options can be found <a href="https://npr.github.io/content-distribution-service/querying/filtering.html">in the CDS documentation</a></em></p></div>' .
+		          '<p><em>A list of available filtering options can be found <a href="https://npr.github.io/content-distribution-service/api-reference/core-concepts/querying/#filtering">in the CDS documentation</a></em></p></div>' .
 		          '<h4>Sorting</h4><div><p><input type="text" value="' . $query['sorting'] . '" name="npr_cds_query_' . $i . '[sorting]" placeholder="sort=<type>[:<direction>]" /></p>' .
-		          '<p><em>A list of available sorting query parameters can be found <a href="https://npr.github.io/content-distribution-service/querying/sorting.html">in the CDS documentation</a></em></p></div>' .
+		          '<p><em>A list of available sorting query parameters can be found <a href="https://npr.github.io/content-distribution-service/api-reference/core-concepts/querying/#sorting">in the CDS documentation</a></em></p></div>' .
 		          '<h4>Publish or Save as Draft?</h4> ' .
 		          '<div><select id="npr_cds_query_' . $i . '[publish]" name="npr_cds_query_' . $i . '[publish]">' .
 		          '<option value="Publish"' . ( $query['publish'] == 'Publish' ? ' selected' : '' ) . '>Publish</option>' .
