@@ -196,7 +196,7 @@ function npr_cds_activate(): void {
 	}
 	$push_post = get_option( 'ds_npr_push_post_type' );
 	if ( !empty( $push_post ) ) {
-		update_option( 'npr_cds_push_post_type', [ $push_post ] );
+		update_option( 'npr_cds_push_post_type', $push_post );
 	}
 	$org_id = get_option( 'ds_npr_api_org_id' );
 	if ( !empty( $org_id ) ) {
@@ -381,20 +381,16 @@ function npr_cds_create_post_type(): void {
  */
 function npr_cds_add_meta_boxes(): void {
 	$screen = get_current_screen();
-	$push_post_type = get_option( 'npr_cds_push_post_type', [ 'post' ] );
-	if ( !is_array( $push_post_type ) ) {
-		$push_post_type = [ $push_post_type ];
-		update_option( 'npr_cds_push_post_type', $push_post_type );
-	}
+	$push_post_type = get_option( 'npr_cds_push_post_type' ) ?: 'post';
 	$push_url = get_option( 'npr_cds_push_url' );
-	if ( in_array( $screen->id, $push_post_type ) ) {
+	if ( $screen->id == $push_post_type ) {
 		if ( !empty( $push_url ) ) {
 			global $post;
 			add_meta_box(
 				'npr_cds_document_meta',
 				'NPR CDS',
 				'npr_cds_publish_meta_box',
-				$screen->id,
+				$push_post_type,
 				'side',
 				'core'
 			);
@@ -405,7 +401,7 @@ function npr_cds_add_meta_boxes(): void {
 				'npr_cds_document_meta',
 				'NPR CDS',
 				'npr_cds_publish_meta_box_prompt',
-				$screen->id,
+				$push_post_type,
 				'side',
 				'core'
 			);
@@ -436,7 +432,7 @@ function npr_cds_esc_html( $string ): string {
 function npr_cds_add_header_meta(): void {
 	global $wp_query;
 	if ( !is_home() && !is_404() &&
-	     ( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || in_array( get_post_type(), get_option( 'npr_cds_push_post_type' ) ) )
+		( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || get_post_type() === get_option( 'npr_cds_push_post_type' ) )
 	) {
 		$id = $wp_query->queried_object_id;
 		$npr_story_id = get_post_meta( $id, NPR_STORY_ID_META_KEY, 1 );
@@ -483,16 +479,16 @@ function npr_cds_add_header_meta(): void {
 				wp_enqueue_style( 'npr-splide-css', NPR_CDS_PLUGIN_URL . 'assets/css/splide.min.css' );
 			}
 			?>
-			<meta name="datePublished" content="<?php echo esc_attr( get_the_date( 'c', $id ) ); ?>" />
-			<meta name="story_id" content="<?php echo esc_attr( $npr_story_id ); ?>" />
-			<meta name="has_audio" content="<?php echo esc_attr( $has_audio ); ?>" />
-			<meta name="org_id" content="<?php echo esc_attr( get_option( 'npr_cds_org_id' ) ); ?>" />
-			<meta name="category" content="<?php echo esc_attr( $primary_cat ); ?>" />
-			<meta name="author" content="<?php echo esc_attr( $byline ); ?>" />
-			<meta name="programs" content="none" />
-			<meta name="wordCount" content="<?php echo esc_attr( $word_count ); ?>" />
-			<meta name="keywords" content="<?php echo esc_html( implode( ',', $keywords ) ); ?>" />
-			<?php
+		<meta name="datePublished" content="<?php echo esc_attr( get_the_date( 'c', $id ) ); ?>" />
+		<meta name="story_id" content="<?php echo esc_attr( $npr_story_id ); ?>" />
+		<meta name="has_audio" content="<?php echo esc_attr( $has_audio ); ?>" />
+		<meta name="org_id" content="<?php echo esc_attr( get_option( 'npr_cds_org_id' ) ); ?>" />
+		<meta name="category" content="<?php echo esc_attr( $primary_cat ); ?>" />
+		<meta name="author" content="<?php echo esc_attr( $byline ); ?>" />
+		<meta name="programs" content="none" />
+		<meta name="wordCount" content="<?php echo esc_attr( $word_count ); ?>" />
+		<meta name="keywords" content="<?php echo esc_html( implode( ',', $keywords ) ); ?>" />
+<?php
 		}
 	}
 }

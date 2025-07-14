@@ -76,7 +76,6 @@ NPR Stories having been retrieved
 == Changelog ==
 = V.1.3.6 =
 * Fixed bug that prevented category selection for posts imported via Get Multi queries from saving properly (h/t @xpn-bdivver for the fix)
-* Adding support for pushing multiple post types to the CDS (h/t @justinferrell for the suggestion)
 
 = V.1.3.5 =
 * Switched Yoast plugin detection to work better in multisite setups (h/t @tamw-wnet for the fix)
