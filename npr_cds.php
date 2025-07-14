@@ -3,7 +3,7 @@
  * Plugin Name: NPR Content Distribution Service
  * Plugin URI: https://github.com/OpenPublicMedia/npr-cds-wordpress
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 1.3.5
+ * Version: 1.3.6
  * Requires at least: 4.0
  * Requires PHP: 8.0
  * Author: Open Public Media
@@ -11,7 +11,7 @@
  * License: GPLv2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: npr-content-distribution-service
-*/
+ */
 /*
 	Copyright 2024 Open Public Media
 
@@ -196,7 +196,7 @@ function npr_cds_activate(): void {
 	}
 	$push_post = get_option( 'ds_npr_push_post_type' );
 	if ( !empty( $push_post ) ) {
-		update_option( 'npr_cds_push_post_type', $push_post );
+		update_option( 'npr_cds_push_post_type', [ $push_post ] );
 	}
 	$org_id = get_option( 'ds_npr_api_org_id' );
 	if ( !empty( $org_id ) ) {
@@ -381,16 +381,20 @@ function npr_cds_create_post_type(): void {
  */
 function npr_cds_add_meta_boxes(): void {
 	$screen = get_current_screen();
-	$push_post_type = get_option( 'npr_cds_push_post_type' ) ?: 'post';
+	$push_post_type = get_option( 'npr_cds_push_post_type', [ 'post' ] );
+	if ( !is_array( $push_post_type ) ) {
+		$push_post_type = [ $push_post_type ];
+		update_option( 'npr_cds_push_post_type', $push_post_type );
+	}
 	$push_url = get_option( 'npr_cds_push_url' );
-	if ( $screen->id == $push_post_type ) {
+	if ( in_array( $screen->id, $push_post_type ) ) {
 		if ( !empty( $push_url ) ) {
 			global $post;
 			add_meta_box(
 				'npr_cds_document_meta',
 				'NPR CDS',
 				'npr_cds_publish_meta_box',
-				$push_post_type,
+				$screen->id,
 				'side',
 				'core'
 			);
@@ -401,7 +405,7 @@ function npr_cds_add_meta_boxes(): void {
 				'npr_cds_document_meta',
 				'NPR CDS',
 				'npr_cds_publish_meta_box_prompt',
-				$push_post_type,
+				$screen->id,
 				'side',
 				'core'
 			);
@@ -432,7 +436,7 @@ function npr_cds_esc_html( $string ): string {
 function npr_cds_add_header_meta(): void {
 	global $wp_query;
 	if ( !is_home() && !is_404() &&
-		( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || get_post_type() === get_option( 'npr_cds_push_post_type' ) )
+	     ( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || in_array( get_post_type(), get_option( 'npr_cds_push_post_type' ) ) )
 	) {
 		$id = $wp_query->queried_object_id;
 		$npr_story_id = get_post_meta( $id, NPR_STORY_ID_META_KEY, 1 );
@@ -479,30 +483,30 @@ function npr_cds_add_header_meta(): void {
 				wp_enqueue_style( 'npr-splide-css', NPR_CDS_PLUGIN_URL . 'assets/css/splide.min.css' );
 			}
 			?>
-		<meta name="datePublished" content="<?php echo esc_attr( get_the_date( 'c', $id ) ); ?>" />
-		<meta name="story_id" content="<?php echo esc_attr( $npr_story_id ); ?>" />
-		<meta name="has_audio" content="<?php echo esc_attr( $has_audio ); ?>" />
-		<meta name="org_id" content="<?php echo esc_attr( get_option( 'npr_cds_org_id' ) ); ?>" />
-		<meta name="category" content="<?php echo esc_attr( $primary_cat ); ?>" />
-		<meta name="author" content="<?php echo esc_attr( $byline ); ?>" />
-		<meta name="programs" content="none" />
-		<meta name="wordCount" content="<?php echo esc_attr( $word_count ); ?>" />
-		<meta name="keywords" content="<?php echo esc_html( implode( ',', $keywords ) ); ?>" />
-<?php
+			<meta name="datePublished" content="<?php echo esc_attr( get_the_date( 'c', $id ) ); ?>" />
+			<meta name="story_id" content="<?php echo esc_attr( $npr_story_id ); ?>" />
+			<meta name="has_audio" content="<?php echo esc_attr( $has_audio ); ?>" />
+			<meta name="org_id" content="<?php echo esc_attr( get_option( 'npr_cds_org_id' ) ); ?>" />
+			<meta name="category" content="<?php echo esc_attr( $primary_cat ); ?>" />
+			<meta name="author" content="<?php echo esc_attr( $byline ); ?>" />
+			<meta name="programs" content="none" />
+			<meta name="wordCount" content="<?php echo esc_attr( $word_count ); ?>" />
+			<meta name="keywords" content="<?php echo esc_html( implode( ',', $keywords ) ); ?>" />
+			<?php
 		}
 	}
 }
 add_action( 'wp_head', 'npr_cds_add_header_meta', 9 );
 
 /**
- * Helper function for Yoast users to insert the correct canonical link 
- * credit @santalone 
+ * Helper function for Yoast users to insert the correct canonical link
+ * credit @santalone
  */
 function npr_cds_filter_yoast_canonical( $canonical ) {
-    if (is_singular() && !empty( get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 ) ) ) {
-        $canonical = get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 );
-    }
-    return $canonical;
+	if (is_singular() && !empty( get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 ) ) ) {
+		$canonical = get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 );
+	}
+	return $canonical;
 }
 add_filter( 'wpseo_canonical', 'npr_cds_filter_yoast_canonical' );
 

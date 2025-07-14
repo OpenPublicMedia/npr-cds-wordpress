@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Version: 1.3.5
-Stable tag: 1.3.5
+Version: 1.3.6
+Stable tag: 1.3.6
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,10 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V.1.3.6 =
+* Fixed bug that prevented category selection for posts imported via Get Multi queries from saving properly (h/t @xpn-bdivver for the fix)
+* Adding support for pushing multiple post types to the CDS (h/t @justinferrell for the suggestion)
+
 = V.1.3.5 =
 * Switched Yoast plugin detection to work better in multisite setups (h/t @tamw-wnet for the fix)
 
