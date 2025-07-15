@@ -21,7 +21,7 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 		npr_cds_error_log( 'Not pushing the story with post_ID ' . $post_ID . ' to the NPR CDS because it was retrieved from the CDS' );
 		return;
 	}
-	$push_post_type = get_option( 'npr_cds_push_post_type', 'post' );
+	$push_post_type = npr_cds_get_push_post_type( $post );
 
 	//if the push url isn't set, don't even try to push.
 	$push_url = get_option( 'npr_cds_push_url' );
@@ -53,7 +53,7 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 		// Get the list of post meta keys available for this post.
 		$post_metas = get_post_custom_keys( $post->ID );
 
-		$custom_content_meta = get_option( 'npr_cds_mapping_body' );
+		$custom_content_meta = npr_cds_get_mapping_body( $post );
 		$body_field = $custom_content_meta;
 		if ( !empty( $custom_content_meta ) && $custom_content_meta !== '#NONE#' && in_array( $custom_content_meta, $post_metas, true ) ) {
 			$content = get_post_meta( $post->ID, $custom_content_meta, true );
@@ -90,7 +90,7 @@ function npr_cds_delete( int $post_ID ): void {
 			403
 		);
 	}
-	$push_post_type = get_option( 'npr_cds_push_post_type', 'post' );
+	$push_post_type = npr_cds_get_push_post_type( get_post( $post_ID ) );
 
 	$api_id = get_post_meta( $post_ID, NPR_STORY_ID_META_KEY, true );
 
@@ -154,10 +154,7 @@ function npr_cds_get_post_meta_keys( string $post_type = 'post' ): array {
 }
 
 function npr_cds_bulk_action_push_dropdown(): void {
-	$push_post_type = get_option( 'npr_cds_push_post_type' );
-	if ( empty( $push_post_type ) ) {
-		$push_post_type = 'post';
-	}
+	$push_post_type = npr_cds_get_push_post_type();
 
 	$push_url = get_option( 'npr_cds_push_url' );
 	global $post_type;
@@ -223,7 +220,7 @@ function npr_cds_save_send_to_cds( Int $post_ID ): bool {
 	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 	global $post;
 
-	if ( get_post_type( $post ) !== get_option( 'npr_cds_push_post_type' ) ) return false;
+	if ( get_post_type( $post ) !== npr_cds_get_push_post_type( $post ) ) return false;
 	$value = ( isset( $_POST['send_to_cds'] ) && $_POST['send_to_cds'] == 1 ) ? 1 : 0;
 
 	// see historical note
@@ -249,7 +246,7 @@ function npr_cds_save_send_to_one( int $post_ID ): bool {
 
 	global $post;
 
-	if ( get_post_type( $post ) !== get_option( 'npr_cds_push_post_type' ) ) return false;
+	if ( get_post_type( $post ) !== npr_cds_get_push_post_type( $post ) ) return false;
 	$value = (
 		isset( $_POST['_send_to_one'] )
 		&& $_POST['_send_to_one'] == 1
@@ -279,7 +276,7 @@ function npr_cds_save_nprone_featured( int $post_ID ): bool {
 
 	global $post;
 
-	if ( get_post_type( $post ) != get_option( 'npr_cds_push_post_type' ) ) return false;
+	if ( get_post_type( $post ) != npr_cds_get_push_post_type( $post ) ) return false;
 	$value = (
 		isset( $_POST['_nprone_featured'] )
 		&& $_POST['_nprone_featured'] == 1
@@ -313,7 +310,7 @@ function npr_cds_save_datetime( int $post_ID ): bool {
 
 	global $post;
 
-	if ( get_post_type( $post ) != get_option( 'npr_cds_push_post_type' ) ) return false;
+	if ( get_post_type( $post ) != npr_cds_get_push_post_type( $post ) ) return false;
 
 	$date = ( isset( $_POST['nprone-expiry-datetime'] ) ) ? sanitize_text_field( $_POST['nprone-expiry-datetime'] ) : '';
 

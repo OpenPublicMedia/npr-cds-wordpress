@@ -62,7 +62,7 @@ function npr_cds_to_json( $post ): bool|string {
 	/*
 	 * Custom content
 	 */
-	$custom_content_meta = get_option( 'npr_cds_mapping_body' );
+	$custom_content_meta = npr_cds_get_mapping_body( $post );
 	if ( !empty( $custom_content_meta ) && $custom_content_meta === '#NONE' ) {
 		$custom_content_meta = 'npr_story_content';
 		update_option( 'npr_cds_mapping_body', $custom_content_meta );
@@ -113,7 +113,7 @@ function npr_cds_to_json( $post ): bool|string {
 	/*
 	 * Custom title
 	 */
-	$custom_title_meta = get_option( 'npr_cds_mapping_title' );
+	$custom_title_meta = npr_cds_get_mapping_title( $post );
 	if (
 		$use_custom
 		&& !empty( $custom_title_meta )
@@ -133,7 +133,7 @@ function npr_cds_to_json( $post ): bool|string {
 	 * If no cool things are going on, just send the display name for the post_author field.
 	 */
 	$bylines = [];
-	$custom_byline_meta = get_option( 'npr_cds_mapping_byline' );
+	$custom_byline_meta = npr_cds_get_mapping_byline( $post );
 	// Custom field mapping byline
 	if (
 		$use_custom

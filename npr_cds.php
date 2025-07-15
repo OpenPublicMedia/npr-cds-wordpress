@@ -381,11 +381,11 @@ function npr_cds_create_post_type(): void {
  */
 function npr_cds_add_meta_boxes(): void {
 	$screen = get_current_screen();
-	$push_post_type = get_option( 'npr_cds_push_post_type' ) ?: 'post';
+	global $post;
+	$push_post_type = npr_cds_get_push_post_type( $post );
 	$push_url = get_option( 'npr_cds_push_url' );
 	if ( $screen->id == $push_post_type ) {
 		if ( !empty( $push_url ) ) {
-			global $post;
 			add_meta_box(
 				'npr_cds_document_meta',
 				'NPR CDS',
@@ -396,7 +396,6 @@ function npr_cds_add_meta_boxes(): void {
 			);
 			add_action( 'admin_enqueue_scripts', 'npr_cds_publish_meta_box_assets' );
 		} else {
-			global $post;
 			add_meta_box(
 				'npr_cds_document_meta',
 				'NPR CDS',
@@ -430,9 +429,9 @@ function npr_cds_esc_html( $string ): string {
 }
 
 function npr_cds_add_header_meta(): void {
-	global $wp_query;
+	global $wp_query, $post;
 	if ( !is_home() && !is_404() &&
-		( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || get_post_type() === get_option( 'npr_cds_push_post_type' ) )
+		( get_post_type() === get_option( 'npr_cds_pull_post_type' ) || get_post_type() === npr_cds_get_push_post_type( $post ) )
 	) {
 		$id = $wp_query->queried_object_id;
 		$npr_story_id = get_post_meta( $id, NPR_STORY_ID_META_KEY, 1 );
@@ -506,6 +505,37 @@ function npr_cds_filter_yoast_canonical( $canonical ) {
 }
 add_filter( 'wpseo_canonical', 'npr_cds_filter_yoast_canonical' );
 
+function npr_cds_get_push_post_type( $post = null ): string {
+	$option = get_option( 'npr_cds_post_type', 'post' );
+	if ( has_filter( 'npr_cds_push_post_type_filter' ) ) {
+		$option = apply_filters( 'npr_cds_push_post_type_filter', $option, $post );
+	}
+	return $option;
+}
+
+function npr_cds_get_mapping_title( $post ): string {
+	$option = get_option( 'npr_cds_mapping_title' );
+	if ( has_filter( 'npr_cds_mapping_title_filter' ) ) {
+		$option = apply_filters( 'npr_cds_mapping_title_filter', $option, $post );
+	}
+	return $option;
+}
+
+function npr_cds_get_mapping_body( $post ): string {
+	$option = get_option( 'npr_cds_mapping_body' );
+	if ( has_filter( 'npr_cds_mapping_body_filter' ) ) {
+		$option = apply_filters( 'npr_cds_mapping_body_filter', $option, $post );
+	}
+	return $option;
+}
+
+function npr_cds_get_mapping_byline( $post ): string {
+	$option = get_option( 'npr_cds_mapping_byline' );
+	if ( has_filter( 'npr_cds_mapping_byline_filter' ) ) {
+		$option = apply_filters( 'npr_cds_mapping_byline_filter', $option, $post );
+	}
+	return $option;
+}
 /* add_action( 'rest_api_init', function() {
 	register_rest_route( 'npr-cds/v1', '/notifications', [
 		'methods'  => 'POST',
