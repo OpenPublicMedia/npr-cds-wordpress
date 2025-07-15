@@ -80,3 +80,31 @@ Aside from the settings presented inside the WordPress dashboard, there are also
   * `$service_id (string)`: a comma-separated list of service IDs, which are individually formatted as `s###`
   * `$post (WP_Post)`: the WordPress Post object that is being pushed to the CDS
 * **Return**: `$service_id`
+
+## `npr_cds_push_post_type_filter`
+* **Function**: Allow a site to modify the post type being pushed to the CDS on a case-by-case basis. This allows for sites to push more than one post type while keeping one as their primary. If the metadata fields for the secondary post type differ from the primary, the site can use the mapping filters below in conjunction.
+* **Arguments**
+  * `$option (string)`: the name of the current push post type
+  * `$post (WP_Post)`: the WordPress Post object that is being pushed to the CDS
+* **Return**: `$option`
+
+## `npr_cds_mapping_title_filter`
+* **Function**: Allow a site to modify which metadata field is being used to supply the title for the post. This is intended for use in conjunction with the `npr_cds_push_post_type_filter` to support a secondary post type for pushing to the CDS.
+* **Arguments**
+  * `$option (string)`: the name of the current metadata field
+  * `$post (WP_Post)`: the WordPress Post object that is being pushed to the CDS
+* **Return**: `$option`
+
+## `npr_cds_mapping_body_filter`
+* **Function**: Allow a site to modify which metadata field is being used to supply the body for the post. This is intended for use in conjunction with the `npr_cds_push_post_type_filter` to support a secondary post type for pushing to the CDS.
+* **Arguments**
+  * `$option (string)`: the name of the current metadata field
+  * `$post (WP_Post)`: the WordPress Post object that is being pushed to the CDS
+* **Return**: `$option`
+
+## `npr_cds_mapping_byline_filter`
+* **Function**: Allow a site to modify which metadata field is being used to supply the byline for the post. This is intended for use in conjunction with the `npr_cds_push_post_type_filter` to support a secondary post type for pushing to the CDS.
+* **Arguments**
+  * `$option (string)`: the name of the current metadata field
+  * `$post (WP_Post)`: the WordPress Post object that is being pushed to the CDS
+* **Return**: `$option`
