@@ -635,6 +635,9 @@ class NPR_CDS_WP {
 				}
 				if ( !empty( $story->collections ) && $import_tags === '1' ) {
 					foreach ( $story->collections as $collect ) {
+						if ( !isset( $collect->rels ) ) {
+							continue;
+						}
 						if ( in_array( 'topic', $collect->rels ) || in_array( 'category', $collect->rels ) ) {
 
 							/**
