@@ -80,6 +80,9 @@ NPR Stories having been retrieved
 ### V.1.3.7
 * Implementing filters for push post type, custom title, custom body, and custom byline (h/t @justinferrell for the suggestion)
 
+### V.1.3.6.1
+* Added a check to prevent fatal error on collections with no rels (h/t @tamw-wnet for the fix)
+
 ### V.1.3.6
 * Fixed bug that prevented category selection for posts imported via Get Multi queries from saving properly (h/t @xpn-bdivver for the fix)
 
