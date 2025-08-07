@@ -748,10 +748,6 @@ function npr_cds_show_keys_select( string $field_name, array $keys, bool $return
 	return $output;
 }
 
-function npr_cds_get_push_post_type(): string {
-	return get_option( 'npr_cds_push_post_type', 'post' );
-}
-
 function npr_cds_restore_old(): string {
 	$output = '';
 	$old_options = get_option( 'npr_cds_old_options' );
