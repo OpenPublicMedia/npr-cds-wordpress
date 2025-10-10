@@ -372,6 +372,11 @@ function npr_cds_create_post_type(): void {
 	]);
 }
 
+add_action( 'init', 'npr_cds_add_wide_image_crops' );
+
+function npr_cds_add_wide_image_crops(): void {
+	add_image_size( 'npr-cds-wide', 1920, 1080, [ 'center', 'center' ] );
+}
 /**
  * Register the meta box and enqueue its scripts
  *
