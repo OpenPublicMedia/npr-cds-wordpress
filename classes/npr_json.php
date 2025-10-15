@@ -282,7 +282,7 @@ function npr_cds_to_json( $post ): bool|string {
 		// All kinds of other math when polarity is negative or the field isn't set.
 		$image_type = [];
 		if ( $image->ID == $primary_image ) {
-			$image_type = [ 'primary' ];
+			$image_type[] = 'primary';
 		}
 
 		// Is the image in the content?  If so, tell the API with a flag that CorePublisher knows.
@@ -305,6 +305,7 @@ function npr_cds_to_json( $post ): bool|string {
 		$image_meta = wp_get_attachment_metadata( $image->ID );
 
 		$new_image = new stdClass;
+		$new_image->rels = $image_type;
 		$image_asset = new stdClass;
 		$image_asset_id = $prefix . '-' . $image->ID;
 		$image_asset->id = $image_asset_id;
@@ -315,34 +316,6 @@ function npr_cds_to_json( $post ): bool|string {
 		$image_asset->provider = $custom_agency;
 		$image_asset->enclosures = [];
 
-//		$image_enc = new stdClass;
-//		$image_enc->href = $image_attach_url . $in_body;
-//		$image_enc->rels = [];
-		if ( !empty( $image_type ) ) {
-			$new_image->rels = $image_type;
-		}
-//
-//		$image_enc->type = $image->post_mime_type;
-//		if ( !empty( $image_meta ) ) {
-//			$image_enc->width = $image_meta['width'];
-//			$image_enc->height = $image_meta['height'];
-//			$aspect_ratio = $image_meta['width'] / $image_meta['height'];
-//			if ( $aspect_ratio > 1.7 && $aspect_ratio < 1.8 ) {
-//				$image_enc->rels[] = 'image-wide';
-//				$new_image->rels[] = 'promo-image-wide';
-//			} elseif ( $aspect_ratio == 1.0 ) {
-//				$image_enc->rels[] = 'image-square';
-//				$new_image->rels[] = 'promo-image-square';
-//			} elseif ( $aspect_ratio < 1.0 ) {
-//				$image_enc->rels[] = 'image-vertical';
-//				$new_image->rels[] = 'promo-image-vertical';
-//			} else {
-//				$image_enc->rels[] = 'image-standard';
-//				$new_image->rels[] = 'promo-image-standard';
-//			}
-//		}
-//
-//		$image_asset->enclosures[] = $image_enc;
 		$image_crops = [ 'large', 'medium', 'npr-cds-wide' ];
 		if ( !empty( $image_meta['sizes'] ) ) {
 			$primary_crop = 'large';
@@ -362,24 +335,16 @@ function npr_cds_to_json( $post ): bool|string {
 				$image_enc->rels = [];
 				$aspect_ratio = $value['width'] / $value['height'];
 				if ( ( $aspect_ratio > 1.7 && $aspect_ratio < 1.8 ) ) {
-					if ( !in_array( 'promo-image-wide', $new_image->rels ) ) {
-						$new_image->rels[] = 'promo-image-wide';
-					}
+					$new_image->rels[] = 'promo-image-wide';
 					$image_enc->rels[] = 'image-wide';
 				} elseif ( $aspect_ratio == 1.0 ) {
-					if ( !in_array( 'promo-image-square', $new_image->rels ) ) {
-						$new_image->rels[] = 'promo-image-square';
-					}
+					$new_image->rels[] = 'promo-image-square';
 					$image_enc->rels[] = 'image-square';
 				} elseif ( $aspect_ratio < 1.0 ) {
-					if ( !in_array( 'promo-image-vertical', $new_image->rels ) ) {
-						$new_image->rels[] = 'promo-image-vertical';
-					}
+					$new_image->rels[] = 'promo-image-vertical';
 					$image_enc->rels[] = 'image-vertical';
 				} else {
-					if ( !in_array( 'promo-image-standard', $new_image->rels ) ) {
-						$new_image->rels[] = 'promo-image-standard';
-					}
+					$new_image->rels[] = 'promo-image-standard';
 					$image_enc->rels[] = 'image-standard';
 				}
 				if ( $key == $primary_crop ) {
@@ -389,12 +354,38 @@ function npr_cds_to_json( $post ): bool|string {
 				$image_enc->type = $image->post_mime_type;
 				$image_enc->width = $value['width'];
 				$image_enc->height = $value['height'];
-
+				$image_enc->rels = array_unique( $image_enc->rels );
 				$image_asset->enclosures[] = $image_enc;
 			}
 		}
+		if ( empty( $image_asset->enclosures ) ) {
+			$image_enc = new stdClass;
+			$image_enc->href = $image_attach_url . $in_body;
+			$image_enc->rels = [ 'primary' ];
+			$image_enc->type = $image->post_mime_type;
+			if ( !empty( $image_meta ) ) {
+				$image_enc->width = $image_meta['width'];
+				$image_enc->height = $image_meta['height'];
+				$aspect_ratio = $image_meta['width'] / $image_meta['height'];
+				if ( $aspect_ratio > 1.7 && $aspect_ratio < 1.8 ) {
+					$image_enc->rels[] = 'image-wide';
+					$new_image->rels[] = 'promo-image-wide';
+				} elseif ( $aspect_ratio == 1.0 ) {
+					$image_enc->rels[] = 'image-square';
+					$new_image->rels[] = 'promo-image-square';
+				} elseif ( $aspect_ratio < 1.0 ) {
+					$image_enc->rels[] = 'image-vertical';
+					$new_image->rels[] = 'promo-image-vertical';
+				} else {
+					$image_enc->rels[] = 'image-standard';
+					$new_image->rels[] = 'promo-image-standard';
+				}
+			}
+			$image_enc->rels = array_unique( $image_enc->rels );
+			$image_asset->enclosures[] = $image_enc;
+		}
 		$story->assets->{$image_asset_id} = $image_asset;
-
+		$new_image->rels = array_unique( $new_image->rels );
 		$new_image->href = '#/assets/' . $image_asset_id;
 		$story->images[] = $new_image;
 	}
