@@ -315,42 +315,53 @@ function npr_cds_to_json( $post ): bool|string {
 		$image_asset->provider = $custom_agency;
 		$image_asset->enclosures = [];
 
-		$image_enc = new stdClass;
-		$image_enc->href = $image_attach_url . $in_body;
-		$image_enc->rels = [];
+//		$image_enc = new stdClass;
+//		$image_enc->href = $image_attach_url . $in_body;
+//		$image_enc->rels = [];
 		if ( !empty( $image_type ) ) {
-			$image_enc->rels[] = 'primary';
 			$new_image->rels = $image_type;
 		}
-
-		$image_enc->type = $image->post_mime_type;
-		if ( !empty( $image_meta ) ) {
-			$image_enc->width = $image_meta['width'];
-			$image_enc->height = $image_meta['height'];
-			$aspect_ratio = $image_meta['width'] / $image_meta['height'];
-			if ( $aspect_ratio > 1.7 && $aspect_ratio < 1.8 ) {
-				$image_enc->rels[] = 'image-wide';
-				$new_image->rels[] = 'promo-image-wide';
-			} elseif ( $aspect_ratio == 1.0 ) {
-				$image_enc->rels[] = 'image-square';
-				$new_image->rels[] = 'promo-image-square';
-			} elseif ( $aspect_ratio < 1.0 ) {
-				$image_enc->rels[] = 'image-vertical';
-				$new_image->rels[] = 'promo-image-vertical';
-			} else {
-				$image_enc->rels[] = 'image-standard';
-				$new_image->rels[] = 'promo-image-standard';
-			}
-		}
-
-		$image_asset->enclosures[] = $image_enc;
+//
+//		$image_enc->type = $image->post_mime_type;
+//		if ( !empty( $image_meta ) ) {
+//			$image_enc->width = $image_meta['width'];
+//			$image_enc->height = $image_meta['height'];
+//			$aspect_ratio = $image_meta['width'] / $image_meta['height'];
+//			if ( $aspect_ratio > 1.7 && $aspect_ratio < 1.8 ) {
+//				$image_enc->rels[] = 'image-wide';
+//				$new_image->rels[] = 'promo-image-wide';
+//			} elseif ( $aspect_ratio == 1.0 ) {
+//				$image_enc->rels[] = 'image-square';
+//				$new_image->rels[] = 'promo-image-square';
+//			} elseif ( $aspect_ratio < 1.0 ) {
+//				$image_enc->rels[] = 'image-vertical';
+//				$new_image->rels[] = 'promo-image-vertical';
+//			} else {
+//				$image_enc->rels[] = 'image-standard';
+//				$new_image->rels[] = 'promo-image-standard';
+//			}
+//		}
+//
+//		$image_asset->enclosures[] = $image_enc;
+		$image_crops = [ 'large', 'medium', 'npr-cds-wide' ];
 		if ( !empty( $image_meta['sizes'] ) ) {
+			$primary_crop = 'large';
+			if ( empty( $image_meta['sizes']['large'] ) ) {
+				if ( !empty( $image_meta['sizes']['medium'] ) ) {
+					$primary_crop = 'medium';
+				} elseif ( !empty( $image_meta['sizes']['npr-cds-wide'] ) ) {
+					$primary_crop = 'npr-cds-wide';
+				}
+			}
 			foreach ( $image_meta['sizes'] as $key => $value ) {
+				if ( !in_array( $key, $image_crops ) ) {
+					continue;
+				}
 				$image_enc = new stdClass;
 				$image_enc->href = str_replace( $image_name_parts['basename'], $value['file'], $image_attach_url ) . $in_body;
 				$image_enc->rels = [];
 				$aspect_ratio = $value['width'] / $value['height'];
-				if ( ( $aspect_ratio > 1.7 && $aspect_ratio < 1.8 ) || $key == 'npr-cds-wide' ) {
+				if ( ( $aspect_ratio > 1.7 && $aspect_ratio < 1.8 ) ) {
 					if ( !in_array( 'promo-image-wide', $new_image->rels ) ) {
 						$new_image->rels[] = 'promo-image-wide';
 					}
@@ -371,6 +382,10 @@ function npr_cds_to_json( $post ): bool|string {
 					}
 					$image_enc->rels[] = 'image-standard';
 				}
+				if ( $key == $primary_crop ) {
+					$image_enc->rels[] = 'primary';
+				}
+
 				$image_enc->type = $image->post_mime_type;
 				$image_enc->width = $value['width'];
 				$image_enc->height = $value['height'];
