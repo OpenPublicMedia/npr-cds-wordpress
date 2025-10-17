@@ -248,6 +248,13 @@ function npr_cds_to_json( $post ): bool|string {
 	$images = get_children( $args );
 	$primary_image = get_post_thumbnail_id( $post->ID );
 
+	if ( $primary_image !== false && empty( $images[ $primary_image ] ) ) {
+		$main_image = get_post( $primary_image );
+		if ( !empty( $main_image ) ) {
+			$images[ $primary_image ] = $main_image;
+		}
+	}
+
 	if ( !empty( $images ) ) {
 		$story->images = [];
 		$image_profile = new stdClass;
@@ -354,7 +361,7 @@ function npr_cds_to_json( $post ): bool|string {
 				$image_enc->type = $image->post_mime_type;
 				$image_enc->width = $value['width'];
 				$image_enc->height = $value['height'];
-				$image_enc->rels = array_unique( $image_enc->rels );
+				$image_enc->rels = array_values( array_unique( $image_enc->rels ) );
 				$image_asset->enclosures[] = $image_enc;
 			}
 		}
@@ -381,11 +388,11 @@ function npr_cds_to_json( $post ): bool|string {
 					$new_image->rels[] = 'promo-image-standard';
 				}
 			}
-			$image_enc->rels = array_unique( $image_enc->rels );
+			$image_enc->rels = array_values( array_unique( $image_enc->rels ) );
 			$image_asset->enclosures[] = $image_enc;
 		}
 		$story->assets->{$image_asset_id} = $image_asset;
-		$new_image->rels = array_unique( $new_image->rels );
+		$new_image->rels = array_values( array_unique( $new_image->rels ) );
 		$new_image->href = '#/assets/' . $image_asset_id;
 		$story->images[] = $new_image;
 	}
