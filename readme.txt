@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Version: 1.3.8
-Stable tag: 1.3.8
+Version: 1.3.7
+Stable tag: 1.3.7
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,10 +74,8 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
-= V.1.3.8 =
-* Stories submitted to the CDS can now be featured on the NPR homepage. Most the requirements for feature were included in the plugin previously, but the features require a 16:9 image, which this update addresses. This update creates a new image size which is a strict 16:9 crop, and also formats and sends more image crops to the CDS, with the full sized image as a backstop.
-
 = V.1.3.7 =
+* Stories submitted to the CDS can now be featured on the NPR homepage. Most the requirements for feature were included in the plugin previously, but the features require a 16:9 image, which this update addresses. This update creates a new image size which is a strict 16:9 crop, and also formats and sends more image crops to the CDS, with the full sized image as a backstop.
 * Implementing filters for push post type, custom title, custom body, and custom byline (h/t @justinferrell for the suggestion)
 
 = V.1.3.6.1 =
