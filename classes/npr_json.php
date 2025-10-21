@@ -285,7 +285,12 @@ function npr_cds_to_json( $post ): bool|string {
 			$custom_agency = get_post_meta( $image->ID, $custom_media_agency, true);
 		}
 
-		if ( !empty( $custom_credit ) && !empty( $custom_agency ) && $custom_credit == $custom_agency ) {
+		if (
+			!empty( $custom_credit ) &&
+			!empty( $custom_agency ) &&
+			$custom_credit == $custom_agency &&
+			( str_contains( $custom_credit, '/' ) || str_contains( $custom_credit, ',' ) )
+		) {
 			$exp_separator = '/';
 			if ( str_contains( $custom_credit, '|' ) ) {
 				$exp_separator = '|';
