@@ -285,6 +285,16 @@ function npr_cds_to_json( $post ): bool|string {
 			$custom_agency = get_post_meta( $image->ID, $custom_media_agency, true);
 		}
 
+		if ( !empty( $custom_credit ) && !empty( $custom_agency ) && $custom_credit == $custom_agency ) {
+			$exp_separator = '/';
+			if ( str_contains( $custom_credit, '|' ) ) {
+				$exp_separator = '|';
+			}
+			$parts = explode( $exp_separator, $custom_credit );
+			$custom_credit = trim( $parts[0] );
+			$custom_agency = trim( $parts[1] );
+		}
+
 		// If the image field for distribute is set and polarity then send it.
 		// All kinds of other math when polarity is negative or the field isn't set.
 		$image_type = [];
