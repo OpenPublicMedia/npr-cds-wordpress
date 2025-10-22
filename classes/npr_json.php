@@ -363,7 +363,6 @@ function npr_cds_to_json( $post ): bool|string {
 					$new_image_rels[] = 'promo-image-square';
 					$image_enc->rels[] = 'image-square';
 				} elseif ( $aspect_ratio < 1.0 ) {
-					$new_image_rels[] = 'promo-image-vertical';
 					$image_enc->rels[] = 'image-vertical';
 				} else {
 					$new_image_rels[] = 'promo-image-standard';
@@ -397,7 +396,6 @@ function npr_cds_to_json( $post ): bool|string {
 					$new_image_rels[] = 'promo-image-square';
 				} elseif ( $aspect_ratio < 1.0 ) {
 					$image_enc->rels[] = 'image-vertical';
-					$new_image_rels[] = 'promo-image-vertical';
 				} else {
 					$image_enc->rels[] = 'image-standard';
 					$new_image_rels[] = 'promo-image-standard';
@@ -411,8 +409,6 @@ function npr_cds_to_json( $post ): bool|string {
 			$new_image_rels = [ 'promo-image-wide' ];
 		} elseif ( in_array( 'promo-image-square', $new_image_rels ) ) {
 			$new_image_rels = [ 'promo-image-square' ];
-		} elseif ( in_array( 'promo-image-vertical', $new_image_rels ) ) {
-			$new_image_rels = [ 'promo-image-vertical' ];
 		} else {
 			$new_image_rels = [ 'promo-image-standard' ];
 		}
