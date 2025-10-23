@@ -59,7 +59,6 @@ define( 'NPR_CDS_PLUGIN_URL', plugin_dir_url(__FILE__) );
 define( 'NPR_CDS_PLUGIN_DIR', plugin_dir_path(__FILE__) );
 require_once( NPR_CDS_PLUGIN_DIR . 'settings.php' );
 require_once( NPR_CDS_PLUGIN_DIR . 'classes/NPR_CDS_WP.php' );
-require_once( NPR_CDS_PLUGIN_DIR . 'get_stories.php' );
 require_once( NPR_CDS_PLUGIN_DIR . 'meta_boxes.php' );
 require_once( NPR_CDS_PLUGIN_DIR . 'push_story.php' );
 
