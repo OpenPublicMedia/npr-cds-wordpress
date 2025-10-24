@@ -1089,7 +1089,7 @@ class NPR_CDS {
 				border: 1px solid #5b5b5b;
 				&[open] summary {
 					border-bottom: 1px dotted #000000;
-					padding-bottom: 0.25rem;
+					padding-bottom: 1rem;
 					&::after {
 						transform: rotate(0deg);
 					}
@@ -1123,16 +1123,35 @@ class NPR_CDS {
 						display: grid;
 						width: calc(100% - 2rem);
 						grid-template-columns: 3fr 1fr 1fr;
+						gap: 1rem;
 						align-items: center;
 						div:first-child {
 							font-weight: 700;
-							font-size: 1.25rem;
+							font-size: 1rem;
+							line-height: 1.25;
 						}
 
 						div:nth-child(n+2) {
 							font-size: 0.85rem;
 							font-style: italic;
 						}
+					}
+				}
+				.npr-grid {
+					display: grid;
+					width: calc(100% - 2rem);
+					grid-template-columns: 3fr 1fr 1fr;
+					gap: 1rem;
+					align-items: start;
+				}
+				.npr-images {
+					display: grid;
+					width: 100%;
+					grid-template-columns: 4fr 1fr;
+					gap: 1rem;
+					align-items: center;
+					img {
+						max-width: 100%;
 					}
 				}
 			}
@@ -1163,6 +1182,70 @@ class NPR_CDS {
 				$gmt_offset = get_option( 'gmt_offset' ) * 3600;
 				$publishTime = date( $date_format, strtotime( $story->publishDateTime ) + $gmt_offset );
 				$lastModified = date( $date_format, strtotime( $story->editorialLastModifiedDateTime ) + $gmt_offset );
+				$local_id = explode( '-', $story->id )[1];
+				$edit_link = admin_url( 'post.php?post=' . $local_id . '&action=edit');
+				$profiles_arr = $owners_arr = $collect_arr = $bylines_arr = $images_arr = [];
+				$primary_image = '<div class="npr-images"><div><p><strong>Primary Image:</strong><br>None</p></div></div>';
+				foreach ( $story->profiles as $profile ) {
+					$pexp = explode( '/', $profile->href );
+					$profiles_arr[] = end( $pexp );
+				}
+				foreach ( $story->owners as $owner ) {
+					$oexp = explode( '/', $owner->href );
+					$owners_arr[] = end( $oexp );
+				}
+				foreach ( $story->collections as $collect ) {
+					$cexp = explode( '/', $collect->href );
+					$collect_id = end( $cexp );
+					if ( $collect_id == '319418027' ) {
+						$collect_arr[] = 'NPR One/Homepage';
+					} elseif ( $collect_id == '500549368' ) {
+						$collect_arr[] = 'NPR One Featured';
+					}
+				}
+				foreach ( $story->bylines as $byline ) {
+					$bexp = explode( '/', $byline->href );
+					$byline_id = end( $bexp );
+					$bylines_arr[] = $story->assets->{$byline_id}->name;
+				}
+				foreach ( $story->images as $image ) {
+					if ( in_array( 'primary', $image->rels ) ) {
+						$iexp        = explode( '/', $image->href );
+						$image_id    = end( $iexp );
+						$image_asset = $story->assets->{$image_id};
+						$main_rel = $image_src = '';
+						foreach ( $image->rels as $rel ) {
+							if ( $rel !== 'primary' ) {
+								$main_rel = $rel;
+							}
+						}
+						foreach ( $image_asset->enclosures as $enclosure ) {
+							if ( in_array( 'primary', $enclosure->rels ) ) {
+								$image_src = $enclosure->href;
+							}
+						}
+
+						$primary_image = <<<EOT
+							<div class="npr-images">
+								<div>
+									<p><strong>Primary Image:</strong></p>
+									<ul>
+										<li><strong>Profile:</strong> {$main_rel}</li>
+										<li><strong>Caption:</strong> {$image_asset->caption}</li>
+										<li><strong>Credit:</strong> {$image_asset->producer} / {$image_asset->provider}</li>
+									</ul>
+								</div>
+								<div>
+									<img src="{$image_src}" loading="lazy" alt="{$image_asset->caption}">
+								</div>
+							</div>
+EOT;
+					}
+				}
+				$profiles = implode( ', ', $profiles_arr );
+				$owners = implode( ', ', $owners_arr );
+				$collections = implode( ', ', $collect_arr );
+				$bylines = implode( ', ', $bylines_arr );
 				echo <<<EOT
 				<details>
 					<summary>
@@ -1172,7 +1255,22 @@ class NPR_CDS {
 							<div>Last Modified:<br /><strong>{$publishTime}</strong></div>
 						</div>
 					</summary>
-					<p>{$story->teaser}</p>
+					<div class="npr-grid">
+						<div>
+							<p><strong>Teaser:</strong><br>{$story->teaser}</p>
+							{$primary_image}
+						</div>
+						<div>
+							<p><strong>Bylines:</strong><br>{$bylines}</p>
+							<p><strong>Collections:</strong><br>{$collections}</p>
+							<p><strong>Profiles:</strong><br>{$profiles}</p>
+						</div>
+						<div>
+							<p><strong>CDS ID:</strong><br>{$story->id}</p>
+							<p><strong>Owners:</strong><br>{$owners}</p>
+							<p><strong><a href="{$edit_link}">Edit in WordPress</a></strong></p>
+						</div>
+					</div>
 				</details>
 EOT;
 			}
