@@ -1077,10 +1077,10 @@ class NPR_CDS {
 		$api_key = NPR_CDS_WP::get_cds_token();
 		$pull_url = NPR_CDS_PULL_URL;
 		if ( !$api_key ) {
-			npr_cds_show_message( 'You do not currently have a CDS token set. <a href="' . admin_url( 'options-general.php?page=npr_cds#npr-general' ) . '">Set your CDS token here.</a>', TRUE );
+			npr_cds_show_message( 'You do not currently have a CDS token set. <a href="' . admin_url( 'admin.php?page=npr-cds-settings' ) . '">Set your CDS token here.</a>', TRUE );
 		}
 		if ( !$pull_url ) {
-			npr_cds_show_message( 'You do not currently have a CDS Pull URL set. <a href="' . admin_url( 'options-general.php?page=npr_cds#npr-general' ) . '">Set your CDS Pull URL here.</a>', TRUE );
+			npr_cds_show_message( 'You do not currently have a CDS Pull URL set. <a href="' . admin_url( 'admin.php?page=npr-cds-settings' ) . '">Set your CDS Pull URL here.</a>', TRUE );
 		} ?>
 		<style>
 			details {
@@ -1153,12 +1153,47 @@ class NPR_CDS {
 					img {
 						max-width: 100%;
 					}
+					ul {
+						list-style: disc;
+						margin-inline-start: 1rem;
+						margin-block-start: 0.25rem;
+					}
+					p {
+						margin-block-end: 0;
+					}
 				}
 			}
 		</style>
 		<div class="wrap">
 			<h1>NPR CDS: View Uploaded Stories</h1>
 		<?php
+		$offset = 0;
+		if ( !empty( $_GET['cds_offset'] ) ) {
+			$get_offset = sanitize_text_field( $_GET['cds_offset'] );
+			if ( is_numeric( $get_offset ) ) {
+				if ( $get_offset % 50 == 0 ) {
+					$offset = $get_offset;
+				} else {
+					$offset = round($get_offset / 50) * 50;
+				}
+			}
+		}
+		if ( $offset > 1950 ) {
+			$offset = 1950;
+		}
+		$next_offset = $offset + 50;
+		$prev_offset = $offset - 50;
+		echo '<p style="text-align: right;">';
+		if ( $prev_offset >= 0 ) {
+			echo '<a href="' . admin_url( 'admin.php?page=npr-cds-overview&cds_offset=' . $prev_offset  ) . '">&larr; Previous 50</a>';
+		}
+		if ( $prev_offset >= 0 && $next_offset < 2000 ) {
+			echo " | ";
+		}
+		if ( $next_offset < 2000 ) {
+			echo '<a href="' . admin_url( 'admin.php?page=npr-cds-overview&cds_offset=' . $next_offset  ) . '">Next 50 &rarr;</a>';
+		}
+		echo '</p>';
 		$api = new NPR_CDS_WP();
 
 		$service_id = get_option( 'npr_cds_org_id' );
@@ -1170,6 +1205,7 @@ class NPR_CDS {
 		$params = [
 			'sort' => 'publishDateTime:desc',
 			'limit' => 50,
+			'offset' => $offset,
 			'profileIds' => [ 'story', 'publishable', 'document', 'renderable', 'buildout' ],
 			'ownerHrefs' => implode( ',', $owners ),
 		];
@@ -1186,60 +1222,70 @@ class NPR_CDS {
 				$edit_link = admin_url( 'post.php?post=' . $local_id . '&action=edit');
 				$profiles_arr = $owners_arr = $collect_arr = $bylines_arr = $images_arr = [];
 				$primary_image = '<div class="npr-images"><div><p><strong>Primary Image:</strong><br>None</p></div></div>';
-				foreach ( $story->profiles as $profile ) {
-					$pexp = explode( '/', $profile->href );
-					$profiles_arr[] = end( $pexp );
-				}
-				foreach ( $story->owners as $owner ) {
-					$oexp = explode( '/', $owner->href );
-					$owners_arr[] = end( $oexp );
-				}
-				foreach ( $story->collections as $collect ) {
-					$cexp = explode( '/', $collect->href );
-					$collect_id = end( $cexp );
-					if ( $collect_id == '319418027' ) {
-						$collect_arr[] = 'NPR One/Homepage';
-					} elseif ( $collect_id == '500549368' ) {
-						$collect_arr[] = 'NPR One Featured';
+				if ( !empty( $story->profiles ) ) {
+					foreach ( $story->profiles as $profile ) {
+						$pexp           = explode( '/', $profile->href );
+						$profiles_arr[] = end( $pexp );
 					}
 				}
-				foreach ( $story->bylines as $byline ) {
-					$bexp = explode( '/', $byline->href );
-					$byline_id = end( $bexp );
-					$bylines_arr[] = $story->assets->{$byline_id}->name;
+				if ( !empty( $story->owners ) ) {
+					foreach ( $story->owners as $owner ) {
+						$oexp         = explode( '/', $owner->href );
+						$owners_arr[] = end( $oexp );
+					}
 				}
-				foreach ( $story->images as $image ) {
-					if ( in_array( 'primary', $image->rels ) ) {
-						$iexp        = explode( '/', $image->href );
-						$image_id    = end( $iexp );
-						$image_asset = $story->assets->{$image_id};
-						$main_rel = $image_src = '';
-						foreach ( $image->rels as $rel ) {
-							if ( $rel !== 'primary' ) {
-								$main_rel = $rel;
-							}
+				if ( !empty( $story->collections ) ) {
+					foreach ( $story->collections as $collect ) {
+						$cexp       = explode( '/', $collect->href );
+						$collect_id = end( $cexp );
+						if ( $collect_id == '319418027' ) {
+							$collect_arr[] = 'NPR One/Homepage';
+						} elseif ( $collect_id == '500549368' ) {
+							$collect_arr[] = 'NPR One Featured';
 						}
-						foreach ( $image_asset->enclosures as $enclosure ) {
-							if ( in_array( 'primary', $enclosure->rels ) ) {
-								$image_src = $enclosure->href;
+					}
+				}
+				if ( !empty( $story->bylines ) ) {
+					foreach ( $story->bylines as $byline ) {
+						$bexp          = explode( '/', $byline->href );
+						$byline_id     = end( $bexp );
+						$bylines_arr[] = $story->assets->{$byline_id}->name;
+					}
+				}
+				if ( !empty( $story->images ) ) {
+					foreach ( $story->images as $image ) {
+						if ( !empty( $image->rels ) && in_array( 'primary', $image->rels ) ) {
+							$iexp        = explode( '/', $image->href );
+							$image_id    = end( $iexp );
+							$image_asset = $story->assets->{$image_id};
+							$main_rel    = $image_src = '';
+							foreach ( $image->rels as $rel ) {
+								if ( $rel !== 'primary' ) {
+									$main_rel = $rel;
+								}
 							}
-						}
+							foreach ( $image_asset->enclosures as $enclosure ) {
+								if ( in_array( 'primary', $enclosure->rels ) ) {
+									$image_src = $enclosure->href;
+								}
+							}
 
-						$primary_image = <<<EOT
-							<div class="npr-images">
-								<div>
-									<p><strong>Primary Image:</strong></p>
-									<ul>
-										<li><strong>Profile:</strong> {$main_rel}</li>
-										<li><strong>Caption:</strong> {$image_asset->caption}</li>
-										<li><strong>Credit:</strong> {$image_asset->producer} / {$image_asset->provider}</li>
-									</ul>
+							$primary_image = <<<EOT
+								<div class="npr-images">
+									<div>
+										<p><strong>Primary Image:</strong></p>
+										<ul>
+											<li><strong>Profile:</strong> {$main_rel}</li>
+											<li><strong>Caption:</strong> {$image_asset->caption}</li>
+											<li><strong>Credit:</strong> {$image_asset->producer} / {$image_asset->provider}</li>
+										</ul>
+									</div>
+									<div>
+										<img src="{$image_src}" loading="lazy" alt="{$image_asset->caption}">
+									</div>
 								</div>
-								<div>
-									<img src="{$image_src}" loading="lazy" alt="{$image_asset->caption}">
-								</div>
-							</div>
 EOT;
+						}
 					}
 				}
 				$profiles = implode( ', ', $profiles_arr );
@@ -1252,7 +1298,7 @@ EOT;
 						<div class="cds-summary">
 							<div>{$story->title}</div>
 							<div>Publish:<br /><strong>{$publishTime}</strong></div>
-							<div>Last Modified:<br /><strong>{$publishTime}</strong></div>
+							<div>Last Modified:<br /><strong>{$lastModified}</strong></div>
 						</div>
 					</summary>
 					<div class="npr-grid">
@@ -1279,6 +1325,17 @@ EOT;
 				npr_cds_show_message( 'Error retrieving stories<br> CDS Message = ' . $api->message, TRUE );
 			}
 		}
+		echo '<p style="text-align: right;">';
+		if ( $prev_offset >= 0 ) {
+			echo '<a href="' . admin_url( 'admin.php?page=npr-cds-overview&cds_offset=' . $prev_offset  ) . '">&larr; Previous 50</a>';
+		}
+		if ( $prev_offset >= 0 && $next_offset < 2000 ) {
+			echo " | ";
+		}
+		if ( $next_offset < 2000 ) {
+			echo '<a href="' . admin_url( 'admin.php?page=npr-cds-overview&cds_offset=' . $next_offset  ) . '">Next 50 &rarr;</a>';
+		}
+		echo '</p>';
 		echo "</div>";
 	}
 	public function add_new_story_columns( $cols ) {
