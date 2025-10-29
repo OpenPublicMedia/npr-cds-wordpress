@@ -1087,79 +1087,99 @@ class NPR_CDS {
 				padding: 0.75rem;
 				background-color: white;
 				border: 1px solid #5b5b5b;
-				&[open] summary {
-					border-bottom: 1px dotted #000000;
-					padding-bottom: 1rem;
-					&::after {
-						transform: rotate(0deg);
-					}
-				}
-				+ details {
-					margin-top: 0.5rem;
-				}
-				summary {
-					position: relative;
-					anchor-name: --summary;
-					&::marker {
-						content: "";
-					}
-					&::before,
-					&::after {
-						content: "";
-						border-block-start: 3px solid #237bbd;
-						height: 0;
-						width: 1rem;
-						inset-block-start: 50%;
-						inset-inline-end: 0;
-						position: absolute;
-						position-anchor: --summary;
-						position-area: top end;
-					}
-					&::after {
-						transform: rotate(90deg);
-						transform-origin: 50%;
-					}
-					.cds-summary {
-						display: grid;
-						width: calc(100% - 2rem);
-						grid-template-columns: 3fr 1fr 1fr;
-						gap: 1rem;
-						align-items: center;
-						div:first-child {
-							font-weight: 700;
-							font-size: 1rem;
-							line-height: 1.25;
-						}
-
-						div:nth-child(n+2) {
-							font-size: 0.85rem;
-							font-style: italic;
-						}
-					}
-				}
-				.npr-grid {
-					display: grid;
-					width: calc(100% - 2rem);
-					grid-template-columns: 3fr 1fr 1fr;
-					gap: 1rem;
-					align-items: start;
-				}
-				.npr-images {
-					display: grid;
-					width: 100%;
-					grid-template-columns: 4fr 1fr;
-					gap: 1rem;
-					align-items: center;
-					img {
-						max-width: 100%;
+				&.npr-homepage-eligible {
+					summary {
+						font-weight: bolder;
 					}
 					ul {
 						list-style: disc;
 						margin-inline-start: 1rem;
-						margin-block-start: 0.25rem;
 					}
-					p {
-						margin-block-end: 0;
+				}
+				&.npr-upload {
+					&[open] > summary {
+						border-bottom: 1px dotted #000000;
+						padding-bottom: 1rem;
+						&::after {
+							transform: rotate(0deg);
+						}
+					}
+					+ details {
+						margin-top: 0.5rem;
+					}
+					> summary {
+						position: relative;
+						anchor-name: --summary;
+						&::marker {
+							content: "";
+						}
+						&::before,
+						&::after {
+							content: "";
+							border-block-start: 3px solid #F15B1C;
+							height: 0;
+							width: 1rem;
+							inset-block-start: 50%;
+							inset-inline-end: 0;
+							position: absolute;
+							position-anchor: --summary;
+							position-area: top end;
+						}
+						&::after {
+							transform: rotate(90deg);
+							transform-origin: 50%;
+						}
+						.cds-summary {
+							display: grid;
+							width: calc(100% - 2rem);
+							grid-template-columns: 3fr 1fr 1fr;
+							gap: 1rem;
+							align-items: center;
+							div:first-child {
+								font-weight: 700;
+								font-size: 1rem;
+								line-height: 1.25;
+							}
+							div:nth-child(n+2) {
+								font-size: 0.85rem;
+								font-style: italic;
+							}
+						}
+					}
+					.npr-grid {
+						display: grid;
+						width: calc(100% - 2rem);
+						grid-template-columns: 3fr 1fr 1fr;
+						gap: 1rem;
+						align-items: start;
+					}
+					.npr-images {
+						display: grid;
+						width: 100%;
+						grid-template-columns: 4fr 1fr;
+						gap: 1rem;
+						align-items: center;
+						img {
+							max-width: 100%;
+						}
+						ul {
+							list-style: disc;
+							margin-inline-start: 1rem;
+							margin-block-start: 0.25rem;
+						}
+						p {
+							margin-block-end: 0;
+						}
+					}
+				}
+			}
+			.npr-homepage {
+				background-color: #4C85C5;
+				padding: 0.5rem;
+				p {
+					margin-block-start: 0;
+					&.homepage-eligible {
+						color: white;
 					}
 				}
 			}
@@ -1214,9 +1234,23 @@ class NPR_CDS {
 
 		if ( empty( $api->message ) ) {
 			foreach ( $api->stories as $story ) {
+				$homepage_eligible = [
+					'overall' => 'No',
+					'collection' => 'No',
+					'publish-time' => 'No',
+					'image-wide-primary' => 'No',
+					'image-producer-credit' => 'No',
+					'image-provider-credit' => 'No',
+					'teaser' => 'No'
+				];
 				$date_format = get_option( 'date_format' );
 				$gmt_offset = get_option( 'gmt_offset' ) * 3600;
-				$publishTime = date( $date_format, strtotime( $story->publishDateTime ) + $gmt_offset );
+				$pubTimestamp = strtotime( $story->publishDateTime ) + $gmt_offset;
+				$now = time() + $gmt_offset;
+				if ( $now - $pubTimestamp < 259200 ) {
+					$homepage_eligible['publish-time'] = 'Yes';
+				}
+				$publishTime = date( $date_format, $pubTimestamp );
 				$lastModified = date( $date_format, strtotime( $story->editorialLastModifiedDateTime ) + $gmt_offset );
 				$local_id = explode( '-', $story->id )[1];
 				$edit_link = admin_url( 'post.php?post=' . $local_id . '&action=edit');
@@ -1240,6 +1274,7 @@ class NPR_CDS {
 						$collect_id = end( $cexp );
 						if ( $collect_id == '319418027' ) {
 							$collect_arr[] = 'NPR One/Homepage';
+							$homepage_eligible['collection'] = 'Yes';
 						} elseif ( $collect_id == '500549368' ) {
 							$collect_arr[] = 'NPR One Featured';
 						}
@@ -1262,12 +1297,21 @@ class NPR_CDS {
 							foreach ( $image->rels as $rel ) {
 								if ( $rel !== 'primary' ) {
 									$main_rel = $rel;
+									if ( $main_rel == 'promo-image-wide' ) {
+										$homepage_eligible['image-wide-primary'] = 'Yes';
+									}
 								}
 							}
 							foreach ( $image_asset->enclosures as $enclosure ) {
 								if ( in_array( 'primary', $enclosure->rels ) ) {
 									$image_src = $enclosure->href;
 								}
+							}
+							if ( !empty( $image_asset->producer ) ) {
+								$homepage_eligible['image-producer-credit'] = 'Yes';
+							}
+							if ( !empty( $image_asset->provider ) ) {
+								$homepage_eligible['image-provider-credit'] = 'Yes';
 							}
 
 							$primary_image = <<<EOT
@@ -1288,12 +1332,39 @@ EOT;
 						}
 					}
 				}
+				if ( !empty( $story->teaser ) && ( !str_contains( $story->teaser, '>' ) || !str_contains( $story->teaser, '<' ) ) ) {
+					$homepage_eligible['teaser'] = 'Yes';
+				}
+				if (
+					$homepage_eligible['collection'] == 'Yes' &&
+					$homepage_eligible['publish-time'] == 'Yes' &&
+					$homepage_eligible['image-wide-primary'] == 'Yes' &&
+					$homepage_eligible['image-producer-credit'] == 'Yes' &&
+					$homepage_eligible['image-provider-credit'] == 'Yes' &&
+					$homepage_eligible['teaser'] == 'Yes'
+				) {
+					$homepage_eligible['overall'] = 'Yes';
+				}
 				$profiles = implode( ', ', $profiles_arr );
 				$owners = implode( ', ', $owners_arr );
 				$collections = implode( ', ', $collect_arr );
 				$bylines = implode( ', ', $bylines_arr );
+				$homepage = <<<EOT
+					<details class="npr-homepage-eligible">
+						<summary>Why?</summary>
+						<p>Your story...</p>
+						<ul>
+							<li>is in the NPR One collection? <strong>{$homepage_eligible['collection']}</strong></li>
+							<li>was published < 72 hours ago? <strong>{$homepage_eligible['publish-time']}</strong></li>
+							<li>has a teaser/description with no formatting? <strong>{$homepage_eligible['teaser']}</strong></li>
+							<li>has a wide primary image? <strong>{$homepage_eligible['image-wide-primary']}</strong></li>
+							<li>has an image producer/source? <strong>{$homepage_eligible['image-provider-credit']}</strong></li>
+							<li>has an image provider/credit? <strong>{$homepage_eligible['image-producer-credit']}</strong></li>
+						</ul>
+					</details>
+EOT;
 				echo <<<EOT
-				<details>
+				<details class="npr-upload">
 					<summary>
 						<div class="cds-summary">
 							<div>{$story->title}</div>
@@ -1308,13 +1379,17 @@ EOT;
 						</div>
 						<div>
 							<p><strong>Bylines:</strong><br>{$bylines}</p>
+							<p><strong>Owners:</strong><br>{$owners}</p>
 							<p><strong>Collections:</strong><br>{$collections}</p>
 							<p><strong>Profiles:</strong><br>{$profiles}</p>
 						</div>
 						<div>
 							<p><strong>CDS ID:</strong><br>{$story->id}</p>
-							<p><strong>Owners:</strong><br>{$owners}</p>
 							<p><strong><a href="{$edit_link}">Edit in WordPress</a></strong></p>
+							<div class="npr-homepage">
+								<p class="homepage-eligible">NPR Homepage Eligible: <strong>{$homepage_eligible['overall']}</strong></p>
+								{$homepage}
+							</div>
 						</div>
 					</div>
 				</details>
