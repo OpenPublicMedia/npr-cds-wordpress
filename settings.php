@@ -1132,13 +1132,20 @@ class NPR_CDS {
 						.cds-summary {
 							display: grid;
 							width: calc(100% - 2rem);
-							grid-template-columns: 3fr 1fr 1fr;
 							gap: 1rem;
 							align-items: center;
+							grid-template-columns: 1fr 1fr;
+							@media (width >= 800px) {
+								grid-template-columns: 3fr 1fr 1fr;
+							}
 							div:first-child {
 								font-weight: 700;
 								font-size: 1rem;
 								line-height: 1.25;
+								grid-column-end: span 2;
+								@media (width >= 800px) {
+									grid-column-end: span 1;
+								}
 							}
 							div:nth-child(n+2) {
 								font-size: 0.85rem;
@@ -1149,9 +1156,18 @@ class NPR_CDS {
 					.npr-grid {
 						display: grid;
 						width: calc(100% - 2rem);
-						grid-template-columns: 3fr 1fr 1fr;
 						gap: 1rem;
 						align-items: start;
+						grid-template-columns: 1fr 1fr;
+						div:first-child {
+							grid-column-end: span 2;
+						}
+						@media (width >= 800px) {
+							grid-template-columns: 3fr 1fr 1fr;
+							div:first-child {
+								grid-column-end: span 1;
+							}
+						}
 					}
 					.npr-images {
 						display: grid;
@@ -1368,8 +1384,8 @@ EOT;
 					<summary>
 						<div class="cds-summary">
 							<div>{$story->title}</div>
-							<div>Publish:<br /><strong>{$publishTime}</strong></div>
-							<div>Last Modified:<br /><strong>{$lastModified}</strong></div>
+							<div>Published:<br><strong>{$publishTime}</strong></div>
+							<div>NPR Homepage Eligible:<br><strong>{$homepage_eligible['overall']}</strong></div>
 						</div>
 					</summary>
 					<div class="npr-grid">
@@ -1385,6 +1401,7 @@ EOT;
 						</div>
 						<div>
 							<p><strong>CDS ID:</strong><br>{$story->id}</p>
+							<p>Last Modified Date:<br><strong>{$lastModified}</strong></p>
 							<p><strong><a href="{$edit_link}">Edit in WordPress</a></strong></p>
 							<div class="npr-homepage">
 								<p class="homepage-eligible">NPR Homepage Eligible: <strong>{$homepage_eligible['overall']}</strong></p>
