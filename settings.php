@@ -84,6 +84,14 @@ class NPR_CDS {
 			'npr-cds-push-mapping',
 			[ $this, 'push_mapping' ]
 		);
+		add_submenu_page(
+			'edit.php' . ( $post_type !== 'post' ? '?post_type=' . $post_type : '' ),
+			'Get NPR Stories',
+			'Get NPR Stories',
+			$required_capability,
+			'get-npr-stories',
+			[ $this, 'get_stories' ]
+		);
 	}
 	public function general_settings(): void { ?>
 		<style>
