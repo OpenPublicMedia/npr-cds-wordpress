@@ -315,8 +315,11 @@ class NPR_CDS {
 		add_settings_field( 'npr_cds_push_post_type', 'NPR Push Post Type', [ $this, 'push_post_type_callback' ], 'npr_cds', 'npr_cds_theme_settings' );
 		register_setting( 'npr_cds', 'npr_cds_push_post_type' );
 
-		add_settings_field( 'npr_cds_push_default', 'NPR Push to CDS Default', [ $this, 'push_default_callback' ], 'npr_cds', 'npr_cds_theme_settings' );
+		add_settings_field( 'npr_cds_push_default', 'Push to CDS Default', [ $this, 'push_default_callback' ], 'npr_cds', 'npr_cds_theme_settings' );
 		register_setting( 'npr_cds', 'npr_cds_push_default' );
+
+		add_settings_field( 'npr_cds_push_one_homepage_default', 'Include for NPR One/ Homepage Default', [ $this, 'push_one_homepage_default_callback' ], 'npr_cds', 'npr_cds_theme_settings' );
+		register_setting( 'npr_cds', 'npr_cds_push_one_homepage_default' );
 
 		add_settings_field( 'npr_cds_import_tags', 'Import Tags from CDS?', [ $this, 'import_tags_callback' ], 'npr_cds', 'npr_cds_theme_settings' );
 		register_setting( 'npr_cds', 'npr_cds_import_tags' );
@@ -463,6 +466,13 @@ class NPR_CDS {
 		                    '</select>';
 		echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>When creating a new post in your NPR Push Post Type, do you want the "Push to NPR CDS" box to be checked by default or not?</em></p>' );
 	}
+	public function push_one_homepage_default_callback(): void {
+		$push_default = get_option( 'npr_cds_push_one_homepage_default', '0' );
+		$check_box_string = '<select id="npr_cds_push_one_homepage_default" name="npr_cds_push_one_homepage_default"><option value="0"' . ( $push_default === '0' ? ' selected' : '' ) . '>Not Checked</option>' .
+		                    '<option value="1"' . ( $push_default === '1' ? ' selected' : '' ) . '>Checked</option>' .
+		                    '</select>';
+		echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>When creating a new post in your NPR Push Post Type, do you want the "Include for NPR One and NPR Homepage" box to be checked by default or not?</em></p>' );
+	}
 	public function import_tags_callback(): void {
 		$import_tags_default = get_option( 'npr_cds_import_tags', '1' );
 		$check_box_string = '<select id="npr_cds_import_tags" name="npr_cds_import_tags"><option value="1"' . ( $import_tags_default === '1' ? ' selected' : '' ) . '>Import</option>' .
@@ -475,7 +485,7 @@ class NPR_CDS {
 		$check_box_string = '<select id="npr_cds_display_attribution" name="npr_cds_display_attribution"><option value="0"' . ( $attribution_default === '0' ? ' selected' : '' ) . '>Do Not Append</option>' .
 		                    '<option value="1"' . ( $attribution_default === '1' ? ' selected' : '' ) . '>Append</option>' .
 		                    '</select>';
-		echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>Do you want to append an attribution message to the bottom of imported articles? (e.g. "Copyright &copy; 2024 NPR")</em></p>' );
+		echo npr_cds_esc_html( '<p>' . $check_box_string . '</p><p><em>Do you want to append an attribution message to the bottom of imported articles? (e.g. "Copyright &copy; ' . date( 'Y' ) . ' NPR")</em></p>' );
 	}
 	public function skip_promo_cards_callback(): void {
 		$skip_promos = get_option( 'npr_cds_skip_promo_cards' );
@@ -1094,6 +1104,11 @@ class NPR_CDS {
 					ul {
 						list-style: disc;
 						margin-inline-start: 1rem;
+						li.homepage-No {
+							border: 1px solid #F15B1C;
+							padding: 0.25rem;
+							background-color: #F15B1C25;
+						}
 					}
 				}
 				&.npr-upload {
@@ -1370,12 +1385,12 @@ EOT;
 						<summary>Why?</summary>
 						<p>Your story...</p>
 						<ul>
-							<li>is in the NPR One collection? <strong>{$homepage_eligible['collection']}</strong></li>
-							<li>was published < 72 hours ago? <strong>{$homepage_eligible['publish-time']}</strong></li>
-							<li>has a teaser/description with no formatting? <strong>{$homepage_eligible['teaser']}</strong></li>
-							<li>has a wide primary image? <strong>{$homepage_eligible['image-wide-primary']}</strong></li>
-							<li>has an image producer/source? <strong>{$homepage_eligible['image-provider-credit']}</strong></li>
-							<li>has an image provider/credit? <strong>{$homepage_eligible['image-producer-credit']}</strong></li>
+							<li class="homepage-{$homepage_eligible['collection']}">is in the NPR One collection? <strong>{$homepage_eligible['collection']}</strong></li>
+							<li class="homepage-{$homepage_eligible['publish-time']}">was published < 72 hours ago? <strong>{$homepage_eligible['publish-time']}</strong></li>
+							<li class="homepage-{$homepage_eligible['teaser']}">has a teaser/description with no formatting? <strong>{$homepage_eligible['teaser']}</strong></li>
+							<li class="homepage-{$homepage_eligible['image-wide-primary']}">has a wide primary image? <strong>{$homepage_eligible['image-wide-primary']}</strong></li>
+							<li class="homepage-{$homepage_eligible['image-producer-credit']}">has an image producer/source? <strong>{$homepage_eligible['image-producer-credit']}</strong></li>
+							<li class="homepage-{$homepage_eligible['image-provider-credit']}">has an image provider/credit? <strong>{$homepage_eligible['image-provider-credit']}</strong></li>
 						</ul>
 					</details>
 EOT;
