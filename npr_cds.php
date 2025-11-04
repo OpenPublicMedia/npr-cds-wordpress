@@ -510,7 +510,7 @@ function npr_cds_filter_yoast_canonical( $canonical ) {
 add_filter( 'wpseo_canonical', 'npr_cds_filter_yoast_canonical' );
 
 function npr_cds_get_push_post_type( $post = null ): string {
-	$option = get_option( 'npr_cds_post_type', 'post' );
+	$option = get_option( 'npr_cds_push_post_type', 'post' );
 	if ( has_filter( 'npr_cds_push_post_type_filter' ) ) {
 		$option = apply_filters( 'npr_cds_push_post_type_filter', $option, $post );
 	}
