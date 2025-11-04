@@ -5,10 +5,10 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Contributors: jwcounts, tamw-wnet, bdivver
 - Original developers: NPRDS, INN Labs
 - Requires at least: 4.0
-- Tested up to: 6.7
+- Tested up to: 6.8.3
 - Requires PHP: 8.0
-- Version: 1.3.7
-- Stable tag: 1.3.7
+- Version: 1.4
+- Stable tag: 1.4
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -32,7 +32,7 @@ The WordPress plugin was originally developed as an Open Source plugin by NPR an
 
 1. Upload the plugin files to the `/wp-content/plugins/plugin-name` directory, or install the plugin through the WordPress plugins screen directly.
 2. Activate the plugin through the 'Plugins' screen in WordPress
-3. Use the **Settings -> NPR CDS** screen to configure the plugin. Begin by entering your CDS token, then add your Push URL and Org ID.
+3. Use the **NPR CDS -> Main Settings** screen to configure the plugin. Begin by entering your CDS token, then add your Push URL and Org ID.
 
 ## Frequently Asked Questions
 
@@ -74,9 +74,17 @@ NPR Stories having been retrieved
 
 ![NPR Stories having been retrieved](docs/assets/img/npr-stories.png.webp)
 
+Viewing Stories Uploaded to the CDS
+
+![Viewing Stories Uploaded to the CDS](docs/assets/img/cds-uploaded-stories.png.webp)
+
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.4
+* Consolidated all of the admin dashboard pages into a unified menu
+* Added a dashboard to view stories uploaded to the CDS. Contains general publishing information, as well as info on why or why not the story is eligible for the NPR homepage
+
 ### V.1.3.7
 * Stories submitted to the CDS can now be featured on the NPR homepage. Most the requirements for feature were included in the plugin previously, but the features require a 16:9 image, which this update addresses. This update creates a new image size which is a strict 16:9 crop, and also formats and sends more image crops to the CDS, with the full sized image as a backstop.
 * Implementing filters for push post type, custom title, custom body, and custom byline (h/t @justinferrell for the suggestion)

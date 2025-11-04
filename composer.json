@@ -5,7 +5,7 @@
 	"type"       : "wordpress-plugin",
 	"license"    : "GPL-2.0+",
 	"dist": {
-		"url": "https://github.com/OpenPublicMedia/npr-cds-wordpress/archive/refs/tags/v1.3.7.zip",
+		"url": "https://github.com/OpenPublicMedia/npr-cds-wordpress/archive/refs/tags/v1.4.zip",
 		"type": "zip"
 	},
 	"authors": [

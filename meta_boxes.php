@@ -20,7 +20,8 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 	wp_enqueue_script( 'npr_cds_publish_meta_box_script' );
 	wp_nonce_field( 'npr_cds-' . $post->ID, 'npr_cds_send_nonce' );
 	$npr_id = get_post_meta( $post->ID, 'npr_story_id', true );
-	$push_default = get_option( 'npr_cds_push_default', '1' ); ?>
+	$push_default = get_option( 'npr_cds_push_default', '1' );
+	$push_npr_homepage_default = get_option( 'npr_cds_push_one_homepage_default', '0' ); ?>
 	<div id="npr-cds-publish-actions">
 <?php
 	if ( !empty( $npr_id ) ) {
@@ -29,7 +30,7 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 		<ul>
 		<?php
 			// send to the npr api
-			// The meta name here is '_send_to_nprone' for backwards compatibility with plugin versions 1.6 and prior
+			// The meta name here is '_send_to_nprone' for backwards compatibility with old plugin
 			$nprapi = get_post_meta( $post->ID, '_send_to_nprone', true ); // 0 or 1
 			if ( empty( $npr_id ) && $push_default === '0' ) {
 				$nprapi = '0';
@@ -37,8 +38,16 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 				if ( '0' !== $nprapi && '1' !== $nprapi ) {
 					$nprapi = $push_default;
 				}
-			}// defaults to checked; unset on new posts
+			} // defaults to checked; unset on new posts
 
+			$push_homepage = get_post_meta( $post->ID, '_send_to_one', true ); // 0 or 1
+			if ( empty( $npr_id ) && $push_npr_homepage_default === '0' ) {
+				$push_homepage = '0';
+			} else {
+				if ( '0' !== $push_homepage && '1' !== $push_homepage ) {
+					$push_homepage = $push_npr_homepage_default;
+				}
+			}
 			// this list item contains all other list items, because their enabled/disabled depends on this checkbox
 			printf(
 				'<li><label><input value="1" type="checkbox" name="send_to_cds" id="send_to_cds" %2$s/> %1$s</label></li>',
@@ -50,7 +59,7 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 			printf(
 				'<li><label><input value="1" type="checkbox" name="_send_to_one" id="_send_to_one" %2$s/> %1$s</label></li>',
 				esc_html__( 'Include for NPR One and NPR homepage', 'npr-content-distribution-service' ),
-				checked( get_post_meta( $post->ID, '_send_to_one', true ), '1', false )
+				checked( $push_homepage, '1', false )
 			);
 			printf(
 				'<li><label><input value="1" type="checkbox" name="_nprone_featured" id="_nprone_featured" %2$s/> %1$s</label></li>',
