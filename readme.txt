@@ -77,6 +77,7 @@ NPR Stories having been retrieved
 = V.1.4 =
 * Consolidated all of the admin dashboard pages into a unified menu
 * Added a dashboard to view stories uploaded to the CDS. Contains general publishing information, as well as info on why or why not the story is eligible for the NPR homepage
+* Added a setting in `NPR CDS > Main Settings` to set the default state of the 'Include for NPR One/NPR Homepage' checkbox (defaults to unchecked)
 
 = V.1.3.7 =
 * Stories submitted to the CDS can now be featured on the NPR homepage. Most the requirements for feature were included in the plugin previously, but the features require a 16:9 image, which this update addresses. This update creates a new image size which is a strict 16:9 crop, and also formats and sends more image crops to the CDS, with the full sized image as a backstop.
