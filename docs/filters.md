@@ -108,3 +108,12 @@ Aside from the settings presented inside the WordPress dashboard, there are also
   * `$option (string)`: the name of the current metadata field
   * `$post (WP_Post)`: the WordPress Post object that is being pushed to the CDS
 * **Return**: `$option`
+
+$bylines = apply_filters( 'npr_cds_bylines_filter', $bylines, $post->ID );
+
+## `npr_cds_bylines_filter`
+* **Function**: Allow sites one last stop for modifying their bylines before converting them to the CDS format
+* **Arguments**
+	* `$bylines (array)`: an array of user or display names for use in generating the bylines for the CDS
+	* `$id`: the ID of the Post that is being pushed to the CDS
+* **Return**: `$bylines`
