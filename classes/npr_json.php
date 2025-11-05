@@ -157,6 +157,10 @@ function npr_cds_to_json( $post ): bool|string {
 	} else {
 		npr_cds_error_log( 'can not find get_coauthors' );
 	}
+
+	// last chance to customize bylines before converting to CDS format
+	$bylines = apply_filters( 'npr_cds_bylines_filter', $bylines, $post->ID );
+
 	if ( empty( $bylines ) ) {
 		$bylines[] = get_the_author_meta( 'display_name', $post->post_author );
 	}
