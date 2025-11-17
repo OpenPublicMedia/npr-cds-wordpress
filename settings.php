@@ -1094,11 +1094,19 @@ class NPR_CDS {
 	public function view_uploads(): void {
 		$api_key = NPR_CDS_WP::get_cds_token();
 		$pull_url = NPR_CDS_PULL_URL;
+		$service_id = get_option( 'npr_cds_org_id' );
+		$valid = true;
 		if ( !$api_key ) {
 			npr_cds_show_message( 'You do not currently have a CDS token set. <a href="' . admin_url( 'admin.php?page=npr-cds-settings' ) . '">Set your CDS token here.</a>', TRUE );
+			$valid = false;
 		}
 		if ( !$pull_url ) {
 			npr_cds_show_message( 'You do not currently have a CDS Pull URL set. <a href="' . admin_url( 'admin.php?page=npr-cds-settings' ) . '">Set your CDS Pull URL here.</a>', TRUE );
+			$valid = false;
+		}
+		if ( empty( $service_id ) ) {
+			npr_cds_show_message( 'You do not currently have an organization ID set. <a href="' . admin_url( 'admin.php?page=npr-cds-settings' ) . '">Set your organization ID here.</a>', TRUE );
+			$valid = false;
 		} ?>
 		<style>
 			details {
@@ -1226,6 +1234,10 @@ class NPR_CDS {
 		<div class="wrap">
 			<h1>NPR CDS: View Uploaded Stories</h1>
 		<?php
+		if ( !$valid ) {
+			echo "</div>";
+			return;
+		}
 		$offset = 0;
 		if ( !empty( $_GET['cds_offset'] ) ) {
 			$get_offset = sanitize_text_field( $_GET['cds_offset'] );
@@ -1254,8 +1266,6 @@ class NPR_CDS {
 		}
 		echo '</p>';
 		$api = new NPR_CDS_WP();
-
-		$service_id = get_option( 'npr_cds_org_id' );
 		$service_ids = explode( ',', $service_id );
 		$owners = [];
 		foreach( $service_ids as $oi ) {

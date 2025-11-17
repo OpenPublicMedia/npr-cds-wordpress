@@ -41,6 +41,11 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 		return;
 	}
 
+	$service_id = get_option( 'npr_cds_org_id' );
+	if ( empty( $service_id ) ) {
+		npr_cds_error_log( 'You do not currently have an organization ID set. Please check your settings.' );
+		return;
+	}
 
 	/*
 	 * If there's a custom mapping for the post content,

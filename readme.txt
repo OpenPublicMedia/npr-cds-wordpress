@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.8.3
 Requires PHP: 8.0
-Version: 1.4
-Stable tag: 1.4
+Version: 1.4.1
+Stable tag: 1.4.1
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,10 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V.1.4.1 =
+* Uploaded stories dashboard no longer displays anything if you don't have a valid CDS token, a valid pull URL, or an organization ID
+* Added a check to `npr_cds_push()` to make sure that an organization ID is present before trying to push a story
+
 = V.1.4 =
 * Consolidated all of the admin dashboard pages into a unified menu
 * Added a dashboard to view stories uploaded to the CDS. Contains general publishing information, as well as info on why or why not the story is eligible for the NPR homepage

@@ -81,6 +81,10 @@ Viewing Stories Uploaded to the CDS
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.4.1
+* Uploaded stories dashboard no longer displays anything if you don't have a valid CDS token, a valid pull URL, or an organization ID
+* Added a check to `npr_cds_push()` to make sure that an organization ID is present before trying to push a story
+
 ### V.1.4
 * Consolidated all of the admin dashboard pages into a unified menu
 * Added a dashboard to view stories uploaded to the CDS. Contains general publishing information, as well as info on why or why not the story is eligible for the NPR homepage
