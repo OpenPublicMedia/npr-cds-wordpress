@@ -290,14 +290,17 @@ function npr_cds_to_json( $post ): bool|string {
 		}
 
 		if (
-			!empty( $custom_credit ) &&
-			!empty( $custom_agency ) &&
-			$custom_credit == $custom_agency &&
-			( str_contains( $custom_credit, '/' ) || str_contains( $custom_credit, ',' ) )
+			(
+				( !empty( $custom_credit ) && empty( $custom_agency ) ) ||
+				( !empty( $custom_credit ) && !empty( $custom_agency ) && $custom_credit == $custom_agency )
+			) &&
+			( str_contains( $custom_credit, '/' ) || str_contains( $custom_credit, '|' ) || str_contains( $custom_credit, ',' ) )
 		) {
 			$exp_separator = '/';
 			if ( str_contains( $custom_credit, '|' ) ) {
 				$exp_separator = '|';
+			} elseif ( str_contains( $custom_credit, ',' ) ) {
+				$exp_separator = ',';
 			}
 			$parts = explode( $exp_separator, $custom_credit );
 			$custom_credit = trim( $parts[0] );

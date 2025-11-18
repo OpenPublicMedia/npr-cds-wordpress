@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.8.3
 - Requires PHP: 8.0
-- Version: 1.4
-- Stable tag: 1.4
+- Version: 1.4.2
+- Stable tag: 1.4.2
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -81,6 +81,9 @@ Viewing Stories Uploaded to the CDS
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.4.2
+* Small tweak to the logic for applying image credits. If the full credit is stored in one field or the agency and credit match, and the credit contains a separator (`/`, `|`, or `,`), then the credit is split and distributed.
+
 ### V.1.4.1
 * Uploaded stories dashboard no longer displays anything if you don't have a valid CDS token, a valid pull URL, or an organization ID
 * Added a check to `npr_cds_push()` to make sure that an organization ID is present before trying to push a story
