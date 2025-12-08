@@ -88,6 +88,11 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
  * @param int $post_ID
  */
 function npr_cds_delete( int $post_ID ): void {
+	$post = get_post( $post_ID );
+	$push_post_type = npr_cds_get_push_post_type( get_post( $post_ID ) );
+	if ( $post->post_type !== $push_post_type ) {
+		return;
+	}
 	if ( !current_user_can( 'delete_others_posts' ) ) {
 		wp_die(
 			__('You do not have permission to delete posts in the NPR CDS. Users that can delete other users\' posts have that ability: administrators and editors.', ),
@@ -95,14 +100,11 @@ function npr_cds_delete( int $post_ID ): void {
 			403
 		);
 	}
-	$push_post_type = npr_cds_get_push_post_type( get_post( $post_ID ) );
-
 	$api_id = get_post_meta( $post_ID, NPR_STORY_ID_META_KEY, true );
 
-	$post = get_post( $post_ID );
 	//if the push url isn't set, don't even try to delete.
 	$push_url = get_option( 'npr_cds_push_url' );
-	if ( $post->post_type == $push_post_type && !empty( $push_url ) && !empty( $api_id ) ) {
+	if ( !empty( $push_url ) && !empty( $api_id ) ) {
 		$api = new NPR_CDS_WP();
 		$retrieved = get_post_meta( $post_ID, NPR_RETRIEVED_STORY_META_KEY, true );
 

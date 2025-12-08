@@ -5,10 +5,10 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Contributors: jwcounts, tamw-wnet, bdivver
 - Original developers: NPRDS, INN Labs
 - Requires at least: 4.0
-- Tested up to: 6.8.3
+- Tested up to: 6.9
 - Requires PHP: 8.0
-- Version: 1.4.2
-- Stable tag: 1.4.2
+- Version: 1.4.3
+- Stable tag: 1.4.3
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -81,6 +81,9 @@ Viewing Stories Uploaded to the CDS
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.4.3
+* `npr_cds_delete()` now checks if the post type of the post being deleted matches the CDS Push Post Type before any further processing. If so, it then checks user capabilities and potentially errors and dies. Otherwise, it simply returns.  
+
 ### V.1.4.2
 * Small tweak to the logic for applying image credits. If the full credit is stored in one field or the agency and credit match, and the credit contains a separator (`/`, `|`, or `,`), then the credit is split and distributed.
 
