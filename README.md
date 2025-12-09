@@ -82,7 +82,8 @@ Viewing Stories Uploaded to the CDS
 ## Changelog
 <!-- copy from readme.txt to here -->
 ### V.1.4.3
-* `npr_cds_delete()` now checks if the post type of the post being deleted matches the CDS Push Post Type before any further processing. If so, it then checks user capabilities and potentially errors and dies. Otherwise, it simply returns.  
+* `npr_cds_delete()` now checks if the post type of the post being deleted matches the CDS Push Post Type before any further processing. If so, it then checks user capabilities and potentially errors and dies. Otherwise, it simply returns.
+* Bug fix in Uploaded Stories dashboard when stories have primary images without producer or provider credits
 
 ### V.1.4.2
 * Small tweak to the logic for applying image credits. If the full credit is stored in one field or the agency and credit match, and the credit contains a separator (`/`, `|`, or `,`), then the credit is split and distributed.

@@ -1356,11 +1356,17 @@ class NPR_CDS {
 									$image_src = $enclosure->href;
 								}
 							}
+							$image_producer_provider = '';
 							if ( !empty( $image_asset->producer ) ) {
 								$homepage_eligible['image-producer-credit'] = 'Yes';
+								$image_producer_provider = $image_asset->producer;
+							}
+							if ( !empty( $image_producer_provider ) ) {
+								$image_producer_provider .= ' / ';
 							}
 							if ( !empty( $image_asset->provider ) ) {
 								$homepage_eligible['image-provider-credit'] = 'Yes';
+								$image_producer_provider .= $image_asset->provider;
 							}
 
 							$primary_image = <<<EOT
@@ -1370,7 +1376,7 @@ class NPR_CDS {
 										<ul>
 											<li><strong>Profile:</strong> {$main_rel}</li>
 											<li><strong>Caption:</strong> {$image_asset->caption}</li>
-											<li><strong>Credit:</strong> {$image_asset->producer} / {$image_asset->provider}</li>
+											<li><strong>Credit:</strong> {$image_producer_provider}</li>
 										</ul>
 									</div>
 									<div>
