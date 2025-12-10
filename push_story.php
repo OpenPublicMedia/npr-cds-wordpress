@@ -222,7 +222,7 @@ function npr_cds_bulk_action_push_action(): void {
 function npr_cds_save_send_to_cds( Int $post_ID ): bool {
 	// safety checks
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
-	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
+	if ( !current_user_can( 'edit_post', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
 	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 	global $post;
@@ -247,7 +247,7 @@ add_action( 'save_post', 'npr_cds_save_send_to_cds', 15 );
 function npr_cds_save_send_to_one( int $post_ID ): bool {
 	// safety checks
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
-	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
+	if ( !current_user_can( 'edit_post', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
 	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 
@@ -277,7 +277,7 @@ add_action( 'save_post', 'npr_cds_save_send_to_one', 15 );
 function npr_cds_save_nprone_featured( int $post_ID ): bool {
 	// safety checks
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
-	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
+	if ( !current_user_can( 'edit_post', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
 	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 
@@ -311,7 +311,7 @@ add_action( 'save_post', 'npr_cds_save_nprone_featured', 15 );
 function npr_cds_save_datetime( int $post_ID ): bool {
 	// safety checks
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
-	if ( !current_user_can( 'edit_page', $post_ID ) ) return false;
+	if ( !current_user_can( 'edit_post', $post_ID ) ) return false;
 	if ( empty( $post_ID ) ) return false;
 	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
 

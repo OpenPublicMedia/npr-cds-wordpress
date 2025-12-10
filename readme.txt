@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.8.3
 Requires PHP: 8.0
-Version: 1.4.2
-Stable tag: 1.4.2
+Version: 1.4.4
+Stable tag: 1.4.4
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V.1.4.4 =
+* Bug fix in `push_story.php`: changed capability check when saving post metadata from `edit_page` to `edit_post` because the former does not exist
+
 = V.1.4.3 =
 * `npr_cds_delete()` now checks if the post type of the post being deleted matches the CDS Push Post Type before any further processing. If so, it then checks user capabilities and potentially errors and dies. Otherwise, it simply returns.
 * Bug fix in Uploaded Stories dashboard when stories have primary images without producer or provider credits
