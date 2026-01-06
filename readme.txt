@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.8.3
 Requires PHP: 8.0
-Version: 1.4.5
-Stable tag: 1.4.5
+Version: 1.4.6
+Stable tag: 1.4.6
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V.1.4.6 =
+* CDS Dashboard updated to include NPR app eligibility information
+
 = V.1.4.5 =
 * Stories submitted to the CDS can now be featured in the NPR app, which requires a square crop of the images. That new crop is being added and the upload logic updated.
 

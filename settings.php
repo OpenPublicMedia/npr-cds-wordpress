@@ -1288,6 +1288,7 @@ class NPR_CDS {
 					'collection' => 'No',
 					'publish-time' => 'No',
 					'image-wide-primary' => 'No',
+					'image-square-primary' => 'No',
 					'image-producer-credit' => 'No',
 					'image-provider-credit' => 'No',
 					'teaser' => 'No'
@@ -1355,6 +1356,9 @@ class NPR_CDS {
 								if ( in_array( 'primary', $enclosure->rels ) ) {
 									$image_src = $enclosure->href;
 								}
+								if ( in_array( 'image-square', $enclosure->rels ) ) {
+									$homepage_eligible['image-square-primary'] = 'Yes';
+								}
 							}
 							$image_producer_provider = '';
 							if ( !empty( $image_asset->producer ) ) {
@@ -1394,6 +1398,7 @@ EOT;
 					$homepage_eligible['collection'] == 'Yes' &&
 					$homepage_eligible['publish-time'] == 'Yes' &&
 					$homepage_eligible['image-wide-primary'] == 'Yes' &&
+					$homepage_eligible['image-square-primary'] == 'Yes' &&
 					$homepage_eligible['image-producer-credit'] == 'Yes' &&
 					$homepage_eligible['image-provider-credit'] == 'Yes' &&
 					$homepage_eligible['teaser'] == 'Yes'
@@ -1413,6 +1418,7 @@ EOT;
 							<li class="homepage-{$homepage_eligible['publish-time']}">was published < 72 hours ago? <strong>{$homepage_eligible['publish-time']}</strong></li>
 							<li class="homepage-{$homepage_eligible['teaser']}">has a teaser/description with no formatting? <strong>{$homepage_eligible['teaser']}</strong></li>
 							<li class="homepage-{$homepage_eligible['image-wide-primary']}">has a wide primary image? <strong>{$homepage_eligible['image-wide-primary']}</strong></li>
+							<li class="homepage-{$homepage_eligible['image-square-primary']}">has a square crop of the primary image? <strong>{$homepage_eligible['image-square-primary']}</strong></li>
 							<li class="homepage-{$homepage_eligible['image-producer-credit']}">has an image producer/source? <strong>{$homepage_eligible['image-producer-credit']}</strong></li>
 							<li class="homepage-{$homepage_eligible['image-provider-credit']}">has an image provider/credit? <strong>{$homepage_eligible['image-provider-credit']}</strong></li>
 						</ul>
@@ -1424,7 +1430,7 @@ EOT;
 						<div class="cds-summary">
 							<div>{$story->title}</div>
 							<div>Published:<br><strong>{$publishTime}</strong></div>
-							<div>NPR Homepage Eligible:<br><strong>{$homepage_eligible['overall']}</strong></div>
+							<div>NPR Homepage/App Eligible:<br><strong>{$homepage_eligible['overall']}</strong></div>
 						</div>
 					</summary>
 					<div class="npr-grid">
@@ -1443,7 +1449,7 @@ EOT;
 							<p>Last Modified Date:<br><strong>{$lastModified}</strong></p>
 							<p><strong><a href="{$edit_link}">Edit in WordPress</a></strong></p>
 							<div class="npr-homepage">
-								<p class="homepage-eligible">NPR Homepage Eligible: <strong>{$homepage_eligible['overall']}</strong></p>
+								<p class="homepage-eligible">NPR Homepage/App Eligible: <strong>{$homepage_eligible['overall']}</strong></p>
 								{$homepage}
 							</div>
 						</div>
