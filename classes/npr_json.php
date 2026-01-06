@@ -345,7 +345,7 @@ function npr_cds_to_json( $post ): bool|string {
 		$image_asset->provider = $custom_agency;
 		$image_asset->enclosures = [];
 
-		$image_crops = [ 'large', 'medium', 'npr-cds-wide' ];
+		$image_crops = [ 'large', 'medium', 'npr-cds-wide', 'npr-cds-square' ];
 		if ( !empty( $image_meta['sizes'] ) ) {
 			$primary_crop = 'large';
 			if ( empty( $image_meta['sizes']['large'] ) ) {
@@ -353,6 +353,8 @@ function npr_cds_to_json( $post ): bool|string {
 					$primary_crop = 'medium';
 				} elseif ( !empty( $image_meta['sizes']['npr-cds-wide'] ) ) {
 					$primary_crop = 'npr-cds-wide';
+				} elseif ( !empty( $image_meta['sizes']['npr-cds-square'] ) ) {
+					$primary_crop = 'npr-cds-square';
 				}
 			}
 			foreach ( $image_meta['sizes'] as $key => $value ) {
