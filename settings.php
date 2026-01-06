@@ -1284,7 +1284,8 @@ class NPR_CDS {
 		if ( empty( $api->message ) ) {
 			foreach ( $api->stories as $story ) {
 				$homepage_eligible = [
-					'overall' => 'No',
+					'homepage' => 'No',
+					'app' => 'No',
 					'collection' => 'No',
 					'publish-time' => 'No',
 					'image-wide-primary' => 'No',
@@ -1398,17 +1399,24 @@ EOT;
 					$homepage_eligible['collection'] == 'Yes' &&
 					$homepage_eligible['publish-time'] == 'Yes' &&
 					$homepage_eligible['image-wide-primary'] == 'Yes' &&
-					$homepage_eligible['image-square-primary'] == 'Yes' &&
 					$homepage_eligible['image-producer-credit'] == 'Yes' &&
 					$homepage_eligible['image-provider-credit'] == 'Yes' &&
 					$homepage_eligible['teaser'] == 'Yes'
 				) {
-					$homepage_eligible['overall'] = 'Yes';
+					$homepage_eligible['homepage'] = 'Yes';
+					if ( $homepage_eligible['image-square-primary'] == 'Yes' ) {
+						$homepage_eligible['app'] = 'Yes';
+					}
 				}
 				$profiles = implode( ', ', $profiles_arr );
 				$owners = implode( ', ', $owners_arr );
 				$collections = implode( ', ', $collect_arr );
 				$bylines = implode( ', ', $bylines_arr );
+				$homepage_app = $homepage_eligible['homepage'] . ' / ' . $homepage_eligible['app'];
+				if ( $homepage_eligible['app'] === $homepage_eligible['homepage'] ) {
+					$homepage_app = $homepage_eligible['app'];
+				}
+
 				$homepage = <<<EOT
 					<details class="npr-homepage-eligible">
 						<summary>Why?</summary>
@@ -1430,7 +1438,7 @@ EOT;
 						<div class="cds-summary">
 							<div>{$story->title}</div>
 							<div>Published:<br><strong>{$publishTime}</strong></div>
-							<div>NPR Homepage/App Eligible:<br><strong>{$homepage_eligible['overall']}</strong></div>
+							<div>NPR Homepage/App Eligible:<br><strong>{$homepage_app}</strong></div>
 						</div>
 					</summary>
 					<div class="npr-grid">
@@ -1449,7 +1457,7 @@ EOT;
 							<p>Last Modified Date:<br><strong>{$lastModified}</strong></p>
 							<p><strong><a href="{$edit_link}">Edit in WordPress</a></strong></p>
 							<div class="npr-homepage">
-								<p class="homepage-eligible">NPR Homepage/App Eligible: <strong>{$homepage_eligible['overall']}</strong></p>
+								<p class="homepage-eligible">NPR Homepage/App Eligible: <strong>{$homepage_app}</strong></p>
 								{$homepage}
 							</div>
 						</div>

@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.9
 - Requires PHP: 8.0
-- Version: 1.4.6
-- Stable tag: 1.4.6
+- Version: 1.4.7
+- Stable tag: 1.4.7
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -81,6 +81,9 @@ Viewing Stories Uploaded to the CDS
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.4.7
+* CDS Dashboard breaks out homepage and app eligibility information separately
+
 ### V.1.4.6
 * CDS Dashboard updated to include NPR app eligibility information
 

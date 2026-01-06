@@ -58,7 +58,7 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 			// send to nprone
 			printf(
 				'<li><label><input value="1" type="checkbox" name="_send_to_one" id="_send_to_one" %2$s/> %1$s</label></li>',
-				esc_html__( 'Include for NPR One and NPR homepage', 'npr-content-distribution-service' ),
+				esc_html__( 'Include for NPR One and NPR homepage/app', 'npr-content-distribution-service' ),
 				checked( $push_homepage, '1', false )
 			);
 			printf(

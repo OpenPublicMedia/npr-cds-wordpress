@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 6.8.3
 Requires PHP: 8.0
-Version: 1.4.6
-Stable tag: 1.4.6
+Version: 1.4.7
+Stable tag: 1.4.7
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V.1.4.7 =
+* CDS Dashboard breaks out homepage and app eligibility information separately
+
 = V.1.4.6 =
 * CDS Dashboard updated to include NPR app eligibility information
 
