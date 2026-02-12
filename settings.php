@@ -1079,6 +1079,16 @@ class NPR_CDS {
 				}
 			}
 		}
+
+		$default_collection = 1002; // NPR Home Page Top Stories.
+
+		if ( ! empty( $_POST['collection_id'] ) ) {
+			$default_collection = sanitize_text_field( $_POST['collection_id'] );
+		}
+
+		$recent_documents = $this->get_latest_npr_stories( $default_collection );
+		global $wpdb;
+		$post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 		?>
 
 		<div style="float: left;">
@@ -1089,8 +1099,71 @@ class NPR_CDS {
 				<input type="submit" name='publishNow' value="Publish Now" />
 			</form>
 		</div>
+
+		<div class="wrap" style="width: 100%;display:block;clear:both;">
+			<h2>Filter by collection:</h2>
+			<div>
+				<form method="POST" action="<?php echo admin_url( 'edit.php?post_type=' . $post_type . '&page=get-npr-stories' ); ?>">
+					Filter <input type="text" name="collection_id" placeholder="Collection ID"> <button type="submit">Search</button>
+				</form>
+
+			</div>
+			<table class="wp-list-table widefat fixed striped table-view-list posts">
+				<thead>
+				<tr>
+						<th>#</th>
+						<th>Title</th>
+						<th>Publish Date NPR</th>
+						<th></th>
+						<th>Imported</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php 
+					foreach ( $recent_documents as $story ) {
+						$results = $wpdb->get_col(
+							$wpdb->prepare(
+								"SELECT post_id 
+								FROM $wpdb->postmeta 
+								WHERE meta_key = %s 
+								AND meta_value = %s",
+								NPR_STORY_ID_META_KEY, $story->id
+							)
+						);
+					?>
+					<tr>
+						<td><?php esc_html_e( $story->id ); ?></td>
+						<td><strong><?php esc_html_e( $story->title ); ?></strong></td>
+						<td><?php esc_html_e( date_i18n( 'l d/m/Y \a\t g:i',$story->publishDateTime ) ); ?></td>
+						<td><form method="POST"><input name="story_id" hidden value="<?php echo esc_attr( $story->id); ?>" /><?php wp_nonce_field( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ); ?><button type="submit">Pull/Update</button></form></td>
+						<td style="color:green;"><?php esc_html_e( ($results ? 'Yes': '')); ?></td>
+					</tr>
+					<?php
+					}
+					?>
+				</tbody>
+			</table>
+
+		</div>
+		
+
+
 		</div><?php
 	}
+
+	public function get_latest_npr_stories( $collection_id ): array {
+		$params   = array(
+			'collectionIds' => $collection_id,
+			'profileIds'    => 'renderable',
+			'sort'          => 'publishDateTime:desc',
+		);
+		$response = new NPR_CDS_WP();
+		$response->request( $params );
+		$response->parse();
+
+		return $response->stories;
+	}
+
 	public function view_uploads(): void {
 		$api_key = NPR_CDS_WP::get_cds_token();
 		$pull_url = NPR_CDS_PULL_URL;
