@@ -1089,6 +1089,10 @@ class NPR_CDS {
 		$recent_documents = $this->get_latest_npr_stories( $default_collection );
 		global $wpdb;
 		$post_type = get_option( 'npr_cds_pull_post_type', 'post' );
+		$post_query = '';
+		if ( $post_type !== 'post' ) {
+			$post_query = 'post_type=' . $post_type . '&';
+		}
 		?>
 
 		<div style="float: left;">
@@ -1100,53 +1104,62 @@ class NPR_CDS {
 			</form>
 		</div>
 
-		<div class="wrap" style="width: 100%;display:block;clear:both;">
+		<div class="wrap" style="width: 100%; display:block; clear:both; margin-block: 1rem;">
 			<h2>Filter by collection:</h2>
-			<div>
-				<form method="POST" action="<?php echo admin_url( 'edit.php?post_type=' . $post_type . '&page=get-npr-stories' ); ?>">
-					Filter <input type="text" name="collection_id" placeholder="Collection ID"> <button type="submit">Search</button>
+			<div style="margin-block-end: 1rem;">
+				<form method="POST" action="<?php echo admin_url( 'edit.php?' . $post_query . 'page=get-npr-stories' ); ?>">
+					<label>Filter by collection ID <input type="text" name="collection_id" placeholder="Collection ID" value="<?php echo $default_collection; ?>" /></label>
+					<button type="submit">Search</button>
 				</form>
 
 			</div>
 			<table class="wp-list-table widefat fixed striped table-view-list posts">
 				<thead>
 				<tr>
-						<th>#</th>
-						<th>Title</th>
-						<th>Publish Date NPR</th>
-						<th></th>
-						<th>Imported</th>
-					</tr>
+					<th style="width: 10%;">CDS ID</th>
+					<th style="width: 50%;">Title</th>
+					<th style="width: 20%;">Publish Date</th>
+					<th style="width: 10%;">Action</th>
+					<th style="width: 10%;">Imported</th>
+				</tr>
 				</thead>
 				<tbody>
-					<?php 
+				<?php
+				if ( !empty( $recent_documents ) ) {
 					foreach ( $recent_documents as $story ) {
 						$results = $wpdb->get_col(
 							$wpdb->prepare(
 								"SELECT post_id 
-								FROM $wpdb->postmeta 
-								WHERE meta_key = %s 
-								AND meta_value = %s",
+									FROM $wpdb->postmeta 
+									WHERE meta_key = %s 
+									AND meta_value = %s",
 								NPR_STORY_ID_META_KEY, $story->id
 							)
 						);
-					?>
+						$date_format = get_option( 'date_format' );
+						$gmt_offset = get_option( 'gmt_offset' ) * 3600;
+						$pubTimestamp = strtotime( $story->publishDateTime ) + $gmt_offset;
+						$publishTime = date( $date_format, $pubTimestamp ); ?>
 					<tr>
 						<td><?php esc_html_e( $story->id ); ?></td>
 						<td><strong><?php esc_html_e( $story->title ); ?></strong></td>
-						<td><?php esc_html_e( date_i18n( 'l d/m/Y \a\t g:i',$story->publishDateTime ) ); ?></td>
-						<td><form method="POST"><input name="story_id" hidden value="<?php echo esc_attr( $story->id); ?>" /><?php wp_nonce_field( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ); ?><button type="submit">Pull/Update</button></form></td>
-						<td style="color:green;"><?php esc_html_e( ($results ? 'Yes': '')); ?></td>
+						<td><?php esc_html_e( $publishTime ); ?></td>
+						<td><form method="POST"><input name="story_id" hidden value="<?php echo esc_attr( $story->id ); ?>" /><?php wp_nonce_field( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ); ?><button type="submit">Pull/Update</button></form></td>
+						<td style="color: green;"><?php esc_html_e( ( $results ? 'Yes' : '' ) ); ?></td>
 					</tr>
-					<?php
+			<?php
 					}
-					?>
+				} else { ?>
+					<tr>
+						<td colspan="5">Sorry, that collection ID does not contain any importable stories. Please try a different one.</td>
+					</tr>
+			<?php
+				}
+				?>
 				</tbody>
 			</table>
 
 		</div>
-		
-
 
 		</div><?php
 	}
