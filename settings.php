@@ -1164,6 +1164,24 @@ class NPR_CDS {
 		return $response->stories;
 	}
 
+	public function get_wordcount_assets( $story ): int {
+		$cds_wp = new NPR_CDS_WP();
+		$text = [];
+		foreach ( $story->layout as $layout ) {
+			$asset_id = $cds_wp->extract_asset_id( $layout->href );
+			$asset_current = $story->assets->{ $asset_id };
+			$asset_profile = $cds_wp->extract_asset_profile( $asset_current );
+			if ( $asset_profile === 'text' && !empty( $asset_current->text ) ) {
+				$text[] = $asset_current->text;
+			}
+		}
+		if ( empty( $text ) ) {
+			return 0;
+		} else {
+			$text_str = implode( ' ', $text );
+			return str_word_count( strip_tags( $text_str ) );
+		}
+	}
 	public function view_uploads(): void {
 		$api_key = NPR_CDS_WP::get_cds_token();
 		$pull_url = NPR_CDS_PULL_URL;
@@ -1365,7 +1383,8 @@ class NPR_CDS {
 					'image-square-primary' => 'No',
 					'image-producer-credit' => 'No',
 					'image-provider-credit' => 'No',
-					'teaser' => 'No'
+					'teaser' => 'No',
+					'word-count' => 'No'
 				];
 				$date_format = get_option( 'date_format' );
 				$gmt_offset = get_option( 'gmt_offset' ) * 3600;
@@ -1378,6 +1397,11 @@ class NPR_CDS {
 				$lastModified = date( $date_format, strtotime( $story->editorialLastModifiedDateTime ) + $gmt_offset );
 				$local_id = explode( '-', $story->id )[1];
 				$edit_link = admin_url( 'post.php?post=' . $local_id . '&action=edit');
+				$word_count = $this->get_wordcount_assets( $story );
+
+				if ( $word_count >= 200 ) {
+					$homepage_eligible['word-count'] = 'Yes';
+				}
 				$profiles_arr = $owners_arr = $collect_arr = $bylines_arr = $images_arr = [];
 				$primary_image = '<div class="npr-images"><div><p><strong>Primary Image:</strong><br>None</p></div></div>';
 				if ( !empty( $story->profiles ) ) {
@@ -1474,7 +1498,8 @@ EOT;
 					$homepage_eligible['image-wide-primary'] == 'Yes' &&
 					$homepage_eligible['image-producer-credit'] == 'Yes' &&
 					$homepage_eligible['image-provider-credit'] == 'Yes' &&
-					$homepage_eligible['teaser'] == 'Yes'
+					$homepage_eligible['teaser'] == 'Yes' &&
+					$homepage_eligible['word-count'] == 'Yes'
 				) {
 					$homepage_eligible['homepage'] = 'Yes';
 					if ( $homepage_eligible['image-square-primary'] == 'Yes' ) {
@@ -1498,6 +1523,7 @@ EOT;
 							<li class="homepage-{$homepage_eligible['collection']}">is in the NPR One collection? <strong>{$homepage_eligible['collection']}</strong></li>
 							<li class="homepage-{$homepage_eligible['publish-time']}">was published < 72 hours ago? <strong>{$homepage_eligible['publish-time']}</strong></li>
 							<li class="homepage-{$homepage_eligible['teaser']}">has a teaser/description with no formatting? <strong>{$homepage_eligible['teaser']}</strong></li>
+							<li class="homepage-{$homepage_eligible['word-count']}">has 200+ words of body content? <strong>{$homepage_eligible['word-count']}</strong></li>
 							<li class="homepage-{$homepage_eligible['image-wide-primary']}">has a wide primary image? <strong>{$homepage_eligible['image-wide-primary']}</strong></li>
 							<li class="homepage-{$homepage_eligible['image-square-primary']}">has a square crop of the primary image? <strong>{$homepage_eligible['image-square-primary']}</strong></li>
 							<li class="homepage-{$homepage_eligible['image-producer-credit']}">has an image producer/source? <strong>{$homepage_eligible['image-producer-credit']}</strong></li>
@@ -1517,6 +1543,7 @@ EOT;
 					<div class="npr-grid">
 						<div>
 							<p><strong>Teaser:</strong><br>{$story->teaser}</p>
+							<p><strong>Body Word Count:</strong><br>{$word_count}</p>
 							{$primary_image}
 						</div>
 						<div>
