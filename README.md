@@ -83,6 +83,7 @@ Viewing Stories Uploaded to the CDS
 <!-- copy from readme.txt to here -->
 ### V.1.4.8
 * CDS Dashboard now adds body word count to checks for homepage and app eligibility
+* Adding a list of recent stories to the "Get NPR Stories" page, with the ability to filter by collection ID (h/t to Kaym at WAMU)
 
 ### V.1.4.7
 * CDS Dashboard breaks out homepage and app eligibility information separately
