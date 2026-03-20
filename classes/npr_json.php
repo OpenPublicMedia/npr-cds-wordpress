@@ -31,10 +31,15 @@ function npr_cds_to_json( $post ): bool|string {
 			$brandings[] = $npr_org;
 		}
 	}
+
+	$href = get_permalink( $post );
+	if ( has_filter( 'npr_cds_webpage_url_filter' ) ) {
+		$href = apply_filters( 'npr_cds_webpage_url_filter', $href );
+	}
 	$story->owners = $owners;
 	$story->brandings = $brandings;
 	$webPage = new stdClass;
-	$webPage->href = get_permalink( $post );
+	$webPage->href = $href;
 	$webPage->rels = [ 'canonical' ];
 
 	$cds_count = 0;

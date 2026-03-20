@@ -284,6 +284,10 @@ class NPR_CDS {
 		</form><?php
 	}
 	public function settings_init(): void {
+		if ( is_plugin_active( 'npr-story-api/ds-npr-api.php' ) ) {
+			deactivate_plugins( 'npr-story-api/ds-npr-api.php' );
+			error_log( 'NPR Story API plugin deactivated by NPR CDS plugin. The NPR Story API plugin has been deprecated and cannot coexist with the newer CDS plugin.' );
+		}
 		/**
 		 * CDS: General Settings
 		 */
