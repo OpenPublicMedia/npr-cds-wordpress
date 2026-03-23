@@ -84,6 +84,7 @@ Viewing Stories Uploaded to the CDS
 ### V.1.4.9
 * Adding a filter for the canonical URL being sent to the CDS. Helpful for stations that might have separate URLs for the frontend and backend of their site.
 * Adding a check in `NPR_CDS->settings_init()` to find and disable the old NPR Story API plugin if it is installed. The NPR Story API plugin has been deprecated and cannot coexist with this plugin.
+* Expanding acceptable HTTP response codes when pushing stories from 200 to 200, 201, and 202. This will limit the amount of excess logging that has been happening as the CDS servers sometimes send back 201 responses for successful uploads
 
 ### V.1.4.8
 * CDS Dashboard now adds body word count to checks for homepage and app eligibility

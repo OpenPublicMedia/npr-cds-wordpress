@@ -12,10 +12,7 @@ require_once( dirname( __FILE__ ) . '/npr_json.php' );
 class NPR_CDS_WP {
 
 	// HTTP status code = OK
-	const NPR_CDS_STATUS_OK = 200;
-
-	// HTTP status code for successful deletion
-	const NPR_CDS_DELETE_OK = 204;
+	public array $status_ok = [ 200, 201, 202 ];
 
 	// Default URL for pulling stories
 	const NPR_CDS_VERSION = 'v1';
@@ -113,7 +110,7 @@ class NPR_CDS_WP {
 		$response = wp_remote_get( $url, $options );
 		if ( !is_wp_error( $response ) ) {
 			$this->response = $response;
-			if ( $response['response']['code'] == self::NPR_CDS_STATUS_OK ) {
+			if ( in_array( $response['response']['code'], $this->status_ok ) ) {
 				if ( $response['body'] ) {
 					$this->json = $response['body'];
 				} else {
@@ -741,7 +738,7 @@ class NPR_CDS_WP {
 			$options = apply_filters( 'npr_pre_article_push', $options, $cds_id );
 			$result = wp_remote_request( $url, $options );
 			if ( !is_wp_error( $result ) ) {
-				if ( $result['response']['code'] == self::NPR_CDS_STATUS_OK ) {
+				if ( in_array( $result['response']['code'], $this->status_ok ) ) {
 					$body = wp_remote_retrieve_body( $result );
 					if ( $body ) {
 						update_post_meta( $post_ID, NPR_STORY_ID_META_KEY, $cds_id );
@@ -790,7 +787,7 @@ class NPR_CDS_WP {
 		$options = apply_filters( 'npr_pre_article_delete', $options );
 		$result = wp_remote_request( $url, $options );
 		$body = wp_remote_retrieve_body( $result );
-		if ( $result['response']['code'] == self::NPR_CDS_DELETE_OK && empty( $body ) ) {
+		if ( $result['response']['code'] == 204 && empty( $body ) ) {
 			npr_cds_error_log( 'Uploaded article ' . $api_id . ' successfully deleted from the NPR CDS' );
 		}
 	}
