@@ -1116,11 +1116,12 @@ class NPR_CDS {
 		<div class="wrap" style="width: 100%; display:block; clear:both; margin-block: 1rem;">
 			<h2>Filters:</h2>
 			<div style="margin-block-end: 1rem;">
-				<form method="POST" action="<?php echo admin_url( 'edit.php?' . $post_query . 'page=get-npr-stories' ); ?>">
+				<form method="POST" id="npr_cds_filter_form" action="<?php echo admin_url( 'edit.php?' . $post_query . 'page=get-npr-stories' ); ?>">
 					<label>Filter by collection ID <input type="text" class="npr_cds_search_filter" id="cds_collection_id" name="collection_id" placeholder="Collection ID" value="<?php echo $default_collection; ?>" /></label> &nbsp; &nbsp;
-					<label>Filter by service ID(s) <input type="text" class="npr_cds_search_filter" id="cds_service_id" name="service_id" placeholder="Service ID" value="<?php echo $service_id; ?>" /></label>
+					<label>Filter by service ID(s)* <input type="text" class="npr_cds_search_filter" id="cds_service_id" name="service_id" placeholder="Service ID" value="<?php echo $service_id; ?>" /></label>
 					<button type="submit">Search</button>
 				</form>
+				<p style="font-size: 0.75rem; font-style: italic;">* If you want to query more than one service ID, you may do so as a comma-separated list (e.g. 's220,s77,s252'). <a href="https://docs.google.com/spreadsheets/d/1taLIAUiBdevf39LhUj-Kg6xUKiUPbb9KyU0Y9pOqhA0/edit?usp=sharing" target="_blank">CDS Service IDs can be found here</a>.</p>
 
 			</div>
 			<table class="wp-list-table widefat fixed striped table-view-list posts">
@@ -1178,21 +1179,21 @@ class NPR_CDS {
 						$gmt_offset = get_option( 'gmt_offset' ) * 3600;
 						$pubTimestamp = strtotime( $story->publishDateTime ) + $gmt_offset;
 						$publishTime = date( $date_format, $pubTimestamp ); ?>
-					<tr>
-						<td><?php esc_html_e( $story->id ); ?></td>
-						<td><strong><?php echo $title; ?></strong></td>
-						<td><?php esc_html_e( $publishTime ); ?></td>
-						<td><?php esc_html_e( implode( ', ', $owners ) ); ?></td>
-						<td><form method="POST"><input name="story_id" hidden value="<?php echo esc_attr( $story->id ); ?>" /><?php wp_nonce_field( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ); ?><button type="submit">Pull/Update</button></form></td>
-						<td style="color: green;"><?php esc_html_e( ( $results ? 'Yes' : '' ) ); ?></td>
-					</tr>
-			<?php
+						<tr>
+							<td><?php esc_html_e( $story->id ); ?></td>
+							<td><strong><?php echo $title; ?></strong></td>
+							<td><?php esc_html_e( $publishTime ); ?></td>
+							<td><?php esc_html_e( implode( ', ', $owners ) ); ?></td>
+							<td><form method="POST"><input name="story_id" hidden value="<?php echo esc_attr( $story->id ); ?>" /><?php wp_nonce_field( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ); ?><button type="submit">Pull/Update</button></form></td>
+							<td style="color: green;"><?php esc_html_e( ( $results ? 'Yes' : '' ) ); ?></td>
+						</tr>
+						<?php
 					}
 				} else { ?>
 					<tr>
 						<td colspan="6">Sorry, that collection ID/service ID does not contain any importable stories. Please try a different one.</td>
 					</tr>
-			<?php
+					<?php
 				}
 				?>
 				</tbody>
@@ -1211,6 +1212,25 @@ class NPR_CDS {
 						}
 					});
 				});
+				let form = document.querySelector('#npr_cds_filter_form');
+				form.addEventListener('submit', (e) => {
+					e.preventDefault();
+					const data = new FormData(form);
+					for (const [name,value] of data) {
+						if (name === 'collection_id') {
+							if (isNaN(value)) {
+								alert('Collection IDs can only contain numbers. Please try again.');
+								return false;
+							}
+						} else if (name === 'service_id') {
+							if (!/^[s0-9, ]+$/.test(value)) {
+								alert('The service ID will only accept numbers, commas, and the letter \'s\'. Please try again.');
+								return false;
+							}
+						}
+					}
+					form.submit();
+				})
 			});
 		</script>
 		</div><?php
