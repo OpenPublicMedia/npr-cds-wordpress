@@ -1190,7 +1190,7 @@ class NPR_CDS {
 					}
 				} else { ?>
 					<tr>
-						<td colspan="5">Sorry, that collection ID does not contain any importable stories. Please try a different one.</td>
+						<td colspan="6">Sorry, that collection ID/service ID does not contain any importable stories. Please try a different one.</td>
 					</tr>
 			<?php
 				}
