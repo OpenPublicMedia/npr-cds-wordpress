@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.9
 - Requires PHP: 8.0
-- Version: 1.4.9
-- Stable tag: 1.4.9
+- Version: 1.5
+- Stable tag: 1.5
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -81,6 +81,11 @@ Viewing Stories Uploaded to the CDS
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.5
+* Get NPR Stories page can now filter by collection ID or service ID. If you want to query multiple service IDs, you can enter them as a comma-separated list (e.g. 's220,s252,s77,s188')
+* All stories on the Get NPR Stories page now link to the original post for easier review
+* Get NPR Stories page now displays 50 stories (up from 20)
+
 ### V.1.4.9
 * Adding a filter for the canonical URL being sent to the CDS. Helpful for stations that might have separate URLs for the frontend and backend of their site.
 * Adding a check in `NPR_CDS->settings_init()` to find and disable the old NPR Story API plugin if it is installed. The NPR Story API plugin has been deprecated and cannot coexist with this plugin.

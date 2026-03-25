@@ -1084,20 +1084,25 @@ class NPR_CDS {
 			}
 		}
 
-		$default_collection = 1002; // NPR Home Page Top Stories.
-
-		if ( ! empty( $_POST['collection_id'] ) ) {
-			$default_collection = sanitize_text_field( $_POST['collection_id'] );
+		$default_collection = '1002'; // NPR Home Page Top Stories.
+		$service_id = '';
+		if ( !empty( $_POST['collection_id'] ) || !empty( $_POST['service_id'] ) ) {
+			if ( !empty( $_POST['collection_id'] ) ) {
+				$default_collection = sanitize_text_field( $_POST['collection_id'] );
+				$service_id = '';
+			} elseif ( !empty( $_POST['service_id'] ) ) {
+				$service_id = sanitize_text_field( $_POST['service_id'] );
+				$default_collection = '';
+			}
 		}
 
-		$recent_documents = $this->get_latest_npr_stories( $default_collection );
+		$recent_documents = $this->get_latest_npr_stories( $default_collection, $service_id );
 		global $wpdb;
 		$post_type = get_option( 'npr_cds_pull_post_type', 'post' );
 		$post_query = '';
 		if ( $post_type !== 'post' ) {
 			$post_query = 'post_type=' . $post_type . '&';
-		}
-		?>
+		} ?>
 
 		<div style="float: left;">
 			<form action="" method="POST">
@@ -1109,10 +1114,11 @@ class NPR_CDS {
 		</div>
 
 		<div class="wrap" style="width: 100%; display:block; clear:both; margin-block: 1rem;">
-			<h2>Filter by collection:</h2>
+			<h2>Filters:</h2>
 			<div style="margin-block-end: 1rem;">
 				<form method="POST" action="<?php echo admin_url( 'edit.php?' . $post_query . 'page=get-npr-stories' ); ?>">
-					<label>Filter by collection ID <input type="text" name="collection_id" placeholder="Collection ID" value="<?php echo $default_collection; ?>" /></label>
+					<label>Filter by collection ID <input type="text" class="npr_cds_search_filter" id="cds_collection_id" name="collection_id" placeholder="Collection ID" value="<?php echo $default_collection; ?>" /></label> &nbsp; &nbsp;
+					<label>Filter by service ID(s) <input type="text" class="npr_cds_search_filter" id="cds_service_id" name="service_id" placeholder="Service ID" value="<?php echo $service_id; ?>" /></label>
 					<button type="submit">Search</button>
 				</form>
 
@@ -1121,15 +1127,17 @@ class NPR_CDS {
 				<thead>
 				<tr>
 					<th style="width: 10%;">CDS ID</th>
-					<th style="width: 50%;">Title</th>
-					<th style="width: 20%;">Publish Date</th>
-					<th style="width: 10%;">Action</th>
-					<th style="width: 10%;">Imported</th>
+					<th style="width: 45%;">Title</th>
+					<th style="width: 15%;">Publish Date</th>
+					<th style="width: 15%;">Organization</th>
+					<th style="width: 7.5%;">Action</th>
+					<th style="width: 7.5%;">Imported</th>
 				</tr>
 				</thead>
 				<tbody>
 				<?php
 				if ( !empty( $recent_documents ) ) {
+					$orgs = [];
 					foreach ( $recent_documents as $story ) {
 						$results = $wpdb->get_col(
 							$wpdb->prepare(
@@ -1140,14 +1148,41 @@ class NPR_CDS {
 								NPR_STORY_ID_META_KEY, $story->id
 							)
 						);
+						$webpage = '';
+						$title = esc_html( $story->title );
+						foreach ( $story->webPages as $page ) {
+							if ( !empty( $page->rels ) && in_array( 'canonical', $page->rels ) ) {
+								$webpage = $page->href;
+							}
+						}
+						if ( !empty( $webpage ) ) {
+							$title = '<a href="' . esc_attr( $webpage ) . '" target="_blank">' . $title . '</a>';
+						}
+						$owners = [];
+						foreach ( $story->owners as $owner ) {
+							$org_id = str_replace( 'https://organization.api.npr.org/v4/services/','', $owner->href );
+							if ( empty( $orgs[ $org_id ] ) ) {
+								$response = wp_remote_get( $owner->href );
+								if ( !is_wp_error( $response ) ) {
+									$body = wp_remote_retrieve_body( $response );
+									$orgs[ $org_id ] = json_decode( $body, true );
+									$owners[] = $orgs[ $org_id ]['name'];
+								} else {
+									$owners[] = $org_id;
+								}
+							} else {
+								$owners[] = $orgs[ $org_id ]['name'];
+							}
+						}
 						$date_format = get_option( 'date_format' );
 						$gmt_offset = get_option( 'gmt_offset' ) * 3600;
 						$pubTimestamp = strtotime( $story->publishDateTime ) + $gmt_offset;
 						$publishTime = date( $date_format, $pubTimestamp ); ?>
 					<tr>
 						<td><?php esc_html_e( $story->id ); ?></td>
-						<td><strong><?php esc_html_e( $story->title ); ?></strong></td>
+						<td><strong><?php echo $title; ?></strong></td>
 						<td><?php esc_html_e( $publishTime ); ?></td>
+						<td><?php esc_html_e( implode( ', ', $owners ) ); ?></td>
 						<td><form method="POST"><input name="story_id" hidden value="<?php echo esc_attr( $story->id ); ?>" /><?php wp_nonce_field( 'npr_cds_nonce_story_id', 'npr_cds_nonce_story_id_field' ); ?><button type="submit">Pull/Update</button></form></td>
 						<td style="color: green;"><?php esc_html_e( ( $results ? 'Yes' : '' ) ); ?></td>
 					</tr>
@@ -1164,16 +1199,42 @@ class NPR_CDS {
 			</table>
 
 		</div>
-
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				let fields = document.querySelectorAll('.npr_cds_search_filter');
+				Array.from(fields).forEach((field) => {
+					field.addEventListener('keyup', (e) => {
+						if ( e.target.id === 'cds_collection_id' ) {
+							document.querySelector('#cds_service_id').value = '';
+						} else if ( e.target.id === 'cds_service_id' ) {
+							document.querySelector('#cds_collection_id').value = '';
+						}
+					});
+				});
+			});
+		</script>
 		</div><?php
 	}
 
-	public function get_latest_npr_stories( $collection_id ): array {
-		$params   = array(
+	public function get_latest_npr_stories( $collection_id, $service_id ): array {
+		$params = [
 			'collectionIds' => $collection_id,
-			'profileIds'    => 'renderable',
+			'limit'         => 50,
+			'profileIds'    => [ 'renderable', 'story', 'buildout' ],
 			'sort'          => 'publishDateTime:desc',
-		);
+		];
+		if ( !empty( $service_id ) && preg_match( '/^[s0-9 ,]+$/', $service_id ) ) {
+			$ids = explode( ',', $service_id );
+			foreach ( $ids as $k => $id ) {
+				$id = str_replace( 's', '', strtolower( trim( $id ) ) );
+				$ids[ $k ] = 'https://organization.api.npr.org/v4/services/s' . $id;
+			}
+			if ( !empty( $ids ) ) {
+				unset( $params['collectionIds'] );
+				$params['ownerHrefs'] = implode( ',', $ids );
+			}
+		}
+
 		$response = new NPR_CDS_WP();
 		$response->request( $params );
 		$response->parse();
