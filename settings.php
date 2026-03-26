@@ -1202,27 +1202,18 @@ class NPR_CDS {
 		</div>
 		<script>
 			document.addEventListener('DOMContentLoaded', () => {
-				let fields = document.querySelectorAll('.npr_cds_search_filter');
-				Array.from(fields).forEach((field) => {
-					field.addEventListener('keyup', (e) => {
-						if ( e.target.id === 'cds_collection_id' ) {
-							document.querySelector('#cds_service_id').value = '';
-						} else if ( e.target.id === 'cds_service_id' ) {
-							document.querySelector('#cds_collection_id').value = '';
-						}
-					});
-				});
 				let form = document.querySelector('#npr_cds_filter_form');
 				form.addEventListener('submit', (e) => {
 					e.preventDefault();
 					const data = new FormData(form);
 					for (const [name,value] of data) {
-						if (name === 'collection_id') {
+						if (name === 'collection_id' && value.length > 0) {
 							if (isNaN(value)) {
 								alert('Collection IDs can only contain numbers. Please try again.');
 								return false;
 							}
-						} else if (name === 'service_id') {
+						}
+						if (name === 'service_id' && value.length > 0) {
 							if (!/^[s0-9, ]+$/.test(value)) {
 								alert('The service ID will only accept numbers, commas, and the letter \'s\'. Please try again.');
 								return false;
@@ -1238,8 +1229,7 @@ class NPR_CDS {
 
 	public function get_latest_npr_stories( $collection_id, $service_id ): array {
 		$params = [
-			'collectionIds' => $collection_id,
-			'limit'         => 50,
+			'limit'         => 35,
 			'profileIds'    => [ 'renderable', 'story', 'buildout' ],
 			'sort'          => 'publishDateTime:desc',
 		];
@@ -1250,9 +1240,12 @@ class NPR_CDS {
 				$ids[ $k ] = 'https://organization.api.npr.org/v4/services/s' . $id;
 			}
 			if ( !empty( $ids ) ) {
-				unset( $params['collectionIds'] );
 				$params['ownerHrefs'] = implode( ',', $ids );
 			}
+		}
+
+		if ( !empty( $collection_id ) && is_numeric( $collection_id ) ) {
+			$params['collectionId'] = $collection_id;
 		}
 
 		$response = new NPR_CDS_WP();
