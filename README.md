@@ -84,7 +84,7 @@ Viewing Stories Uploaded to the CDS
 ### V.1.5
 * Get NPR Stories page can now filter by collection ID or service ID. If you want to query multiple service IDs, you can enter them as a comma-separated list (e.g. 's220,s252,s77,s188')
 * All stories on the Get NPR Stories page now link to the original post for easier review
-* Get NPR Stories page now displays 50 stories (up from 20)
+* Get NPR Stories page now displays 35 stories (up from 20)
 
 ### V.1.4.9
 * Adding a filter for the canonical URL being sent to the CDS. Helpful for stations that might have separate URLs for the frontend and backend of their site.
