@@ -1084,16 +1084,17 @@ class NPR_CDS {
 			}
 		}
 
-		$default_collection = '1002'; // NPR Home Page Top Stories.
-		$service_id = '';
-		if ( !empty( $_POST['collection_id'] ) || !empty( $_POST['service_id'] ) ) {
-			if ( !empty( $_POST['collection_id'] ) ) {
-				$default_collection = sanitize_text_field( $_POST['collection_id'] );
-				$service_id = '';
-			} elseif ( !empty( $_POST['service_id'] ) ) {
-				$service_id = sanitize_text_field( $_POST['service_id'] );
-				$default_collection = '';
-			}
+		$default_collection = $service_id = '';
+		if ( !empty( $_POST['collection_id'] ) ) {
+			$default_collection = sanitize_text_field( $_POST['collection_id'] );
+		}
+
+		if ( !empty( $_POST['service_id'] ) ) {
+			$service_id = sanitize_text_field( $_POST['service_id'] );
+		}
+
+		if ( empty( $default_collection ) && empty( $service_id ) ) {
+			$default_collection = 1002; // NPR Home Page Top Stories
 		}
 
 		$recent_documents = $this->get_latest_npr_stories( $default_collection, $service_id );
@@ -1245,7 +1246,7 @@ class NPR_CDS {
 		}
 
 		if ( !empty( $collection_id ) && is_numeric( $collection_id ) ) {
-			$params['collectionId'] = $collection_id;
+			$params['collectionIds'] = $collection_id;
 		}
 
 		$response = new NPR_CDS_WP();
