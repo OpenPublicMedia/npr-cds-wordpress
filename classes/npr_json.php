@@ -251,13 +251,13 @@ function npr_cds_to_json( $post ): bool|string {
 		'post_mime_type' => 'image',
 		'post_parent' => $post->ID,
 		'post_status' => null,
-		'post_type' => 'attachment'
+		'post_type' => 'attachments'
 	];
 
 	$images = get_children( $args );
 	$primary_image = get_post_thumbnail_id( $post->ID );
 
-	if ( $primary_image !== false && empty( $images[ $primary_image ] ) ) {
+	if ( $primary_image !== false && $primary_image !== 0 && empty( $images[ $primary_image ] ) ) {
 		$main_image = get_post( $primary_image );
 		if ( !empty( $main_image ) ) {
 			$images[ $primary_image ] = $main_image;
@@ -273,6 +273,10 @@ function npr_cds_to_json( $post ): bool|string {
 	}
 
 	foreach ( $images as $image ) {
+		$image_attach_url = wp_get_attachment_url( $image->ID );
+		if ( $image_attach_url === false ) {
+			continue;
+		}
 		$custom_credit = '';
 		$custom_agency = '';
 		$image_metas = get_post_custom_keys( $image->ID );
