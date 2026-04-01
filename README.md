@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 6.9
 - Requires PHP: 8.0
-- Version: 1.5.1
-- Stable tag: 1.5.1
+- Version: 1.5.2
+- Stable tag: 1.5.2
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -81,6 +81,9 @@ Viewing Stories Uploaded to the CDS
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.5.2
+* Fixed a typo in `npr_cds_add_header_meta()` that called a non-existent function (it's `get_coauthors()`, not `coauthors()`) (h/t Hayden Pierce)
+
 ### V.1.5.1
 * Fixed a typo in `npr_cds_to_json()` that was causing WordPress to return the parent post when searching for image attachments, especially when no attachments exist
 
