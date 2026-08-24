@@ -3,7 +3,7 @@
  * Plugin Name: NPR Content Distribution Service
  * Plugin URI: https://github.com/OpenPublicMedia/npr-cds-wordpress
  * Description: A collection of tools for reusing content from NPR.org, now maintained and updated by NPR member station developers
- * Version: 1.5.4
+ * Version: 1.5.5
  * Requires at least: 4.0
  * Requires PHP: 8.0
  * Author: Open Public Media
@@ -503,7 +503,7 @@ add_action( 'wp_head', 'npr_cds_add_header_meta', 9 );
  * credit @santalone
  */
 function npr_cds_filter_yoast_canonical( $canonical ) {
-	if (is_singular() && !empty( get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 ) ) ) {
+	if ( is_singular() && !empty( get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 ) ) ) {
 		$canonical = get_post_meta( get_the_ID(), NPR_HTML_LINK_META_KEY, 1 );
 	}
 	return $canonical;
@@ -541,6 +541,30 @@ function npr_cds_get_mapping_byline( $post ): string {
 	}
 	return $option;
 }
+
+function npr_cds_retrieve_aggregations(): array {
+	$aggs = get_transient('npr_cds_network_aggregations');
+	if ( !empty( $aggs ) ) {
+		return $aggs;
+	}
+	$aggs = [
+		'ids' => [],
+		'aggregations' => []
+	];
+	$response = wp_remote_get( "https://cdn.houstonpublicmedia.org/npr-cds/cds-aggregations.json" );
+	if ( !is_wp_error( $response ) ) {
+		if ( $response['body'] ) {
+			$json = json_decode( $response['body'] );
+			foreach( $json as $j ) {
+				$aggs['aggregations'][] = $j;
+				$aggs['ids'][] = $j->id;
+			}
+		}
+	}
+	set_transient( 'npr_cds_network_aggregations', $aggs, 60 * 60 * 2 );
+	return $aggs;
+}
+
 /* add_action( 'rest_api_init', function() {
 	register_rest_route( 'npr-cds/v1', '/notifications', [
 		'methods'  => 'POST',

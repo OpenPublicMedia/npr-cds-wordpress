@@ -36,7 +36,7 @@ function npr_cds_push( int $post_ID, WP_Post $post ): void {
 			return;
 		}
 	}
-	if ( !current_user_can( 'publish_posts' ) ) {
+	if ( !current_user_can( 'publish_posts' ) && !defined('DOING_CRON') ) {
 		npr_cds_error_log( 'You do not have permission to publish posts, and therefore you do not have permission to push posts to the NPR CDS.' );
 		return;
 	}
@@ -139,7 +139,7 @@ function npr_cds_push_meta_keys( string $post_type = 'post' ): array {
 	$keys = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT( $wpdb->postmeta.meta_key ) FROM $wpdb->posts LEFT JOIN $wpdb->postmeta ON $wpdb->posts.ID = $wpdb->postmeta.post_id WHERE $wpdb->posts.post_type = %s AND $wpdb->postmeta.meta_key != '' AND $wpdb->postmeta.meta_key NOT LIKE %s AND $wpdb->postmeta.meta_key NOT RegExp '(^[0-9]+$)'", $post_type, '_oembed_%' ) );
 	if ( $keys ) natcasesort( $keys );
 
-	set_transient( 'npr_cds_' . $post_type . '_meta_keys', $keys, 60*60*24 ); # 1 Day Expiration
+	set_transient( 'npr_cds_' . $post_type . '_meta_keys', $keys, 60 * 60 * 24 ); # 1 Day Expiration
 	return $keys;
 }
 
@@ -382,6 +382,33 @@ function npr_cds_get_datetimezone(): DateTimeZone {
 	}
 	return $return;
 }
+
+/**
+ * Save the "NPR Network Aggregation" metadata
+ *
+ * @param Int $post_ID The post ID of the post we're saving
+ * @since 1.7
+ */
+function npr_cds_save_network_aggregations( int $post_ID ): bool {
+	// safety checks
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return false;
+	if ( !current_user_can( 'edit_post', $post_ID ) ) return false;
+	if ( empty( $post_ID ) ) return false;
+	if ( !isset( $_POST['npr_cds_send_nonce'] ) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['npr_cds_send_nonce'] ) ), 'npr_cds-' . $post_ID ) ) return false;
+
+	global $post;
+
+	if ( get_post_type( $post ) !== npr_cds_get_push_post_type( $post ) ) return false;
+	$value = [];
+	if ( !empty( $_POST['npr_cds_aggregation'] ) ) {
+		foreach ( $_POST['npr_cds_aggregation'] as $aggregation ) {
+			$value[] = sanitize_text_field( wp_unslash( $aggregation ) );
+		}
+	}
+	update_post_meta( $post_ID, 'npr_cds_aggregations', $value );
+	return true;
+}
+add_action( 'save_post', 'npr_cds_save_network_aggregations', 15 );
 
 /**
  * Add an admin notice to the post editor with the post's error message if it exists

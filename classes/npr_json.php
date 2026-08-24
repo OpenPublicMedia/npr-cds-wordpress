@@ -209,6 +209,19 @@ function npr_cds_to_json( $post ): bool|string {
 		$story->collections[] = $collect;
 	}
 
+	$cds_aggregations = get_post_meta( $post->ID, 'npr_cds_aggregations', true ); // an array of aggregation IDs, or an empty array
+	$cached_aggregations = npr_cds_retrieve_aggregations();
+	if ( !empty( $cds_aggregations ) && !empty( $cached_aggregations ) ) {
+		foreach ( $cds_aggregations as $cds_agg ) {
+			if ( in_array( $cds_agg, $cached_aggregations['ids'] ) ) {
+				$collect = new stdClass;
+				$collect->rels = [ 'collection' ];
+				$collect->href = '/' . $cds_version . '/documents/' . $cds_agg;
+				$story->collections[] = $collect;
+			}
+		}
+	}
+
 	// NPR One audio run-by date
 	$datetime = npr_cds_get_post_expiry_datetime( $post ); // if expiry date is not set, returns publication date plus 7 days
 	$story->recommendUntilDateTime = date_format( $datetime, 'c' );
@@ -316,7 +329,7 @@ function npr_cds_to_json( $post ): bool|string {
 			$custom_agency = trim( $parts[1] );
 		}
 
-		// If the image field for distribute is set and polarity then send it.
+		// If the image field for distribution and polarity are set, then send it.
 		// All kinds of other math when polarity is negative or the field isn't set.
 		$image_type = [];
 		if ( $image->ID == $primary_image ) {

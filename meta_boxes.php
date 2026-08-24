@@ -41,12 +41,8 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 			} // defaults to checked; unset on new posts
 
 			$push_homepage = get_post_meta( $post->ID, '_send_to_one', true ); // 0 or 1
-			if ( empty( $npr_id ) && $push_npr_homepage_default === '0' ) {
-				$push_homepage = '0';
-			} else {
-				if ( '0' !== $push_homepage && '1' !== $push_homepage ) {
-					$push_homepage = $push_npr_homepage_default;
-				}
+			if ( '0' !== $push_homepage && '1' !== $push_homepage ) {
+				$push_homepage = $push_npr_homepage_default;
 			}
 			// this list item contains all other list items, because their enabled/disabled depends on this checkbox
 			printf(
@@ -92,6 +88,31 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 		</div>
 	</div>
 <?php
+	$cds_aggregations = get_post_meta( $post->ID, 'npr_cds_aggregations', true ); // an array of aggregation IDs, or an empty array
+	if ( empty( $cds_aggregations ) ) {
+		$cds_aggregations = [];
+	}
+	$cached_aggregations = npr_cds_retrieve_aggregations();
+	if ( !empty( $cached_aggregations['aggregations'] ) ) { ?>
+	<div id="npr-cds-network-aggregations">
+		<p><strong><?php esc_html_e( 'NPR Network Aggregations', 'npr-content-distribution-service' ); ?></strong></p>
+		<p><?php esc_html_e( "Check the boxes below to include this post in the selected NPR Network Aggregation. This will allow your story to be featured in various locations across NPR's website and apps.", 'npr-content-distribution-service' ); ?></p>
+		<ul><?php
+			foreach ( $cached_aggregations['aggregations'] as $cds_agg ) {
+				printf(
+					'<li><label><input value="%3$s" type="checkbox" title="%4$s" name="npr_cds_aggregation[]" id="npr_cds_aggregation-%3$s" %2$s/> %1$s</label></li>',
+					esc_html__( $cds_agg->name, 'npr-content-distribution-service' ),
+					checked( in_array( $cds_agg->id, $cds_aggregations ), '1', false ),
+					esc_html__( $cds_agg->id, 'npr-content-distribution-service' ),
+					esc_html__( $cds_agg->teaser, 'npr-content-distribution-service' )
+
+				);
+			}
+		?></ul>
+	</div>
+<?php
+	}
+
 }
 
 /**

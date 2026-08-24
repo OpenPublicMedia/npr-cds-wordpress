@@ -5,10 +5,10 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Contributors: jwcounts, tamw-wnet, bdivver
 - Original developers: NPRDS, INN Labs
 - Requires at least: 4.0
-- Tested up to: 6.9
+- Tested up to: 7.0.3
 - Requires PHP: 8.0
-- Version: 1.5.4
-- Stable tag: 1.5.4
+- Version: 1.5.5
+- Stable tag: 1.5.5
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -80,7 +80,12 @@ Viewing Stories Uploaded to the CDS
 
 
 ## Changelog
-<!-- copy from readme.txt to here -->
+<!-- copy from readme.txt to here --> 
+### V.1.5.5
+* Adding support for NPR Network Aggregations, which will allow stories uploaded to the CDS to be displayed in more places across NPR's site and apps
+* Fixed a bug that was preventing articles from being pushed to the CDS when being scheduled to publish
+* Fixed a logic issue that was preventing the "Include for NPR One and NPR homepage/app" checkbox state from being properly represented
+
 ### V.1.5.4
 * Fixed a bug in which the wrong Co-Authors Plus function was called when pulling the byline to insert into the page header metadata
 

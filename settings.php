@@ -260,6 +260,7 @@ class NPR_CDS {
 			}
 		</style>
 		<h1>NPR CDS: Push Mapping</h1>
+		<p><?php echo __( 'Use the fields below if you need to set custom metadata fields to be pushed to the CDS. Once you\'ve chosen your fields, be sure to check the "Use Custom Mapping" box to enable the changes.', 'npr-content-distribution-service' ); ?></p>
 		<?php echo $this->restore_old(); ?>
 		<form action="<?php echo admin_url( 'options.php' ); ?>" method="post">
 		<?php settings_fields( 'npr_cds_push_mapping' ); ?>
