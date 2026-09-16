@@ -301,7 +301,7 @@ class NPR_CDS_WP {
 									}
 								}
 								$by_lines[] = [
-									'name' => trim( $byl_data->title ),
+									'name' => trim( !empty( $byl_data->title ) ? $byl_data->title : '' ),
 									'link' => $byl_link
 								];
 							}
@@ -656,7 +656,7 @@ class NPR_CDS_WP {
 								if ( !empty( $category_id ) ) {
 									$category_ids[] = $category_id;
 								}
-							} elseif ( in_array( 'category', $collect->rels ) ) {
+							} elseif ( in_array( 'category', $collect->rels ) && !empty( $topic->title ) ) {
 								$npr_tags[] = $topic->title;
 							}
 						}
