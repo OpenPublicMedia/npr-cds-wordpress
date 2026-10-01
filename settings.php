@@ -1465,7 +1465,10 @@ class NPR_CDS {
 		$api->request( $params );
 		$api->parse();
 
-		if ( empty( $api->message ) ) {
+		if ( !empty( $api->message ) ) {
+			npr_cds_show_message( 'Error retrieving stories<br> CDS Message = ' . $api->message, TRUE );
+		}
+		if ( !empty( $api->stories ) ) {
 			foreach ( $api->stories as $story ) {
 				$homepage_eligible = [
 					'homepage' => 'No',
@@ -1657,10 +1660,6 @@ EOT;
 					</div>
 				</details>
 EOT;
-			}
-		} else {
-			if ( empty( $story ) ) {
-				npr_cds_show_message( 'Error retrieving stories<br> CDS Message = ' . $api->message, TRUE );
 			}
 		}
 		echo '<p style="text-align: right;">';
