@@ -228,7 +228,7 @@ function npr_cds_save_send_to_cds( Int $post_ID ): bool {
 	global $post;
 
 	if ( get_post_type( $post ) !== npr_cds_get_push_post_type( $post ) ) return false;
-	$value = ( isset( $_POST['send_to_cds'] ) && $_POST['send_to_cds'] == 1 ) ? 1 : 0;
+	$value = ( isset( $_POST['_send_to_cds'] ) && $_POST['_send_to_cds'] == 1 ) ? 1 : 0;
 
 	// see historical note
 	update_post_meta( $post_ID, '_send_to_nprone', $value );
@@ -257,8 +257,8 @@ function npr_cds_save_send_to_one( int $post_ID ): bool {
 	$value = (
 		isset( $_POST['_send_to_one'] )
 		&& $_POST['_send_to_one'] == 1
-		&& isset( $_POST['send_to_cds'] )
-		&& $_POST['send_to_cds'] == 1
+		&& isset( $_POST['_send_to_cds'] )
+		&& $_POST['_send_to_cds'] == 1
 	) ? 1 : 0;
 	update_post_meta( $post_ID, '_send_to_one', $value );
 	return true;
@@ -287,8 +287,8 @@ function npr_cds_save_nprone_featured( int $post_ID ): bool {
 	$value = (
 		isset( $_POST['_nprone_featured'] )
 		&& $_POST['_nprone_featured'] == 1
-		&& isset( $_POST['send_to_cds'] )
-		&& $_POST['send_to_cds'] == 1
+		&& isset( $_POST['_send_to_cds'] )
+		&& $_POST['_send_to_cds'] == 1
 		&& isset( $_POST['_send_to_one'] )
 		&& $_POST['_send_to_one'] == 1
 	) ? 1 : 0;
@@ -399,6 +399,10 @@ function npr_cds_save_network_aggregations( int $post_ID ): bool {
 	global $post;
 
 	if ( get_post_type( $post ) !== npr_cds_get_push_post_type( $post ) ) return false;
+	$value = (
+		isset( $_POST['_send_to_cds'] )
+		&& $_POST['_send_to_cds'] == 1
+	) ? 1 : 0;
 	$value = [];
 	if ( !empty( $_POST['npr_cds_aggregation'] ) ) {
 		foreach ( $_POST['npr_cds_aggregation'] as $aggregation ) {

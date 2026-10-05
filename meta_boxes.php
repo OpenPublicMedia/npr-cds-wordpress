@@ -46,7 +46,7 @@ function npr_cds_publish_meta_box( WP_Post $post ): void {
 			}
 			// this list item contains all other list items, because their enabled/disabled depends on this checkbox
 			printf(
-				'<li><label><input value="1" type="checkbox" name="send_to_cds" id="send_to_cds" %2$s/> %1$s</label></li>',
+				'<li><label><input value="1" type="checkbox" name="_send_to_cds" id="_send_to_cds" %2$s/> %1$s</label></li>',
 				esc_html__( 'Send to NPR CDS', 'npr-content-distribution-service' ),
 				checked( $nprapi, '1', false )
 				// @see npr_cds_save_send_to_api for a historical note on this metadata name

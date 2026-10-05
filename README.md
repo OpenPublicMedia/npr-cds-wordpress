@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 7.0.3
 - Requires PHP: 8.0
-- Version: 1.5.6
-- Stable tag: 1.5.6
+- Version: 1.5.7
+- Stable tag: 1.5.7
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -80,7 +80,10 @@ Viewing Stories Uploaded to the CDS
 
 
 ## Changelog
-<!-- copy from readme.txt to here --> 
+<!-- copy from readme.txt to here -->
+### V.1.5.7
+* Bug fix: `send_to_cds` checkbox was sometimes not being recognized as checked in editor, which was preventing the Send to CDS metadata from being saved 
+
 ### V.1.5.6
 * Bug fix: When viewing uploaded stories, a story that is not licensed for syndication will no longer preclude the plugin from showing the rest of the list
 
