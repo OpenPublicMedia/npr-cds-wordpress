@@ -7,8 +7,8 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Requires at least: 4.0
 - Tested up to: 7.0.3
 - Requires PHP: 8.0
-- Version: 1.5.7
-- Stable tag: 1.5.7
+- Version: 1.5.8
+- Stable tag: 1.5.8
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -81,6 +81,9 @@ Viewing Stories Uploaded to the CDS
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.5.8
+* Adding an additional step when attempting to pull in a CDS article via a URL, due to Cloudflare's bot mitigations. It now attempts to download the article using the "NPR CDS Bot" user agent
+
 ### V.1.5.7
 * Bug fix: `send_to_cds` checkbox was sometimes not being recognized as checked in editor, which was preventing the Send to CDS metadata from being saved 
 

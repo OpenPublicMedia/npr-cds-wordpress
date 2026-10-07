@@ -110,7 +110,7 @@ class NPR_CDS {
 			}
 		</style>
 		<h1>NPR CDS: General Settings</h1>
-		<form action="<?php echo admin_url( 'options.php' ); ?>" method="post">
+	<form action="<?php echo admin_url( 'options.php' ); ?>" method="post">
 		<?php settings_fields( 'npr_cds' ); ?>
 		<?php echo $this->restore_old(); ?>
 		<div id="poststuff">
@@ -201,7 +201,7 @@ class NPR_CDS {
 		<h1>NPR CDS: Get Multi Settings</h1>
 		<p><?php echo __( 'Create an NPR CDS query. Enter your queries into one of the rows below to have stories on that query automatically publish to your site. Please note, you do not need to include your CDS token in the query.', 'npr-content-distribution-service' ); ?></p>
 		<?php echo $this->restore_old(); ?>
-		<form action="<?php echo admin_url( 'options.php' ); ?>" method="post">
+	<form action="<?php echo admin_url( 'options.php' ); ?>" method="post">
 		<?php settings_fields( 'npr_cds_get_multi_settings' ); ?>
 		<div id="poststuff">
 			<div id="post-body" class="metabox-holder columns-2">
@@ -262,7 +262,7 @@ class NPR_CDS {
 		<h1>NPR CDS: Push Mapping</h1>
 		<p><?php echo __( 'Use the fields below if you need to set custom metadata fields to be pushed to the CDS. Once you\'ve chosen your fields, be sure to check the "Use Custom Mapping" box to enable the changes.', 'npr-content-distribution-service' ); ?></p>
 		<?php echo $this->restore_old(); ?>
-		<form action="<?php echo admin_url( 'options.php' ); ?>" method="post">
+	<form action="<?php echo admin_url( 'options.php' ); ?>" method="post">
 		<?php settings_fields( 'npr_cds_push_mapping' ); ?>
 		<div id="poststuff">
 			<div id="post-body" class="metabox-holder columns-2">
@@ -1014,18 +1014,44 @@ class NPR_CDS {
 					}
 				} else {
 					$meta = get_meta_tags( $story_id );
-					if ( ! empty( $meta['brightspot-datalayer'] ) ) {
-						$json = json_decode( html_entity_decode( $meta['brightspot-datalayer'] ), true );
-						if ( ! empty( $json['nprStoryId'] ) ) {
-							$story_id = $json['nprStoryId'];
+					if ( $meta !== false ) {
+						if ( !empty( $meta['brightspot-datalayer'] ) ) {
+							$json = json_decode( html_entity_decode( $meta['brightspot-datalayer'] ), true );
+							if ( !empty( $json['nprStoryId'] ) ) {
+								$story_id = $json['nprStoryId'];
+								$valid = true;
+							}
+						} elseif ( !empty( $meta['story_id'] ) ) {
+							$story_id = $meta['story_id'];
 							$valid = true;
+						} else {
+							npr_cds_show_message( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID. Please try again.", true );
+							error_log( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID. Please try again." ); // debug use
 						}
-					} elseif ( ! empty( $meta['story_id'] ) ) {
-						$story_id = $meta['story_id'];
-						$valid = true;
 					} else {
-						npr_cds_show_message( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID. Please try again.", true );
-						error_log( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID. Please try again." ); // debug use
+						$remote = wp_remote_get( $story_id,  [ 'user-agent' => 'NPR CDS Bot' ] );
+						if ( is_wp_error( $remote ) ) {
+							npr_cds_show_message( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID or blocked our request. Please try again.", true );
+							error_log( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID or blocked our request. Please try again." ); // debug use
+						} else {
+							$api = wp_remote_retrieve_body( $remote );
+							preg_match( '#<meta\s+name="story_id"\s+content="([a-z0-9\-]+)"\s+\/?>#', $api, $matches );
+							preg_match( '#<meta\s+name="brightspot-dataLayer"\s+content="(\{[\n\s\w&;:,/\.\-]+\})"\s?\/?>#', $api, $brightspot );
+							if ( !empty( $brightspot[1] ) ) {
+								$json = json_decode( html_entity_decode( $brightspot[1] ), true );
+								if ( !empty( $json['nprStoryId'] ) ) {
+									$story_id = $json['nprStoryId'];
+									$valid = true;
+									echo "STORY ID: " . $story_id;
+								}
+							} elseif ( !empty( $matches[1] ) ) {
+								$story_id = $matches[1];
+								$valid = true;
+							} else {
+								npr_cds_show_message( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID. Please try again.", true );
+								error_log( "The referenced URL (" . $story_id . ") does not contain a valid NPR CDS ID. Please try again." ); // debug use
+							}
+						}
 					}
 				}
 			}
