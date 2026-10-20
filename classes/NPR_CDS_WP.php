@@ -194,6 +194,8 @@ class NPR_CDS_WP {
 			}
 			foreach ( $this->stories as $story ) {
 				$post_id = null;
+				$existing_skip = FALSE;
+				$existing = $existing_status = null;
 				$exists = new WP_Query([
 					'meta_key' => NPR_STORY_ID_META_KEY,
 					'meta_value' => $story->id,
@@ -231,8 +233,6 @@ class NPR_CDS_WP {
 					}
 					// get ids of existing categories for post
 					$cats = wp_get_post_categories( $post_id );
-				} else {
-					$existing = $existing_status = null;
 				}
 
 				$npr_has_video = FALSE;
@@ -262,7 +262,7 @@ class NPR_CDS_WP {
 
 				$wp_category_ids = [];
 				$wp_category_id = "";
-				if ( $existing === null ) {
+				if ( !$existing_skip ) {
 					if ( $pull_post_type === 'post' ) {
 						// Get Default category from options table and store in array for post_array
 						if ( !empty( $cds_query['category'] ) ) {
@@ -399,7 +399,7 @@ class NPR_CDS_WP {
 					}
 					$metas[NPR_AUDIO_META_KEY] = implode( ',', $mp3_array );
 				}
-				if ( $existing ) {
+				if ( $existing_skip ) {
 					$created = false;
 					$args['ID'] = $existing->ID;
 				} else {
@@ -454,7 +454,7 @@ class NPR_CDS_WP {
 				if ( in_array( 'has-images', $profiles ) && !empty( $story->images ) ) {
 
 					// are there any images saved for this post, probably on update, but no sense looking of the post didn't already exist
-					if ( $existing ) {
+					if ( $existing_skip ) {
 						$image_args = [
 							'order'=> 'ASC',
 							'post_mime_type' => 'image',
@@ -589,7 +589,7 @@ class NPR_CDS_WP {
 				}
 
 				//now set the status
-				if ( !$existing ) {
+				if ( !$existing_skip ) {
 					if ( $publish ) {
 						$args['post_status'] = 'publish';
 					} else {
@@ -699,7 +699,7 @@ class NPR_CDS_WP {
 					}
 				}
 				if ( WP_DEBUG ) {
-					if ( $existing ) {
+					if ( $existing_skip ) {
 						npr_cds_error_log( 'Cron ' . $qnum . ': CDS ID ' . $story->id . ' story updated' );
 					} else {
 						npr_cds_error_log( 'Cron ' . $qnum . ': CDS ID ' . $story->id . ' story posted to database' );

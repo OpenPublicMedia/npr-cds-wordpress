@@ -6,8 +6,8 @@ Tags: npr, news, public radio, api
 Requires at least: 4.0
 Tested up to: 7.0.3
 Requires PHP: 8.0
-Version: 1.5.8
-Stable tag: 1.5.8
+Version: 1.5.9
+Stable tag: 1.5.9
 Author: Open Public Media
 Author URI: https://github.com/OpenPublicMedia/
 License: GPLv2
@@ -74,6 +74,9 @@ NPR Stories having been retrieved
 
 
 == Changelog ==
+= V.1.5.9 =
+* Bug fix: When updating an imported story that has been modified in the CDS, the existence check is now an explicit boolean check. Previously it was checking whether a variable was null or a WP_Post object, which caused inconsistencies.
+
 = V.1.5.8 =
 * Adding an additional step when attempting to pull in a CDS article via a URL, due to Cloudflare's bot mitigations. It now attempts to download the article using the "NPR CDS Bot" user agent
 
