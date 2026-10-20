@@ -955,7 +955,7 @@ class NPR_CDS_WP {
 		$use_npr_featured = !empty( get_option( 'npr_cds_query_use_featured' ) );
 		$profiles = $this->extract_profiles( $story->profiles );
 		$primary_image_id = '';
-		$primary_image_in_layout = $include_featured_image = false;
+		$primary_image_in_layout = false;
 		if ( in_array( 'has-images', $profiles ) ) {
 			foreach ( $story->images as $images ) {
 				if ( !empty( $images->rels ) && in_array( 'primary', $images->rels ) ) {
@@ -965,238 +965,10 @@ class NPR_CDS_WP {
 		}
 
 		if ( in_array( 'buildout', $profiles ) && !empty( $story->layout ) ) {
-			foreach ( $story->layout as $layout ) {
-				$asset_id = $this->extract_asset_id( $layout->href );
-				if ( $asset_id === $primary_image_id ) {
-					$primary_image_in_layout = true;
-				}
-				$asset_current = $story->assets->{ $asset_id };
-				$asset_profile = $this->extract_asset_profile( $asset_current );
-				if ( !empty( $asset_current->isRestrictedToAuthorizedOrgServiceIds ) ) {
-					continue;
-				}
-				switch ( $asset_profile ) {
-					case 'text' :
-						if ( !empty( $asset_current->text ) ) {
-							$body_with_layout .= $this->add_paragraph_tag( $asset_current->text ) . "\n";
-						}
-						break;
-					case 'promo-card' :
-						if( get_option( 'npr_cds_skip_promo_cards', false ) ) {
-							break;
-						}
-
-						if ( !empty( $asset_current->documentLink ) ) {
-							$promo_card     = $this->get_document( $asset_current->documentLink->href );
-							$promo_card_url = '';
-							if ( ! is_wp_error( $promo_card ) && !empty( $promo_card->webPages ) ) {
-								foreach ( $promo_card->webPages as $web ) {
-									if ( !empty( $web->rels ) && in_array( 'canonical', $web->rels ) ) {
-										$promo_card_url = $web->href;
-									}
-								}
-							}
-							$card_title = '';
-							$card_teaser = 'Link';
-							if ( !empty( $asset_current->eyebrowText ) ) {
-								$card_title = '<h3>' . $asset_current->eyebrowText . '</h3>';
-							} elseif ( !empty( $asset_current->title ) ) {
-								$card_title = '<h3>' . $asset_current->title . '</h3>';
-							}
-							if ( !empty( $asset_current->teaser ) ) {
-								$card_teaser = $asset_current->teaser;
-							} elseif ( !empty( $asset_current->title ) ) {
-								$card_teaser = $asset_current->title;
-							}
-							$body_with_layout .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . $card_title .
-							                     '<p><a href="' . $promo_card_url . '">' . $card_teaser . '</a></p></div></figure>';
-						}
-						break;
-					case 'html-block' :
-						if ( !empty( $asset_current->html ) ) {
-							$body_with_layout .= $asset_current->html;
-						}
-						$returnary['has_external'] = TRUE;
-						if ( strpos( $asset_current->html, 'jwplayer.com' ) ) {
-							$returnary['has_video'] = TRUE;
-						}
-						break;
-					case 'audio' :
-						if ( $asset_current->isAvailable ) {
-							if ( $asset_current->isEmbeddable ) {
-								$body_with_layout .= '<p><iframe class="npr-embed-audio" style="width: 100%; height: 239px;" src="' . $asset_current->embeddedPlayerLink->href . '"></iframe></p>';
-							} elseif ( $asset_current->isDownloadable ) {
-								foreach ( $asset_current->enclosures as $enclose ) {
-									if ( $enclose->type == 'audio/mpeg' && empty( $enclose->rels ) || !in_array( 'premium', $enclose->rels ) ) {
-										$body_with_layout .= '[audio mp3="' . $enclose->href . '"][/audio]';
-									}
-								}
-							}
-						}
-						break;
-					case 'pull-quote' :
-						$body_with_layout .= '<blockquote class="npr-pull-quote"><h2>' . $asset_current->quote . '</h2>';
-						if ( !empty( $asset_current->attributionParty ) ) {
-							$body_with_layout .= '<p>' . $asset_current->attributionParty;
-							if ( !empty( $asset_current->attributionContext ) ) {
-								$body_with_layout .= ', ' . $asset_current->attributionContext;
-							}
-							$body_with_layout .= '</p>';
-						}
-						$body_with_layout .= '</blockquote>';
-						break;
-					case 'youtube-video' :
-						$asset_title = 'YouTube video player';
-						if ( !empty( $asset_current->headline ) ) {
-							$asset_title = $asset_current->headline;
-						}
-						$returnary['has_video'] = TRUE;
-						$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper"><iframe width="560" height="315" src="https://www.youtube.com/embed/' . $asset_current->videoId . '" title="' . $asset_title . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></figure>';
-						break;
-					case 'internal-link' :
-						$link_url = '';
-						$link_asset = $this->get_document( $asset_current->documentLink->href );
-						if ( !empty( $link_asset->webPages ) ) {
-							foreach ( $link_asset->webPages as $web ) {
-								if ( in_array( 'canonical', $web->rels ) ) {
-									$link_url = $web->href;
-								}
-							}
-						}
-						if ( !empty( $link_url ) ) {
-							$body_with_layout .= '<p><a href="' . $link_url . '">' . $asset_current->linkText . '</a></p>';
-						}
-						break;
-					case 'external-link' :
-						if ( !empty( $asset_current->externalLink->href ) ) {
-							$body_with_layout .= '<p><a href="' . $asset_current->externalLink->href . '">' . $asset_current->linkText . '</a></p>';
-						}
-						break;
-					case 'image' :
-						$thisimg_rels = [];
-						foreach ( $story->images as $images ) {
-							if ( $images->href == '#/assets/' . $asset_id && ! empty( $images->rels ) ) {
-								$thisimg_rels = $images->rels;
-							}
-						}
-						if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
-							break;
-						}
-						$thisimg = $asset_current->enclosures[0];
-						foreach ( $asset_current->enclosures as $img_enclose ) {
-							if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
-								$thisimg = $img_enclose;
-							}
-						}
-						$figclass = "wp-block-image size-large";
-						$image_href = $this->get_image_url( $thisimg );
-						$fightml = '<img src="' . $image_href['url'] . '"';
-						if ( in_array( 'image-vertical', $thisimg->rels ) ) {
-							$figclass .= ' alignright';
-							$fightml .= " width=200";
-						}
-						$cites = $this->parse_credits( $asset_current );
-						$thiscaption = ( !empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
-						$fightml .= ( !empty( $fightml ) && ! empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
-						$fightml .= ( !empty( $fightml ) ? '>' : '' );
-						$thiscaption .= ( !empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
-						$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
-						$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
-						$body_with_layout .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
-						break;
-					case 'image-gallery' :
-						$fightml = '';
-						foreach ( $asset_current->layout as $ig_layout ) {
-							$ig_asset_id = $this->extract_asset_id( $ig_layout->href );
-							$ig_asset_current = $story->assets->{ $ig_asset_id };
-							if ( empty( $ig_asset_current ) ) {
-								$thisimg = $ig_asset_current->enclosures[0];
-								foreach ( $ig_asset_current->enclosures as $ig_img_enclose ) {
-									if ( ! empty( $ig_img_enclose->rels ) && in_array( 'primary', $ig_img_enclose->rels ) ) {
-										$thisimg = $ig_img_enclose;
-									}
-								}
-								$image_href = $this->get_image_url( $thisimg );
-								$full_credits = $this->parse_credits( $ig_asset_current );
-
-								$link_text = str_replace( '"', "'", $ig_asset_current->title . $full_credits );
-								$fightml .= '<li class="splide__slide"><a href="' . esc_url( $thisimg->href ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_href['url'] ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . npr_cds_esc_html( $link_text ) . '</div></li>';
-							}
-						}
-						if ( !empty( $fightml ) ) {
-							$returnary['has_slideshow'] = TRUE;
-							$fightml = '<figure class="wp-block-image"><div class="splide"><div class="splide__track"><ul class="splide__list">' . $fightml . '</div></div></ul></figure>';
-						}
-						$body_with_layout .= $fightml;
-						break;
-					case str_contains( $asset_profile, 'player-video' ) :
-						$asset_caption = [];
-						$full_caption = '';
-						if ( !empty( $asset_current->title ) ) {
-							$asset_caption[] = $asset_current->title;
-						}
-						if ( !empty( $asset_current->caption ) ) {
-							$asset_caption[] = $asset_current->caption;
-						}
-						$credits = $this->parse_credits( $asset_current );
-						if ( !empty( $credits ) ) {
-							$asset_caption[] = '(' . $credits . ')';
-						}
-						if ( !empty( $asset_caption ) ) {
-							$full_caption = '<figcaption>' . implode( ' ', $asset_caption ) . '</figcaption>';
-						}
-						$returnary['has_video'] = true;
-						$video_asset = '';
-						if ( $asset_profile == 'player-video' && !empty ( $asset_current->enclosures ) ) {
-							$poster = '';
-							$video_url = $asset_current->enclosures[0]->href;
-							if ( !empty( $asset_current->images ) ) {
-								foreach ( $asset_current->images as $v_image ) {
-									if ( in_array( 'thumbnail', $v_image->rels ) ) {
-										$v_image_id = $this->extract_asset_id( $v_image->href );
-										$v_image_asset = $story->assets->{$v_image_id};
-										foreach ( $v_image_asset->enclosures as $vma ) {
-											$poster_image = $this->get_image_url( $vma );
-											$poster = ' poster="' . $poster_image['url'] . '"';
-										}
-									}
-								}
-							}
-							foreach ( $asset_current->enclosures as $v_enclose ) {
-								if ( in_array( 'mp4-hd', $v_enclose->rels ) ) {
-									$video_url = $v_enclose->href;
-								} elseif ( in_array( 'mp4-high', $v_enclose->rels ) ) {
-									$video_url = $v_enclose->href;
-								}
-							}
-							$video_asset = '[video mp4="' . $video_url . '"' . $poster . '][/video]';
-						} elseif ( $asset_profile == 'stream-player-video' ) {
-							if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
-								$returnary['has_video_streaming'] = true;
-								$video_asset = '<video id="'. $asset_current->id .'" controls></video>' .
-								               '<script>' .
-								               'let video = document.getElementById("' . $asset_current->id . '");' .
-								               'if (Hls.isSupported()) {' .
-								               'let hls = new Hls();' .
-								               'hls.attachMedia(video);' .
-								               'hls.on(Hls.Events.MEDIA_ATTACHED, () => {' .
-								               'hls.loadSource("' . $asset_current->enclosures[0]->href .'");' .
-								               'hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {'.
-								               'console.log("manifest loaded, found " + data.levels.length + " quality level");' .
-								               '});' .
-								               '});' .
-								               '}' .
-								               '</script>';
-							}
-						}
-						$body_with_layout .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
-						break;
-					default :
-						// Do nothing???
-						break;
-				}
-
-			}
+			$full_layout = $this->parse_layout_assets( $story, $story->layout, $use_npr_featured, $primary_image_id, $primary_image_in_layout, $returnary );
+			$body_with_layout .= $full_layout['output'];
+			$returnary = $full_layout['returnary'];
+			$primary_image_in_layout = $full_layout['primary_image_in_layout'];
 			$display_attribution = get_option( 'npr_cds_display_attribution', '0' );
 			if ( $display_attribution === '1' && !empty( $story->brandings ) ) {
 				$attribution = [];
@@ -1279,5 +1051,254 @@ class NPR_CDS_WP {
 		}
 		$returnary['body'] = npr_cds_esc_html( $body_with_layout );
 		return $returnary;
+	}
+
+	function parse_layout_assets( stdClass $story, array $story_layout, bool $use_npr_featured, string $primary_image_id, bool $primary_image_in_layout, array $returnary  ): array {
+		$output = '';
+		foreach ( $story_layout as $layout ) {
+			$asset_id = $this->extract_asset_id( $layout->href );
+			if ( $asset_id === $primary_image_id ) {
+				$primary_image_in_layout = true;
+			}
+			$asset_current = $story->assets->{ $asset_id };
+			$asset_profile = $this->extract_asset_profile( $asset_current );
+			if ( !empty( $asset_current->isRestrictedToAuthorizedOrgServiceIds ) ) {
+				continue;
+			}
+			switch ( $asset_profile ) {
+				case 'text' :
+					if ( !empty( $asset_current->text ) ) {
+						$output .= $this->add_paragraph_tag( $asset_current->text ) . "\n";
+					}
+					break;
+				case 'promo-card' :
+					if( get_option( 'npr_cds_skip_promo_cards', false ) ) {
+						break;
+					}
+
+					if ( !empty( $asset_current->documentLink ) ) {
+						$promo_card     = $this->get_document( $asset_current->documentLink->href );
+						$promo_card_url = '';
+						if ( ! is_wp_error( $promo_card ) && !empty( $promo_card->webPages ) ) {
+							foreach ( $promo_card->webPages as $web ) {
+								if ( !empty( $web->rels ) && in_array( 'canonical', $web->rels ) ) {
+									$promo_card_url = $web->href;
+								}
+							}
+						}
+						$card_title = '';
+						$card_teaser = 'Link';
+						if ( !empty( $asset_current->eyebrowText ) ) {
+							$card_title = '<h3>' . $asset_current->eyebrowText . '</h3>';
+						} elseif ( !empty( $asset_current->title ) ) {
+							$card_title = '<h3>' . $asset_current->title . '</h3>';
+						}
+						if ( !empty( $asset_current->teaser ) ) {
+							$card_teaser = $asset_current->teaser;
+						} elseif ( !empty( $asset_current->title ) ) {
+							$card_teaser = $asset_current->title;
+						}
+						$output .= '<figure class="wp-block-embed npr-promo-card ' . strtolower( $asset_current->cardStyle ) . '"><div class="wp-block-embed__wrapper">' . $card_title .
+						           '<p><a href="' . $promo_card_url . '">' . $card_teaser . '</a></p></div></figure>';
+					}
+					break;
+				case 'html-block' :
+					if ( !empty( $asset_current->html ) ) {
+						$output .= $asset_current->html;
+					}
+					$returnary['has_external'] = TRUE;
+					if ( strpos( $asset_current->html, 'jwplayer.com' ) ) {
+						$returnary['has_video'] = TRUE;
+					}
+					break;
+				case 'audio' :
+					if ( $asset_current->isAvailable ) {
+						if ( $asset_current->isEmbeddable ) {
+							$output .= '<p><iframe class="npr-embed-audio" style="width: 100%; height: 239px;" src="' . $asset_current->embeddedPlayerLink->href . '"></iframe></p>';
+						} elseif ( $asset_current->isDownloadable ) {
+							foreach ( $asset_current->enclosures as $enclose ) {
+								if ( $enclose->type == 'audio/mpeg' && empty( $enclose->rels ) || !in_array( 'premium', $enclose->rels ) ) {
+									$output .= '[audio mp3="' . $enclose->href . '"][/audio]';
+								}
+							}
+						}
+					}
+					break;
+				case 'pull-quote' :
+					$output .= '<blockquote class="npr-pull-quote"><h2>' . $asset_current->quote . '</h2>';
+					if ( !empty( $asset_current->attributionParty ) ) {
+						$output .= '<p>' . $asset_current->attributionParty;
+						if ( !empty( $asset_current->attributionContext ) ) {
+							$output .= ', ' . $asset_current->attributionContext;
+						}
+						$output .= '</p>';
+					}
+					$output .= '</blockquote>';
+					break;
+				case 'youtube-video' :
+					$asset_title = 'YouTube video player';
+					if ( !empty( $asset_current->headline ) ) {
+						$asset_title = $asset_current->headline;
+					}
+					$returnary['has_video'] = TRUE;
+					$output .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper"><iframe width="560" height="315" src="https://www.youtube.com/embed/' . $asset_current->videoId . '" title="' . $asset_title . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></figure>';
+					break;
+				case 'internal-link' :
+					$link_url = '';
+					$link_asset = $this->get_document( $asset_current->documentLink->href );
+					if ( !empty( $link_asset->webPages ) ) {
+						foreach ( $link_asset->webPages as $web ) {
+							if ( in_array( 'canonical', $web->rels ) ) {
+								$link_url = $web->href;
+							}
+						}
+					}
+					if ( !empty( $link_url ) ) {
+						$output .= '<p><a href="' . $link_url . '">' . $asset_current->linkText . '</a></p>';
+					}
+					break;
+				case 'external-link' :
+					if ( !empty( $asset_current->externalLink->href ) ) {
+						$output .= '<p><a href="' . $asset_current->externalLink->href . '">' . $asset_current->linkText . '</a></p>';
+					}
+					break;
+				case 'image' :
+					$thisimg_rels = [];
+					foreach ( $story->images as $images ) {
+						if ( $images->href == '#/assets/' . $asset_id && ! empty( $images->rels ) ) {
+							$thisimg_rels = $images->rels;
+						}
+					}
+					if ( in_array( 'primary', $thisimg_rels ) && $use_npr_featured ) {
+						break;
+					}
+					$thisimg = $asset_current->enclosures[0];
+					foreach ( $asset_current->enclosures as $img_enclose ) {
+						if ( !empty( $img_enclose->rels ) && in_array( 'primary', $img_enclose->rels ) ) {
+							$thisimg = $img_enclose;
+						}
+					}
+					$figclass = "wp-block-image size-large";
+					$image_href = $this->get_image_url( $thisimg );
+					$fightml = '<img src="' . $image_href['url'] . '"';
+					if ( in_array( 'image-vertical', $thisimg->rels ) ) {
+						$figclass .= ' alignright';
+						$fightml .= " width=200";
+					}
+					$cites = $this->parse_credits( $asset_current );
+					$thiscaption = ( !empty( $asset_current->caption ) ? trim( $asset_current->caption ) : '' );
+					$fightml .= ( !empty( $fightml ) && ! empty( $thiscaption ) ? ' alt="' . str_replace( '"', '\'', strip_tags( $thiscaption ) ) . '"' : '' );
+					$fightml .= ( !empty( $fightml ) ? '>' : '' );
+					$thiscaption .= ( !empty( $cites ) ? " <cite>" . $cites . "</cite>" : '' );
+					$figcaption = ( !empty( $fightml ) && !empty( $thiscaption ) ? "<figcaption>$thiscaption</figcaption>" : '' );
+					$fightml .= ( !empty( $fightml ) && !empty( $figcaption ) ? $figcaption : '' );
+					$output .= ( !empty( $fightml ) ? "<figure class=\"$figclass\">$fightml</figure>\n\n" : '' );
+					break;
+				case 'image-gallery' :
+					$fightml = '';
+					foreach ( $asset_current->layout as $ig_layout ) {
+						$ig_asset_id = $this->extract_asset_id( $ig_layout->href );
+						$ig_asset_current = $story->assets->{ $ig_asset_id };
+						if ( empty( $ig_asset_current ) ) {
+							$thisimg = $ig_asset_current->enclosures[0];
+							foreach ( $ig_asset_current->enclosures as $ig_img_enclose ) {
+								if ( ! empty( $ig_img_enclose->rels ) && in_array( 'primary', $ig_img_enclose->rels ) ) {
+									$thisimg = $ig_img_enclose;
+								}
+							}
+							$image_href = $this->get_image_url( $thisimg );
+							$full_credits = $this->parse_credits( $ig_asset_current );
+
+							$link_text = str_replace( '"', "'", $ig_asset_current->title . $full_credits );
+							$fightml .= '<li class="splide__slide"><a href="' . esc_url( $thisimg->href ) . '" target="_blank"><img data-splide-lazy="' . esc_url( $image_href['url'] ) . '" alt="' . esc_attr( $link_text ) . '"></a><div>' . npr_cds_esc_html( $link_text ) . '</div></li>';
+						}
+					}
+					if ( !empty( $fightml ) ) {
+						$returnary['has_slideshow'] = TRUE;
+						$fightml = '<figure class="wp-block-image"><div class="splide"><div class="splide__track"><ul class="splide__list">' . $fightml . '</div></div></ul></figure>';
+					}
+					$output .= $fightml;
+					break;
+				case 'resource-container' :
+					if ( !empty( $asset_current->layout ) ) {
+						$resource_container = $this->parse_layout_assets( $story, $asset_current->layout, $use_npr_featured, $primary_image_id, $primary_image_in_layout, $returnary );
+						$output .= $resource_container['output'];
+						$returnary = $resource_container['returnary'];
+						$primary_image_in_layout = $resource_container['primary_image_in_layout'];
+					}
+					break;
+				case str_contains( $asset_profile, 'player-video' ) :
+					$asset_caption = [];
+					$full_caption = '';
+					if ( !empty( $asset_current->title ) ) {
+						$asset_caption[] = $asset_current->title;
+					}
+					if ( !empty( $asset_current->caption ) ) {
+						$asset_caption[] = $asset_current->caption;
+					}
+					$credits = $this->parse_credits( $asset_current );
+					if ( !empty( $credits ) ) {
+						$asset_caption[] = '(' . $credits . ')';
+					}
+					if ( !empty( $asset_caption ) ) {
+						$full_caption = '<figcaption>' . implode( ' ', $asset_caption ) . '</figcaption>';
+					}
+					$returnary['has_video'] = true;
+					$video_asset = '';
+					if ( $asset_profile == 'player-video' && !empty ( $asset_current->enclosures ) ) {
+						$poster = '';
+						$video_url = $asset_current->enclosures[0]->href;
+						if ( !empty( $asset_current->images ) ) {
+							foreach ( $asset_current->images as $v_image ) {
+								if ( in_array( 'thumbnail', $v_image->rels ) ) {
+									$v_image_id = $this->extract_asset_id( $v_image->href );
+									$v_image_asset = $story->assets->{$v_image_id};
+									foreach ( $v_image_asset->enclosures as $vma ) {
+										$poster_image = $this->get_image_url( $vma );
+										$poster = ' poster="' . $poster_image['url'] . '"';
+									}
+								}
+							}
+						}
+						foreach ( $asset_current->enclosures as $v_enclose ) {
+							if ( in_array( 'mp4-hd', $v_enclose->rels ) ) {
+								$video_url = $v_enclose->href;
+							} elseif ( in_array( 'mp4-high', $v_enclose->rels ) ) {
+								$video_url = $v_enclose->href;
+							}
+						}
+						$video_asset = '[video mp4="' . $video_url . '"' . $poster . '][/video]';
+					} elseif ( $asset_profile == 'stream-player-video' ) {
+						if ( in_array( 'hls', $asset_current->enclosures[0]->rels ) ) {
+							$returnary['has_video_streaming'] = true;
+							$video_asset = '<video id="'. $asset_current->id .'" controls></video>' .
+								'<script>' .
+									'let video = document.getElementById("' . $asset_current->id . '");' .
+									'if (Hls.isSupported()) {' .
+										'let hls = new Hls();' .
+										'hls.attachMedia(video);' .
+										'hls.on(Hls.Events.MEDIA_ATTACHED, () => {' .
+											'hls.loadSource("' . $asset_current->enclosures[0]->href .'");' .
+											'hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {'.
+												'console.log("manifest loaded, found " + data.levels.length + " quality level");' .
+											'});' .
+										'});' .
+									'}' .
+								'</script>';
+						}
+					}
+					$output .= '<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">' . $video_asset . '</div>' . $full_caption . '</figure>';
+					break;
+				default :
+					// Do nothing???
+					break;
+			}
+
+		}
+		return [
+			'output' => $output,
+			'returnary' => $returnary,
+			'primary_image_in_layout' => $primary_image_in_layout
+		];
 	}
 }

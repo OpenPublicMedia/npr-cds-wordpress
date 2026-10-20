@@ -75,6 +75,7 @@ NPR Stories having been retrieved
 
 == Changelog ==
 = V.1.5.9 =
+* Added support for the `resource-container` asset type in the layout parser
 * Bug fix: When updating an imported story that has been modified in the CDS, the existence check is now an explicit boolean check. Previously it was checking whether a variable was null or a WP_Post object, which caused inconsistencies.
 
 = V.1.5.8 =
