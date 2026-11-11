@@ -5,10 +5,10 @@ A collection of tools for publishing from and to NPR's Content Distribution Serv
 - Contributors: jwcounts, tamw-wnet, bdivver
 - Original developers: NPRDS, INN Labs
 - Requires at least: 4.0
-- Tested up to: 7.0.3
+- Tested up to: 7.1.4
 - Requires PHP: 8.0
-- Version: 1.5.9
-- Stable tag: 1.5.9
+- Version: 1.5.10
+- Stable tag: 1.5.10
 - Author: Open Public Media
 - Author URI: https://github.com/OpenPublicMedia/
 - License: GPLv2
@@ -81,6 +81,9 @@ Viewing Stories Uploaded to the CDS
 
 ## Changelog
 <!-- copy from readme.txt to here -->
+### V.1.5.10
+* Adding support for the Molongui Authorship plugin. Bylines are properly mapped when exporting the CDS. When importing from the CDS, the plugin will attempt to find an existing author and attach it to the story. If no author exists, then the plugin will create a new guest author.
+
 ### V.1.5.9
 * Added support for the `resource-container` asset type in the layout parser
 * Bug fix: When updating an imported story that has been modified in the CDS, the existence check is now an explicit boolean check. Previously it was checking whether a variable was null or a WP_Post object, which caused inconsistencies.

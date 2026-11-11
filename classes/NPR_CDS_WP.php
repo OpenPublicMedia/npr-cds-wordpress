@@ -1,5 +1,6 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * @file
  * Defines basic OOP containers for NPR JSON.
@@ -696,6 +697,46 @@ class NPR_CDS_WP {
 							}
 						}
 						wp_set_post_terms( $post_id, $coauthor_terms, $coauthors_plus->coauthor_taxonomy );
+					}
+				} elseif ( is_plugin_active('molongui-authorship/molongui-authorship.php') ) {
+					if ( !empty( $by_lines ) ) {
+						foreach ( $by_lines as $bk => $bl ) {
+							$auth_type = 'guest';
+							$search_author = \Molongui\Authorship\Admin\Admin_Post::search_authors( $bl['name'] );
+							if ( !empty( $search_author ) ) {
+								$first = reset( $search_author );
+								if ( $first->type !== 'Guest author' ) {
+									$auth_type = 'user';
+								}
+								add_post_meta( $post_id, '_molongui_author', $auth_type . '-' . $first->ID );
+								if ( $bk === 0 ) {
+									add_post_meta( $post_id, '_molongui_main_author', $auth_type . '-' . $first->ID );
+								}
+							} else {
+								$postarr = [
+									'post_type'      => 'guest_author',
+									'post_title'     => $bl['name'],
+									'meta_input'     => [
+										'_molongui_guest_author_display_name' => $bl['name']
+									],
+									'post_status'    => 'publish',
+									'comment_status' => 'closed',
+									'ping_status'    => 'closed'
+								];
+								if ( !empty( $bl['link'] ) ) {
+									$postarr['meta_input']['_molongui_guest_author_web'] = $bl['link'];
+									$postarr['meta_input']['_molongui_guest_author_custom_link'] = $bl['link'];
+								}
+								$guest_id = wp_insert_post( $postarr, true );
+								if ( is_wp_error( $guest_id ) )	{
+									npr_cds_error_log( 'Error creating guest author during CDS import: ' . $guest_id->get_error_message() );
+								}
+								add_post_meta( $post_id, '_molongui_author', 'guest-' . $guest_id );
+								if ( $bk === 0 ) {
+									add_post_meta( $post_id, '_molongui_main_author', 'guest-' . $guest_id );
+								}
+							}
+						}
 					}
 				}
 				if ( WP_DEBUG ) {

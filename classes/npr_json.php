@@ -153,11 +153,26 @@ function npr_cds_to_json( $post ): bool|string {
 	if ( function_exists( 'get_coauthors' ) ) {
 		$coauthors = get_coauthors( $post->ID );
 		if ( !empty( $coauthors ) ) {
-			foreach( $coauthors as $i => $co ) {
+			foreach ( $coauthors as $i => $co ) {
 				$bylines[] = $co->display_name;
 			}
 		} else {
 			npr_cds_error_log( 'we do not have co authors' );
+		}
+	} elseif ( is_plugin_active('molongui-authorship/molongui-authorship.php') ) {
+		$main_author = get_post_meta( $post->ID, '_molongui_main_author', true );
+		$authors = get_post_meta( $post->ID, '_molongui_author', false );
+		$c = 1;
+		foreach ( $authors as $author ) {
+			$auth_id = explode( '-', $author );
+			$search_author = \Molongui\Authorship\Authors::get_author_by( 'id', $auth_id[1], $auth_id[0], false );
+			if ( $author !== $main_author ) {
+				$auth_index = $c;
+				$c++;
+			} else {
+				$auth_index = 0;
+			}
+			$bylines[$auth_index] = $search_author->get_display_name();
 		}
 	} else {
 		npr_cds_error_log( 'can not find get_coauthors' );
